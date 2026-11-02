@@ -97,6 +97,7 @@
             linear-gradient(180deg, var(--ink), var(--ink-2)); }
         .hero::after { content: ''; position: absolute; inset: 0; z-index: -1; opacity: .5; background-image: linear-gradient(rgba(255, 255, 255, .05) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, .05) 1px, transparent 1px); background-size: 56px 56px; -webkit-mask-image: radial-gradient(ellipse at 50% 30%, #000 20%, transparent 72%); mask-image: radial-gradient(ellipse at 50% 30%, #000 20%, transparent 72%); }
         .hero-center { display: flex; flex-direction: column; align-items: center; }
+        .hero-logo { width: min(340px, 74%); height: auto; margin: 0 auto 22px; display: block; filter: drop-shadow(0 8px 24px rgba(0,0,0,.45)); }
         .eyebrow { display: inline-flex; align-items: center; gap: 10px; padding: 7px 14px 7px 8px; border: 1px solid rgba(255, 215, 0, .28); border-radius: 999px; background: rgba(255, 215, 0, .08); color: #86EFAC; font-size: .85rem; font-weight: 700; }
         .eyebrow .pulse { position: relative; width: 22px; height: 22px; border-radius: 50%; background: rgba(34, 197, 94, .18); }
         .eyebrow .pulse::after { content: ''; position: absolute; inset: 7px; border-radius: 50%; background: #22C55E; box-shadow: 0 0 0 0 rgba(34, 197, 94, .7); animation: pulse 2s infinite; }
@@ -303,6 +304,7 @@
     <main id="top">
         <section class="hero">
             <div class="wrap hero-center">
+                <img class="hero-logo" src="/images/site/wordmark.png" alt="BIG BOSS" width="340">
                 <span class="eyebrow"><span class="pulse" aria-hidden="true"></span>Guichet ouvert 24h/24, 7j/7</span>
                 <h1>Votre caisse 1xBet &amp; Melbet, ouverte <em>jour et nuit.</em></h1>
                 <p class="lead">Rechargez votre compte et retirez vos gains par Mobile Money, directement depuis votre téléphone. Pas de file d’attente, pas de déplacement&nbsp;: BIG BOSS s’occupe de tout.</p>

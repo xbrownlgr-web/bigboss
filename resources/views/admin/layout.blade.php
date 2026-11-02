@@ -449,9 +449,8 @@
         <aside class="bf-sidebar offcanvas-lg offcanvas-start" id="bfSidebar" tabindex="-1" aria-label="Navigation principale">
             <div class="bf-sidebar-inner">
                 <div class="bf-brand">
-                    <img src="/images/logo.png" alt="">
                     <div class="flex-grow-1">
-                        <strong>BIG BOSS</strong>
+                        <img src="/images/site/wordmark.png" alt="BIG BOSS" style="width:100%;max-width:168px;height:auto;display:block;margin-bottom:4px">
                         <span>Console d’administration</span>
                     </div>
                     <button type="button" class="btn-close btn-close-white d-lg-none" data-bs-dismiss="offcanvas" data-bs-target="#bfSidebar" aria-label="Fermer"></button>
