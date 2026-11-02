@@ -27,7 +27,7 @@ class AiPronosticGenerator
 {
     private const ENDPOINT = 'https://openrouter.ai/api/v1/chat/completions';
 
-    public const DEFAULT_MODEL = 'openai/gpt-4o-mini';
+    public const DEFAULT_MODEL = 'anthropic/claude-sonnet-5.5';
 
     // Plafond absolu de sélections dans un coupon (Platinum) ; chaque groupe a le sien.
     public const MAX_SELECTIONS = 5;
