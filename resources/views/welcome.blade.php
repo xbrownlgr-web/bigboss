@@ -258,6 +258,16 @@
         .install { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px 22px; margin: 26px 0 0; padding: 0; list-style: none; counter-reset: install; color: var(--soft); font-size: .95rem; }
         .install li { display: flex; align-items: center; gap: 10px; counter-increment: install; }
         .install li::before { content: counter(install); display: grid; place-items: center; width: 24px; height: 24px; flex: none; border-radius: 50%; background: rgba(255, 255, 255, .12); color: var(--white); font-size: .78rem; font-weight: 800; }
+        .guide { max-width: 640px; margin: 34px auto 0; padding: 22px 22px 18px; border-radius: 22px; text-align: left; background: rgba(255, 255, 255, .05); border: 1px solid rgba(255, 255, 255, .12); }
+        .guide h3 { margin: 0 0 4px; font-size: 1.15rem; color: var(--white); display: flex; align-items: center; gap: 9px; }
+        .guide .lead { margin: 0 0 16px; color: var(--soft); font-size: .95rem; }
+        .guide ol { margin: 0; padding: 0; list-style: none; counter-reset: guide; display: grid; gap: 14px; }
+        .guide li { display: flex; gap: 13px; counter-increment: guide; }
+        .guide li::before { content: counter(guide); display: grid; place-items: center; width: 28px; height: 28px; flex: none; border-radius: 50%; background: var(--gold); color: #1a1a1a; font-size: .9rem; font-weight: 900; }
+        .guide li b { color: var(--white); }
+        .guide li span { color: var(--soft); font-size: .95rem; line-height: 1.5; }
+        .guide .reassure { margin: 16px 0 0; padding: 12px 14px; border-radius: 14px; background: rgba(34, 197, 94, .12); border: 1px solid rgba(34, 197, 94, .3); color: var(--soft); font-size: .88rem; line-height: 1.55; }
+        .guide .chip { display: inline-block; padding: 1px 7px; margin: 0 1px; border-radius: 6px; background: rgba(255, 255, 255, .14); color: var(--white); font-weight: 700; font-size: .85em; white-space: nowrap; }
         .qr { display: none; width: max-content; margin: 34px auto 0; padding: 16px; border-radius: 22px; background: var(--white); text-align: center; color: var(--text); box-shadow: 0 30px 60px -30px rgba(0, 0, 0, .6); }
         .qr img { width: 150px; height: 150px; margin: 0 auto; }
         .qr span { display: block; margin-top: 8px; font-size: .82rem; font-weight: 700; }
@@ -588,7 +598,7 @@
                     </details>
                     <details>
                         <summary>Comment installer l’application&nbsp;?</summary>
-                        <p>Depuis votre téléphone Android, touchez «&nbsp;Télécharger l’application&nbsp;», ouvrez le fichier big-boss.apk, autorisez l’installation si Android le demande, puis créez votre compte. Les mises à jour arrivent ensuite automatiquement.</p>
+                        <p>Depuis votre téléphone Android, touchez «&nbsp;Télécharger l’application&nbsp;», ouvrez le fichier big-boss.apk, autorisez l’installation si Android le demande, puis créez votre compte. Si un message «&nbsp;application non vérifiée&nbsp;» ou Play&nbsp;Protect apparaît, touchez «&nbsp;Plus de détails&nbsp;» puis «&nbsp;Installer quand même&nbsp;»&nbsp;: c’est normal pour une application hors Play&nbsp;Store, voir le guide d’installation plus haut. Les mises à jour arrivent ensuite automatiquement.</p>
                     </details>
                 </div>
             </div>
@@ -614,6 +624,24 @@
                         <li>Autorisez l’installation si Android le demande</li>
                         <li>Créez votre compte&nbsp;: c’est prêt</li>
                     </ol>
+
+                    @if ($downloadUrl)
+                    <div class="guide">
+                        <h3>
+                            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                            Installation bloquée&nbsp;? Suivez ce guide (2&nbsp;min)
+                        </h3>
+                        <p class="lead">Comme l’application n’est pas (encore) sur le Play&nbsp;Store, Android affiche un avertissement. C’est normal et sans danger&nbsp;: voici comment l’installer.</p>
+                        <ol>
+                            <li><span>Au téléchargement, si le navigateur affiche «&nbsp;fichier potentiellement dangereux&nbsp;», touchez <b>Télécharger quand même</b> (ou <b>Conserver</b>).</span></li>
+                            <li><span>Ouvrez le fichier <span class="chip">big-boss.apk</span>. Si Android dit que l’installation depuis cette source n’est pas autorisée, touchez <b>Paramètres</b> puis activez <b>Autoriser depuis cette source</b>, et revenez en arrière.</span></li>
+                            <li><span>Si <b>Play&nbsp;Protect</b> affiche «&nbsp;application non vérifiée&nbsp;», touchez <b>Plus de détails</b> puis <b>Installer quand même</b>.</span></li>
+                            <li><span><b>Pour éviter tout blocage</b> (facultatif, recommandé)&nbsp;: ouvrez le <b>Play&nbsp;Store</b> → touchez votre <b>photo de profil</b> → <b>Play&nbsp;Protect</b> → l’icône <b>⚙️</b> → désactivez <b>Analyser les applications</b>. Réactivez-le après l’installation.</span></li>
+                            <li><span>Lancez BIG&nbsp;BOSS et <b>créez votre compte</b>. Les mises à jour arrivent ensuite automatiquement.</span></li>
+                        </ol>
+                        <p class="reassure">🔒 BIG&nbsp;BOSS est sûre. Cet avertissement apparaît uniquement parce que l’application s’installe directement (hors Play&nbsp;Store), pas parce qu’elle est dangereuse.</p>
+                    </div>
+                    @endif
                     @if ($downloadUrl)
                         <div class="qr">
                             <img src="/images/site/qr-telecharger.png" alt="QR code pour télécharger l’application" width="150" height="150" loading="lazy">
