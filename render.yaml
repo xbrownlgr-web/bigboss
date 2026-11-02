@@ -21,6 +21,8 @@ services:
         sync: false
       - key: APP_TIMEZONE
         value: Africa/Porto-Novo
+      - key: APK_RELEASES_REPO
+        value: gobifinancement-ui/big-boss
       - key: APP_LOCALE
         value: fr
       - key: LOG_CHANNEL

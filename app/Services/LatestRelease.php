@@ -40,7 +40,7 @@ class LatestRelease
         $repository = config('services.github.releases_repo');
 
         return $repository && self::githubVersion()
-            ? "https://github.com/{$repository}/releases/latest/download/binho-flash.apk"
+            ? "https://github.com/{$repository}/releases/latest/download/big-boss.apk"
             : null;
     }
 

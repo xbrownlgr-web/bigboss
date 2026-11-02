@@ -586,7 +586,7 @@
                     </details>
                     <details>
                         <summary>Comment installer l’application&nbsp;?</summary>
-                        <p>Depuis votre téléphone Android, touchez «&nbsp;Télécharger l’application&nbsp;», ouvrez le fichier binho-flash.apk, autorisez l’installation si Android le demande, puis créez votre compte. Les mises à jour arrivent ensuite automatiquement.</p>
+                        <p>Depuis votre téléphone Android, touchez «&nbsp;Télécharger l’application&nbsp;», ouvrez le fichier big-boss.apk, autorisez l’installation si Android le demande, puis créez votre compte. Les mises à jour arrivent ensuite automatiquement.</p>
                     </details>
                 </div>
             </div>
@@ -608,7 +608,7 @@
                         @endif
                     </div>
                     <ol class="install">
-                        <li>Ouvrez le fichier binho-flash.apk</li>
+                        <li>Ouvrez le fichier big-boss.apk</li>
                         <li>Autorisez l’installation si Android le demande</li>
                         <li>Créez votre compte&nbsp;: c’est prêt</li>
                     </ol>
