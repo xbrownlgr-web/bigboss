@@ -15,7 +15,7 @@ class IsAdmin
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if (auth()->user()?->email !== 'admin@binhoflash.com') {
+        if (auth()->user()?->email !== config('app.admin_email')) {
             abort(403);
         }
 

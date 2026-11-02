@@ -499,7 +499,7 @@ class AdminController extends Controller
     {
         $user = User::findOrFail($userId);
 
-        if ($user->email === 'admin@binhoflash.com') {
+        if ($user->email === config('app.admin_email')) {
             return back()->with('success', 'Le compte admin principal ne peut pas être désactivé.');
         }
 
