@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
     <meta name="theme-color" content="#04140D">
     <meta name="robots" content="noindex, nofollow">
     <title>@yield('title', 'Administration') · BIG BOSS Admin</title>
@@ -422,6 +422,29 @@
         .modal-header, .modal-footer { border-color: var(--bf-border); }
         .dropdown-menu { border-color: var(--bf-border); border-radius: 12px; box-shadow: 0 12px 32px rgba(16, 24, 40, .12); font-size: .85rem; }
         .dropdown-item { display: flex; align-items: center; gap: 8px; padding: 7px 14px; }
+
+        /* ---------- Téléphone : jamais de zoom, jamais de débordement horizontal ---------- */
+        html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+        html, body { overflow-x: clip; }
+        .bf-content { overflow-wrap: break-word; }
+        .bf-content img, .bf-content video, .bf-content iframe { max-width: 100%; }
+
+        @media (max-width: 991.98px) {
+            /* Sous 16 px, le navigateur zoome tout seul quand on touche un champ. */
+            input, select, textarea, .form-control, .form-select { font-size: 16px !important; }
+        }
+
+        @media (max-width: 767.98px) {
+            /* Tableaux : une ligne = une carte compacte, plus de défilement de gauche à droite. */
+            .bf-content .table-responsive { overflow-x: visible; }
+            .bf-table thead { display: none; }
+            .bf-table, .bf-table tbody, .bf-table tfoot { display: block; width: 100%; }
+            .bf-table tr { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; padding: 10px 14px; border-bottom: 1px solid var(--bf-border); }
+            .bf-table tbody tr:last-child { border-bottom: 0; }
+            .bf-table > :not(caption) > * > * { display: block; min-width: 0; padding: 0 !important; border: 0 !important; background: transparent !important; }
+            .bf-table td:first-child, .bf-table td[colspan] { flex: 1 1 100%; }
+            .bf-table td.text-end { margin-left: auto; text-align: right; }
+        }
 
         /* ---------- Sections repliables (moins de scroll) ---------- */
         .bf-fold > summary { list-style: none; cursor: pointer; user-select: none; }
