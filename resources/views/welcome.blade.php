@@ -2,7 +2,7 @@
     $operators = $depositOperators ?: ['MTN MoMo', 'Moov Money', 'Celtiis'];
     $vipLevels = [
         'Silver' => ['accent' => '#C9D2E3', 'pitch' => 'Le coupon le plus sûr de chaque séance', 'items' => ['2 coupons par jour', 'Cote 2,10 ou plus', 'Matin et soir']],
-        'Gold' => ['accent' => '#FFD700', 'pitch' => 'Les matchs les plus étudiés du marché', 'items' => ['3 coupons par jour', 'Avant 13 h, vers 17 h, le soir', 'Sélections exclusives']],
+        'Gold' => ['accent' => '#22C55E', 'pitch' => 'Les matchs les plus étudiés du marché', 'items' => ['3 coupons par jour', 'Avant 13 h, vers 17 h, le soir', 'Sélections exclusives']],
         'Platinum' => ['accent' => '#B794F6', 'pitch' => 'Pour ceux qui jouent toute la journée', 'items' => ['4 coupons et plus par jour', 'Lives et matchs de minuit', 'Scores exacts parfois']],
     ];
     $socials = [
@@ -20,7 +20,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>BIG BOSS · Votre caisse 1xBet et Melbet, ouverte 24h/24</title>
     <meta name="description" content="Rechargez votre compte 1xBet ou Melbet et retirez vos gains par Mobile Money, 24h/24, depuis l’application BIG BOSS. Pronostics du jour, coupons VIP et assistant disponible jour et nuit.">
-    <meta name="theme-color" content="#0A1430">
+    <meta name="theme-color" content="#061A12">
     <link rel="icon" type="image/png" href="/images/favicon.png">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="BIG BOSS">
@@ -36,15 +36,15 @@
     <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --ink: #0A1430;
+            --ink: #061A12;
             --ink-2: #0F1D40;
-            --navy: #1A2E5A;
+            --navy: #0C2A1E;
             --navy-3: #24427F;
-            --gold: #FFD700;
-            --gold-deep: #F4B400;
+            --gold: #22C55E;
+            --gold-deep: #16A34A;
             --paper: #F4F6FB;
             --white: #FFFFFF;
-            --text: #0F1B3D;
+            --text: #0C2A1E;
             --muted: #5B6785;
             --soft: #C6CEE0;
             --line: #E2E7F1;
@@ -69,7 +69,7 @@
         /* ---------- Boutons ---------- */
         .btn { display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 54px; padding: 0 26px; border: 0; border-radius: 16px; font-family: var(--body); font-size: 1rem; font-weight: 800; text-decoration: none; cursor: pointer; transition: transform .2s ease, box-shadow .2s ease, background .2s ease; }
         .btn svg { width: 22px; height: 22px; flex: none; }
-        .btn-gold { background: linear-gradient(135deg, #FFE45C, var(--gold) 45%, var(--gold-deep)); color: var(--ink); box-shadow: 0 14px 34px -10px rgba(255, 196, 0, .6); }
+        .btn-gold { background: linear-gradient(135deg, #4ADE80, var(--gold) 45%, var(--gold-deep)); color: var(--ink); box-shadow: 0 14px 34px -10px rgba(255, 196, 0, .6); }
         .btn-gold:hover { transform: translateY(-2px); box-shadow: 0 20px 40px -12px rgba(255, 196, 0, .7); }
         .btn-ghost { background: rgba(255, 255, 255, .06); color: var(--white); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .18); }
         .btn-ghost:hover { background: rgba(255, 255, 255, .12); }
@@ -83,7 +83,7 @@
         .brand img { width: 38px; height: 38px; filter: drop-shadow(0 0 12px rgba(255, 196, 0, .45)); }
         .brand b { color: var(--gold); font-weight: 800; }
         .brand img.tile { border-radius: 10px; filter: none; }
-        footer .brand b { color: #D99E00; }
+        footer .brand b { color: #15803D; }
         .nav-links { display: none; gap: 30px; }
         .nav-links a { color: var(--soft); font-size: .95rem; font-weight: 600; text-decoration: none; transition: color .2s; }
         .nav-links a:hover { color: var(--white); }
@@ -97,12 +97,12 @@
             linear-gradient(180deg, var(--ink), var(--ink-2)); }
         .hero::after { content: ''; position: absolute; inset: 0; z-index: -1; opacity: .5; background-image: linear-gradient(rgba(255, 255, 255, .05) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, .05) 1px, transparent 1px); background-size: 56px 56px; -webkit-mask-image: radial-gradient(ellipse at 50% 30%, #000 20%, transparent 72%); mask-image: radial-gradient(ellipse at 50% 30%, #000 20%, transparent 72%); }
         .hero-center { display: flex; flex-direction: column; align-items: center; }
-        .eyebrow { display: inline-flex; align-items: center; gap: 10px; padding: 7px 14px 7px 8px; border: 1px solid rgba(255, 215, 0, .28); border-radius: 999px; background: rgba(255, 215, 0, .08); color: #FFE680; font-size: .85rem; font-weight: 700; }
+        .eyebrow { display: inline-flex; align-items: center; gap: 10px; padding: 7px 14px 7px 8px; border: 1px solid rgba(255, 215, 0, .28); border-radius: 999px; background: rgba(255, 215, 0, .08); color: #86EFAC; font-size: .85rem; font-weight: 700; }
         .eyebrow .pulse { position: relative; width: 22px; height: 22px; border-radius: 50%; background: rgba(34, 197, 94, .18); }
         .eyebrow .pulse::after { content: ''; position: absolute; inset: 7px; border-radius: 50%; background: #22C55E; box-shadow: 0 0 0 0 rgba(34, 197, 94, .7); animation: pulse 2s infinite; }
         @keyframes pulse { 70% { box-shadow: 0 0 0 9px rgba(34, 197, 94, 0); } 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); } }
         .hero h1 { max-width: 940px; margin-top: 24px; font-size: clamp(2.5rem, 6.6vw, 4.9rem); }
-        .hero h1 em { font-style: normal; background: linear-gradient(120deg, #FFE45C, var(--gold) 40%, var(--gold-deep)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+        .hero h1 em { font-style: normal; background: linear-gradient(120deg, #4ADE80, var(--gold) 40%, var(--gold-deep)); -webkit-background-clip: text; background-clip: text; color: transparent; }
         .hero .lead { max-width: 640px; margin-top: 22px; color: var(--soft); font-size: clamp(1.05rem, 2.2vw, 1.2rem); line-height: 1.65; }
         .hero-ctas { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-top: 34px; }
         .hero-meta { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 8px 14px; margin-top: 16px; color: #8C98B5; font-size: .88rem; }
@@ -114,9 +114,9 @@
 
         /* Vitrine : trois téléphones en éventail, celui du milieu devant */
         .showcase { position: relative; width: 100%; max-width: 940px; height: 560px; margin-top: 60px; overflow: hidden; -webkit-mask-image: linear-gradient(180deg, #000 78%, transparent); mask-image: linear-gradient(180deg, #000 78%, transparent); }
-        .phone { position: absolute; padding: 9px; border-radius: 42px; background: linear-gradient(160deg, #1B2A52, #050A18 40%); box-shadow: 0 40px 80px -20px rgba(0, 0, 0, .7), inset 0 0 0 1.5px rgba(255, 255, 255, .12); }
+        .phone { position: absolute; padding: 9px; border-radius: 42px; background: linear-gradient(160deg, #0C2A1E, #04120B 40%); box-shadow: 0 40px 80px -20px rgba(0, 0, 0, .7), inset 0 0 0 1.5px rgba(255, 255, 255, .12); }
         .phone img { width: 100%; border-radius: 34px; }
-        .phone::before { content: ''; position: absolute; top: 17px; left: 50%; width: 70px; height: 20px; margin-left: -35px; border-radius: 12px; background: #050A18; z-index: 2; }
+        .phone::before { content: ''; position: absolute; top: 17px; left: 50%; width: 70px; height: 20px; margin-left: -35px; border-radius: 12px; background: #04120B; z-index: 2; }
         .phone-center { top: 0; left: calc(50% - 150px); width: 300px; z-index: 3; }
         .phone-left, .phone-right { top: 64px; width: 262px; z-index: 2; opacity: .88; }
         .phone-left { left: calc(50% - 405px); transform: rotate(-7deg); }
@@ -152,7 +152,7 @@
         /* ---------- Sections ---------- */
         section.block { padding: 104px 0; overflow: hidden; }
         .kicker { display: inline-block; margin-bottom: 14px; color: #B45309; font-size: .8rem; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
-        .dark .kicker { color: #FFD24D; }
+        .dark .kicker { color: #34D399; }
         .heading { max-width: 760px; margin: 0 auto; text-align: center; }
         .heading h2 { font-size: clamp(2rem, 5vw, 3.1rem); }
         .heading p { margin-top: 16px; color: var(--muted); font-size: 1.1rem; }
@@ -173,7 +173,7 @@
         .service.featured { background: linear-gradient(150deg, var(--navy), var(--ink)); border-color: transparent; color: var(--white); }
         .service.featured p { color: var(--soft); }
         .service.featured .ico { background: var(--gold); color: var(--ink); }
-        .tag { position: absolute; top: 16px; right: 16px; padding: 4px 10px; border-radius: 999px; background: rgba(255, 215, 0, .16); color: #FFE680; font-size: .75rem; font-weight: 800; }
+        .tag { position: absolute; top: 16px; right: 16px; padding: 4px 10px; border-radius: 999px; background: rgba(255, 215, 0, .16); color: #86EFAC; font-size: .75rem; font-weight: 800; }
 
         /* Comment ça marche et assistant : téléphone au milieu, deux étapes de chaque côté */
         .tabs { margin-top: 44px; }
@@ -204,7 +204,7 @@
         .shot img { border-radius: 22px; }
         .shot figcaption { position: absolute; left: 50%; bottom: -18px; transform: translateX(-50%); padding: 10px 16px; border-radius: 14px; background: var(--white); color: var(--text); font-size: .85rem; font-weight: 700; white-space: nowrap; box-shadow: 0 18px 40px -18px rgba(0, 0, 0, .5); }
         .shot figcaption b { color: #B45309; }
-        .solo-phone { position: relative; width: 100%; max-width: 300px; margin: 0 auto; padding: 10px; border-radius: 44px; background: linear-gradient(160deg, #1B2A52, #050A18 40%); box-shadow: 0 50px 90px -30px rgba(0, 0, 0, .6), inset 0 0 0 1.5px rgba(255, 255, 255, .12); }
+        .solo-phone { position: relative; width: 100%; max-width: 300px; margin: 0 auto; padding: 10px; border-radius: 44px; background: linear-gradient(160deg, #0C2A1E, #04120B 40%); box-shadow: 0 50px 90px -30px rgba(0, 0, 0, .6), inset 0 0 0 1.5px rgba(255, 255, 255, .12); }
         .solo-phone img { border-radius: 35px; }
         .glow { position: absolute; inset: 10% -30%; z-index: -1; border-radius: 50%; background: radial-gradient(closest-side, rgba(255, 196, 0, .28), transparent); filter: blur(10px); }
         .feature { padding: 26px 22px; border-radius: 20px; background: rgba(255, 255, 255, .05); text-align: center; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .09); }
@@ -326,7 +326,7 @@
                 <div class="operators" aria-label="Mobile Money accepté">
                     <small>Recharge par</small>
                     @foreach ($operators as $operator)
-                        <span class="chip"><i style="background: {{ ['MTN MoMo' => '#FFCB05', 'Moov Money' => '#0A6BD6', 'Celtiis' => '#E30613'][$operator] ?? '#FFD700' }}"></i>{{ $operator }}</span>
+                        <span class="chip"><i style="background: {{ ['MTN MoMo' => '#22C55E', 'Moov Money' => '#0A6BD6', 'Celtiis' => '#E30613'][$operator] ?? '#22C55E' }}"></i>{{ $operator }}</span>
                     @endforeach
                 </div>
 
@@ -339,7 +339,7 @@
                         <div><strong>Recharge validée</strong><span>+ 5 000 FCFA sur 1xBet</span></div>
                     </div>
                     <div class="float float-2">
-                        <span class="ico" style="background:#FFF7CC;color:#B45309"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>
+                        <span class="ico" style="background:#DCFCE7;color:#B45309"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>
                         <div><strong>George, votre assistant</strong><span>Je vous guide pas à pas</span></div>
                     </div>
                 </div>
