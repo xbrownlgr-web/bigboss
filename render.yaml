@@ -1,0 +1,74 @@
+# Blueprint Render : https://render.com/docs/blueprint-spec
+# Les valeurs "sync: false" sont des secrets saisis dans le tableau de bord Render, jamais dans ce fichier.
+services:
+  - type: web
+    name: big-boss
+    runtime: docker
+    plan: free
+    region: frankfurt
+    healthCheckPath: /up
+    autoDeploy: true
+    envVars:
+      - key: APP_NAME
+        value: BIG BOSS
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: "false"
+      - key: APP_KEY
+        generateValue: true
+      - key: APP_URL
+        sync: false
+      - key: APP_TIMEZONE
+        value: Africa/Porto-Novo
+      - key: APP_LOCALE
+        value: fr
+      - key: LOG_CHANNEL
+        value: stderr
+      - key: LOG_LEVEL
+        value: warning
+
+      # Base MySQL gratuite Aiven (connexion chiffrée avec leur certificat CA)
+      - key: DB_CONNECTION
+        value: mysql
+      - key: DB_HOST
+        sync: false
+      - key: DB_PORT
+        sync: false
+      - key: DB_DATABASE
+        value: defaultdb
+      - key: DB_USERNAME
+        value: avnadmin
+      - key: DB_PASSWORD
+        sync: false
+      - key: MYSQL_ATTR_SSL_CA
+        value: /etc/secrets/aiven-ca.pem
+
+      - key: SESSION_DRIVER
+        value: database
+      - key: SESSION_LIFETIME
+        value: "480"
+      - key: SESSION_SECURE_COOKIE
+        value: "true"
+      - key: CACHE_STORE
+        value: database
+      - key: QUEUE_CONNECTION
+        value: sync
+
+      # E-mails via l'API Brevo (le SMTP est bloqué sur Render gratuit)
+      - key: MAIL_MAILER
+        value: brevo
+      - key: BREVO_KEY
+        sync: false
+      - key: MAIL_FROM_ADDRESS
+        sync: false
+      - key: MAIL_FROM_NAME
+        value: BIG BOSS
+
+      # Compte admin créé au premier démarrage s'il n'existe pas
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+
+      # Alertes WhatsApp (CallMeBot) : à renseigner dans Admin > Paramètres.
