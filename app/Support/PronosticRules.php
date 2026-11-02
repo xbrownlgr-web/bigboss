@@ -20,27 +20,27 @@ class PronosticRules
     // Cote d'une sélection : jamais sous 1,15.
     public const MIN_SELECTION_ODDS = 1.15;
 
-    // Cote totale minimale volontairement basse : un pari à 75/80 % est un favori à petite cote
-    // (1,15–1,30), et quelques-uns suffisent rarement à atteindre 2,00. Garder un plancher à 2,00
-    // revenait à ne (presque) jamais publier. On publie donc des combinés fiables mais à cote
-    // modérée (le combiné affiche toujours sa vraie probabilité). La fiabilité par pari (75/80 %)
-    // reste intacte ; c'est le plancher de cote, pas le seuil de probabilité, qui a été abaissé.
+    // Échelle BIG BOSS : chaque niveau ajoute un événement et monte en cote.
+    // Niveau 1 = 1 événement, cote ~1,20 (favori très net), publié matin ET soir.
+    // Niveau 2 = 2 événements, … jusqu'au dernier (5 événements). La fiabilité par
+    // sélection (seuil de probabilité) reste appliquée ; seules la taille du combiné
+    // et la cote changent d'un niveau à l'autre.
     private const LIMITS = [
         // max sélections, cote totale minimale, cote totale maximale
-        'Starter' => [3, 1.50, 3.00],
-        'Bronze' => [3, 1.60, 3.50],
-        'Silver' => [3, 1.60, 3.50],
-        'Gold' => [3, 1.70, 4.50],
-        // Platinum peut aller jusqu'à ~5 « sans sacrifier la fiabilité ».
-        'Platinum' => [4, 1.85, 5.50],
+        'Starter' => [1, 1.15, 1.40],   // Niveau 1 : 1 événement, ~1,20
+        'Bronze' => [2, 1.45, 2.10],    // Niveau 2 : 2 événements
+        'Silver' => [3, 1.90, 3.20],    // Niveau 3 : 3 événements
+        'Gold' => [4, 2.60, 4.80],      // Niveau 4 : 4 événements
+        'Platinum' => [5, 3.40, 7.00],  // Niveau 5 : 5 événements
     ];
 
     private const DEFAULT_SCHEDULE = [
-        'Starter' => '09:00',
-        'Bronze' => '16:30',
-        'Silver' => '10:00, 15:00, 20:00',
-        'Gold' => '09:00, 13:00, 18:00, 23:30',
-        'Platinum' => '08:00, 12:00, 16:00, 21:00',
+        // Niveau 1 : matin ET soir. Les autres : une fois par jour.
+        'Starter' => '09:00, 19:00',
+        'Bronze' => '11:00',
+        'Silver' => '13:00',
+        'Gold' => '16:00',
+        'Platinum' => '20:00',
     ];
 
     public static function isFree(string $level): bool

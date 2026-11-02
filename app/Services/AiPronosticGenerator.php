@@ -30,7 +30,7 @@ class AiPronosticGenerator
     public const DEFAULT_MODEL = 'openai/gpt-4o-mini';
 
     // Plafond absolu de sélections dans un coupon (Platinum) ; chaque groupe a le sien.
-    public const MAX_SELECTIONS = 4;
+    public const MAX_SELECTIONS = 5;
 
     // Tous les groupes sont générés automatiquement (heures dans Admin > Paramètres).
     public const AI_LEVELS = PronosticRules::LEVELS;
