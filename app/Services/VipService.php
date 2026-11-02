@@ -174,7 +174,7 @@ class VipService
         $subscribers = $this->push->sendToUsers(
             User::query()->whereIn('id', $subscriberIds),
             "💎 Nouveau coupon VIP {$level}",
-            "Cote {$odd} : votre code 1xBet est disponible dans l’application Binho Flash.",
+            "Cote {$odd} : votre code 1xBet est disponible dans l’application BIG BOSS.",
             $data,
         );
 
@@ -224,7 +224,7 @@ class VipService
                 $this->push->sendToUser(
                     $subscription->user,
                     "Votre VIP {$subscription->level} est terminé",
-                    "Renouvelez-le depuis l’application Binho Flash pour recevoir les prochains coupons.",
+                    "Renouvelez-le depuis l’application BIG BOSS pour recevoir les prochains coupons.",
                     ['type' => 'vip', 'event' => 'ended', 'niveau' => $subscription->level],
                 );
                 $subscription->update(['reminded_ended_at' => now()]);

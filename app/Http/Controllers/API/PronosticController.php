@@ -234,7 +234,7 @@ class PronosticController extends Controller
             'prediction' => $data['prediction'] ?? 'Combiné ' . count($data['evenements']) . ' événements',
             'odds' => $data['odds'] ?? round((float) $coteTotale, 2),
             'confidence' => $data['confidence'] ?? (int) $probabilite,
-            'analysis' => $data['analysis'] ?? 'Combiné généré automatiquement pour Binho Flash.',
+            'analysis' => $data['analysis'] ?? 'Combiné généré automatiquement pour BIG BOSS.',
             'is_vip' => $data['is_vip'] ?? $niveau !== 'Starter',
         ];
     }
@@ -269,7 +269,7 @@ class PronosticController extends Controller
             $this->pushService->sendToUsers(
                 User::query()->whereIn('id', $subscriberIds),
                 "💎 Coupon VIP {$level} · cote {$odd}",
-                'Vos matchs sont disponibles dans l’application Binho Flash.',
+                'Vos matchs sont disponibles dans l’application BIG BOSS.',
                 $data,
             );
             $this->pushService->sendToUsers(
@@ -284,7 +284,7 @@ class PronosticController extends Controller
 
         $this->pushService->sendToActiveUsers(
             '🔥 Nouveau pronostic disponible',
-            "⚽ {$level} - cote {$odd} disponible maintenant sur Binho Flash.",
+            "⚽ {$level} - cote {$odd} disponible maintenant sur BIG BOSS.",
             $data,
         );
     }

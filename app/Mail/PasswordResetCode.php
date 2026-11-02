@@ -22,7 +22,7 @@ class PasswordResetCode extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Code de reinitialisation Binho Flash',
+            subject: 'Code de reinitialisation BIG BOSS',
         );
     }
 

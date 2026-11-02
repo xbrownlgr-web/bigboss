@@ -32,7 +32,7 @@ class AuthController extends Controller
             // d'anciennes versions de l'application (sans la case) sont encore utilisées.
             'adult_confirmed' => ['sometimes', 'accepted'],
         ], [
-            'adult_confirmed.accepted' => 'Vous devez avoir 18 ans ou plus pour utiliser Binho Flash.',
+            'adult_confirmed.accepted' => 'Vous devez avoir 18 ans ou plus pour utiliser BIG BOSS.',
         ]);
 
         $user = User::create([

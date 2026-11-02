@@ -89,7 +89,7 @@ class AppSetting extends Model
             // Marque : nom affiché, logo et palette de couleurs, choisis dans Admin > Marque & couleurs.
             // L'application mobile les applique à chaud (nom, thème) ; défaut si rien n'est réglé.
             'branding' => [
-                'app_name' => trim((string) self::value('brand_app_name')) ?: 'Binho Flash',
+                'app_name' => trim((string) self::value('brand_app_name')) ?: 'BIG BOSS',
                 'logo_url' => trim((string) self::value('brand_logo_url')) ?: null,
                 'palette' => \App\Support\BrandPalettes::resolve(self::value('brand_palette')),
             ],
@@ -126,7 +126,7 @@ class AppSetting extends Model
     public static function communityLinks(): array
     {
         return [
-            'telegram' => self::value('telegram_url', 'https://t.me/Binho_pronostics17'),
+            'telegram' => self::value('telegram_url', ''),
             'whatsapp' => self::value('whatsapp_channel_url', 'https://whatsapp.com/channel/0029VbCycEHISTkBkokScd0K'),
             'facebook' => self::value('facebook_url', 'https://www.facebook.com/binhoflash'),
             'tiktok' => self::value('tiktok_url', 'https://www.tiktok.com/@binhoflash'),

@@ -273,7 +273,7 @@ class AdminController extends Controller
 
     public function testWhatsApp(WhatsAppNotifier $whatsApp): RedirectResponse
     {
-        $error = $whatsApp->send('✅ Binho Flash : les alertes WhatsApp fonctionnent. Vous serez prévenu de chaque recharge, retrait et message.', ['test' => true]);
+        $error = $whatsApp->send('✅ BIG BOSS : les alertes WhatsApp fonctionnent. Vous serez prévenu de chaque recharge, retrait et message.', ['test' => true]);
 
         return $error === null
             ? back()->with('success', 'Message WhatsApp envoyé à ' . WhatsAppNotifier::normalizePhone(AppSetting::value('callmebot_phone')) . '. Il arrive en quelques secondes.')
@@ -524,7 +524,7 @@ class AdminController extends Controller
 
         $error = $this->pushService->sendToUser(
             $user,
-            '🔔 Test Binho Flash',
+            '🔔 Test BIG BOSS',
             'Les notifications push fonctionnent bien sur votre téléphone.',
             [
                 'type' => 'test',
@@ -663,7 +663,7 @@ class AdminController extends Controller
             'prediction' => 'Combiné ' . $eventCount . ' événement' . ($eventCount > 1 ? 's' : ''),
             'odds' => round((float) $validated['cote_totale'], 2),
             'confidence' => (int) $validated['probabilite'],
-            'analysis' => ($validated['analysis'] ?? null) ?: 'Pronostic ajouté manuellement depuis le panel d’administration Binho Flash.',
+            'analysis' => ($validated['analysis'] ?? null) ?: 'Pronostic ajouté manuellement depuis le panel d’administration BIG BOSS.',
             'is_vip' => (bool) ($validated['is_vip'] ?? in_array($niveau, AppSetting::VIP_LEVELS, true)),
             'published_at' => now(),
         ]);
@@ -984,7 +984,7 @@ class AdminController extends Controller
 
         return $this->pushService->sendToActiveUsers(
             '🔥 Nouveau pronostic disponible',
-            "⚽ {$level} - cote {$odd} disponible maintenant sur Binho Flash.",
+            "⚽ {$level} - cote {$odd} disponible maintenant sur BIG BOSS.",
             [
                 'type' => 'pronostic',
                 'event' => 'published',

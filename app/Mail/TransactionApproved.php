@@ -23,7 +23,7 @@ class TransactionApproved extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Transaction approuvée - Binho Flash',
+            subject: 'Transaction approuvée - BIG BOSS',
         );
     }
 

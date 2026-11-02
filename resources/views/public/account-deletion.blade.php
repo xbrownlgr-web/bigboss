@@ -1,7 +1,7 @@
 @extends('public.layout')
 
 @section('title', 'Supprimer mon compte')
-@section('subtitle', 'Binho Flash · suppression définitive de votre compte et de vos données')
+@section('subtitle', 'BIG BOSS · suppression définitive de votre compte et de vos données')
 
 @section('content')
     @if (session('deleted'))
@@ -12,7 +12,7 @@
     @endif
 
     <h2>Depuis l’application</h2>
-    <p>Ouvrez Binho Flash › <strong>Profil</strong> › <strong>Supprimer mon compte</strong>, puis confirmez avec votre mot de passe.</p>
+    <p>Ouvrez BIG BOSS › <strong>Profil</strong> › <strong>Supprimer mon compte</strong>, puis confirmez avec votre mot de passe.</p>
 
     <h2>Depuis cette page</h2>
     <p class="muted">Indiquez l’adresse e-mail et le mot de passe de votre compte. La suppression est immédiate et définitive.</p>
@@ -22,7 +22,7 @@
         <input id="email" type="email" name="email" value="{{ old('email') }}" required autocomplete="email">
         <label for="password">Mot de passe</label>
         <input id="password" type="password" name="password" required autocomplete="current-password">
-        <button type="submit" onclick="return confirm('Supprimer définitivement votre compte Binho Flash ?')">Supprimer définitivement mon compte</button>
+        <button type="submit" onclick="return confirm('Supprimer définitivement votre compte BIG BOSS ?')">Supprimer définitivement mon compte</button>
     </form>
 
     <h2>Ce qui est supprimé</h2>

@@ -123,11 +123,11 @@ class DepositNumbersTest extends TestCase
     public function test_the_withdrawal_point_is_sent_to_the_app(): void
     {
         AppSetting::setValue('retrait_ville', 'Cotonou');
-        AppSetting::setValue('retrait_point', 'Binho Flash Akpakpa');
+        AppSetting::setValue('retrait_point', 'BIG BOSS Akpakpa');
 
         $this->getJson('/api/v1/settings/public')
             ->assertJsonPath('retrait.ville', 'Cotonou')
-            ->assertJsonPath('retrait.point', 'Binho Flash Akpakpa');
+            ->assertJsonPath('retrait.point', 'BIG BOSS Akpakpa');
     }
 
     public function test_the_binho_withdrawal_address_is_set_by_default(): void

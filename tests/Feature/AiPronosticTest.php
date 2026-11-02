@@ -271,7 +271,7 @@ class AiPronosticTest extends TestCase
         }
 
         $this->assertGreaterThanOrEqual(2.0, $drafts[0]['cote_totale']);
-        $this->assertStringStartsWith('BINHO FLASH — BRONZE', $drafts[0]['analysis']);
+        $this->assertStringStartsWith('BIG BOSS — BRONZE', $drafts[0]['analysis']);
         $this->assertStringContainsString('Trois double chances', $drafts[0]['analysis']);
         $this->assertStringContainsString(AiPronosticGenerator::DISCLAIMER, $drafts[0]['analysis']);
 
@@ -404,7 +404,7 @@ class AiPronosticTest extends TestCase
             $this->assertNotEmpty($event['kickoff_at']);
         }
 
-        $this->assertStringStartsWith('BINHO FLASH — BRONZE', $pronostic->analysis);
+        $this->assertStringStartsWith('BIG BOSS — BRONZE', $pronostic->analysis);
         $this->assertStringContainsString('coupon de 16:30', $pronostic->analysis);
         $this->assertStringContainsString(AiPronosticGenerator::DISCLAIMER, $pronostic->analysis);
 
@@ -548,7 +548,7 @@ class AiPronosticTest extends TestCase
             $this->assertLessThanOrEqual(1, $events->whereIn('selection_key', ['home', 'away'])->count(), $level);
             // Victoire sèche : seulement le favori très net (C9 : 85 %, marché 83 %).
             $this->assertNotContains('Équipe 7 vs Adversaire 7', $events->pluck('match')->all(), $level);
-            $this->assertStringStartsWith('BINHO FLASH — ' . ($rules['free'] ? '' : 'VIP ') . strtoupper($level), $draft['analysis']);
+            $this->assertStringStartsWith('BIG BOSS — ' . ($rules['free'] ? '' : 'VIP ') . strtoupper($level), $draft['analysis']);
 
             $rules['free']
                 ? array_push($freeMatches, ...$events->pluck('match'))
@@ -697,10 +697,10 @@ class AiPronosticTest extends TestCase
     {
         $instructions = AppSetting::value('ai_pronostic_instructions');
 
-        $this->assertStringStartsWith('BINHO FLASH — INSTRUCTIONS PRINCIPALES', $instructions);
+        $this->assertStringStartsWith('BIG BOSS — INSTRUCTIONS PRINCIPALES', $instructions);
         $this->assertStringContainsString('75 % par sélection pour Starter/Bronze et 80 % pour les VIP', $instructions);
         $this->assertStringContainsString('corners, cartons', $instructions);
-        $this->assertStringContainsString('BINHO FLASH — [NOM DU GROUPE]', $instructions);
+        $this->assertStringContainsString('BIG BOSS — [NOM DU GROUPE]', $instructions);
         $this->assertStringContainsString('ne publie rien', $instructions);
         // Les prix restent ceux de Admin > VIP, jamais dans les consignes de l'IA.
         $this->assertStringNotContainsString('FCFA', $instructions);

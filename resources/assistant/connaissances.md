@@ -1,18 +1,18 @@
-# Binho Flash : tout ce que George (l'assistant) doit savoir
+# BIG BOSS : tout ce que George (l'assistant) doit savoir
 
 ## Le service
-Binho Flash est une application Android qui sert de guichet (agent de caisse) 1xBet et Melbet par Mobile Money,
+BIG BOSS est une application Android qui sert de guichet (agent de caisse) 1xBet et Melbet par Mobile Money,
 disponible 24h/24 :
-- **Recharger** un compte 1xBet ou Melbet : le client envoie l'argent par Mobile Money à Binho Flash, Binho Flash
+- **Recharger** un compte 1xBet ou Melbet : le client envoie l'argent par Mobile Money à BIG BOSS, BIG BOSS
   crédite son compte joueur.
-- **Retirer ses gains** : le client fait un retrait « Espèces » sur 1xBet / Melbet vers le guichet Binho Flash,
-  Binho Flash lui envoie l'argent sur son numéro Mobile Money.
-- **Pronostics** : combinés du jour analysés par l'IA Binho (gratuits) et coupons VIP payants (Silver, Gold, Platinum).
+- **Retirer ses gains** : le client fait un retrait « Espèces » sur 1xBet / Melbet vers le guichet BIG BOSS,
+  BIG BOSS lui envoie l'argent sur son numéro Mobile Money.
+- **Pronostics** : combinés du jour analysés par l'IA BIG BOSS (gratuits) et coupons VIP payants (Silver, Gold, Platinum).
 - **Support** : George, l'assistant 24h/24, et un conseiller humain dans l'onglet Support.
 
 Pays : Bénin, Côte d'Ivoire, Sénégal, Burkina Faso, Mali, Niger, Togo, Gabon, RD Congo et Cameroun. Montants en FCFA.
 Réservé aux personnes de 18 ans et plus.
-L'application se télécharge sur le site de Binho Flash (fichier APK) ; une version Play Store existe aussi.
+L'application se télécharge sur le site de BIG BOSS (fichier APK) ; une version Play Store existe aussi.
 
 ## Les écrans de l'application
 Barre d'onglets en bas : **Accueil**, **Historique**, **Pronostics**, **Support**, **Profil**.
@@ -46,9 +46,9 @@ Barre d'onglets en bas : **Accueil**, **Historique**, **Pronostics**, **Support*
    bien celui indiqué dans l'app** (encadré vert). S'il est différent : ne pas envoyer. Valider avec le code secret.
 7. Garder le SMS de confirmation de l'opérateur : il contient l'**ID de la transaction**
    (selon l'opérateur : « ID », « Réf. », « Transaction ID » : c'est la suite de chiffres ou de lettres qui suit).
-8. Revenir dans Binho Flash : la fenêtre « Saisissez l'ID de la transaction » s'ouvre toute seule (sinon toucher
+8. Revenir dans BIG BOSS : la fenêtre « Saisissez l'ID de la transaction » s'ouvre toute seule (sinon toucher
    **J'ai fait le dépôt**). Recopier l'ID du SMS, puis toucher **Confirmer ma recharge**.
-9. Message « Paiement envoyé » : la demande apparaît dans l'Historique en « En attente ». Binho Flash vérifie le
+9. Message « Paiement envoyé » : la demande apparaît dans l'Historique en « En attente ». BIG BOSS vérifie le
    paiement puis crédite le compte ; une notification arrive quand c'est « Complété ».
 
 Erreurs fréquentes : mauvais ID joueur (vérifier dans le profil 1xBet/Melbet), montant envoyé différent du montant
@@ -57,26 +57,26 @@ saisi, ID de transaction mal recopié, transfert vers un numéro dont le nom ne 
 ## Retirer ses gains (pas à pas)
 1. Sur l'Accueil, toucher la tuile **Retirer**.
 2. Lire les instructions « Lisez avant de retirer » (obligatoire, quelques secondes la première fois), puis
-   toucher **J'ai lu, je continue**. Elles donnent l'**adresse de retrait** (ville et rue du guichet Binho Flash).
+   toucher **J'ai lu, je continue**. Elles donnent l'**adresse de retrait** (ville et rue du guichet BIG BOSS).
 3. Dans l'application ou le site **1xBet / Melbet** : ouvrir **Retrait**, choisir **Espèces**, puis dans
-   l'adresse de retrait remplir **exactement** la ville et la rue indiquées par Binho Flash. Saisir le montant,
+   l'adresse de retrait remplir **exactement** la ville et la rue indiquées par BIG BOSS. Saisir le montant,
    confirmer, et **copier le code de retrait** affiché par la plateforme.
-   Une autre ville ou une autre rue envoie le retrait à un autre guichet : Binho Flash ne pourra pas le traiter.
-4. Revenir dans Binho Flash (écran Retirer) : choisir la plateforme, l'ID du compte, le **montant retiré**
+   Une autre ville ou une autre rue envoie le retrait à un autre guichet : BIG BOSS ne pourra pas le traiter.
+4. Revenir dans BIG BOSS (écran Retirer) : choisir la plateforme, l'ID du compte, le **montant retiré**
    (minimum 500 FCFA, le même que sur 1xBet/Melbet) et coller le **code de retrait**.
 5. « Où recevoir l'argent ? » : choisir l'opérateur Mobile Money, puis le numéro (celui du profil est proposé,
    « Utiliser un autre numéro » pour en changer ; l'indicatif du pays est déjà mis). Toucher **Continuer**.
 6. Fenêtre « Vérifiez avant d'envoyer » : contrôler le numéro qui recevra l'argent (un numéro faux = argent
    envoyé à quelqu'un d'autre), puis **Confirmer le retrait** (ou **Modifier**).
 7. Message « Retrait envoyé » : la demande est dans l'Historique. L'argent arrive sur le Mobile Money dès que
-   Binho Flash a validé le code ; une notification prévient.
+   BIG BOSS a validé le code ; une notification prévient.
 Le bouton **Revoir** (en haut de l'écran Retirer) réaffiche l'adresse de retrait.
 
 ## Suivre une demande
 Onglet **Historique** (filtres Tout, Recharges, Retraits, En cours). Dans la liste, chaque demande affiche
 **En cours**, **Validée** ou **Refusée**. Toucher la demande ouvre le détail, avec ces statuts :
 - **En attente** : la demande est reçue, elle attend la vérification.
-- **En traitement** : un agent Binho Flash s'en occupe.
+- **En traitement** : un agent BIG BOSS s'en occupe.
 - **Complété** : compte crédité (recharge) ou argent envoyé (retrait).
 - **Refusé** : le **motif de refus** est écrit dans le détail. Pour une recharge refusée alors que l'argent a été
   envoyé, écrire au conseiller avec l'ID de transaction du SMS.
@@ -88,7 +88,7 @@ Onglet **Historique** (filtres Tout, Recharges, Retraits, En cours). Dans la lis
   vers 16 h 30, 1 à 3 sélections). Niveaux VIP payants (prix affichés dans l'app) : **Silver** (jusqu'à 3 coupons
   par jour, vers 10 h, 15 h et 20 h), **Gold** (jusqu'à 4 : matin, après-midi, début de soirée, vers minuit) et
   **Platinum** (jusqu'à 4, analyses les plus poussées). Heures du Bénin, indicatives.
-- Chaque coupon est préparé par l'IA Binho à partir des vrais matchs de tous les championnats et des cotes de
+- Chaque coupon est préparé par l'IA BIG BOSS à partir des vrais matchs de tous les championnats et des cotes de
   plusieurs bookmakers : football d'abord, basket ou handball quand le football ne donne rien de fiable. Chaque
   sélection doit atteindre une probabilité estimée d'au moins 75 % (gratuits) ou 80 % (VIP) et le coupon une cote
   d'au moins 2,00. **Si rien n'est assez fiable, aucun coupon n'est publié à ce créneau** : c'est voulu, la

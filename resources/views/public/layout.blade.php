@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>@yield('title') · Binho Flash</title>
+    <title>@yield('title') · BIG BOSS</title>
     <link rel="icon" type="image/png" href="/images/favicon.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -37,7 +37,7 @@
 <body>
     <header>
         <div class="inner">
-            <a href="/"><img src="/images/logo.png" alt="">Binho Flash</a>
+            <a href="/"><img src="/images/logo.png" alt="">BIG BOSS</a>
             <h1>@yield('title')</h1>
             <p>@yield('subtitle')</p>
         </div>

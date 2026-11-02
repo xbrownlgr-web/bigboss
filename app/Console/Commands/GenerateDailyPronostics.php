@@ -291,7 +291,7 @@ class GenerateDailyPronostics extends Command
             'prediction' => 'Combiné ' . $eventCount . ' événement' . ($eventCount > 1 ? 's' : ''),
             'odds' => $cote,
             'confidence' => $probabilite,
-            'analysis' => $draft['analysis'] ?? 'Combiné généré automatiquement pour Binho Flash.',
+            'analysis' => $draft['analysis'] ?? 'Combiné généré automatiquement pour BIG BOSS.',
             'is_vip' => $isVip,
             'published_at' => now(),
         ]);
@@ -339,7 +339,7 @@ class GenerateDailyPronostics extends Command
         if (! $this->option('dry-run')) {
             // Une alerte par problème et par jour, pas une à chaque créneau.
             if (Cache::add('pronostics:alert:' . now()->toDateString() . ':' . md5($level . $message), true, now()->addDay())) {
-                $this->whatsapp->send("⚠️ Binho Flash — génération {$level} : {$message}");
+                $this->whatsapp->send("⚠️ BIG BOSS — génération {$level} : {$message}");
             }
 
             $this->record($level, $slot, PronosticRun::STATUS_ERROR, $message);

@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex, nofollow">
-    <title>Connexion · Binho Flash Admin</title>
+    <title>Connexion · BIG BOSS Admin</title>
     <link rel="icon" type="image/png" href="/images/favicon.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -45,9 +45,9 @@
 </head>
 <body class="d-flex align-items-center justify-content-center p-3">
     <main class="login-card">
-        <img class="login-logo" src="/images/logo.png" alt="Binho Flash">
+        <img class="login-logo" src="/images/logo.png" alt="BIG BOSS">
         <h1 class="h4 fw-bold text-center mb-1" style="color:#1A2E5A;">Console d’administration</h1>
-        <p class="text-center text-secondary mb-4" style="font-size:.9rem;">Connectez-vous pour gérer Binho Flash</p>
+        <p class="text-center text-secondary mb-4" style="font-size:.9rem;">Connectez-vous pour gérer BIG BOSS</p>
 
         @if ($errors->any())
             <div class="alert alert-danger d-flex gap-2 align-items-start py-2" style="border-radius:12px;font-size:.88rem;">

@@ -23,7 +23,7 @@ class TransactionRejected extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Transaction refusée - Binho Flash',
+            subject: 'Transaction refusée - BIG BOSS',
         );
     }
 

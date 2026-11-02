@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex, nofollow">
-    <title>@yield('title', 'Administration') · Binho Flash Admin</title>
+    <title>@yield('title', 'Administration') · BIG BOSS Admin</title>
     <link rel="icon" type="image/png" href="/images/favicon.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -451,7 +451,7 @@
                 <div class="bf-brand">
                     <img src="/images/logo.png" alt="">
                     <div class="flex-grow-1">
-                        <strong>Binho Flash</strong>
+                        <strong>BIG BOSS</strong>
                         <span>Console d’administration</span>
                     </div>
                     <button type="button" class="btn-close btn-close-white d-lg-none" data-bs-dismiss="offcanvas" data-bs-target="#bfSidebar" aria-label="Fermer"></button>

@@ -15,7 +15,7 @@ class BrandSettingsTest extends TestCase
     {
         $response = $this->getJson('/api/v1/settings/public')->assertSuccessful();
 
-        $response->assertJsonPath('branding.app_name', 'Binho Flash');
+        $response->assertJsonPath('branding.app_name', 'BIG BOSS');
         $response->assertJsonPath('branding.palette.key', 'navy_gold');
         $response->assertJsonPath('branding.palette.primary', '#1A2E5A');
         $response->assertJsonPath('branding.palette.accent', '#FFD700');

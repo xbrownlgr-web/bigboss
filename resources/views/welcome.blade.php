@@ -18,13 +18,13 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Binho Flash · Votre caisse 1xBet et Melbet, ouverte 24h/24</title>
-    <meta name="description" content="Rechargez votre compte 1xBet ou Melbet et retirez vos gains par Mobile Money, 24h/24, depuis l’application Binho Flash. Pronostics du jour, coupons VIP et assistant disponible jour et nuit.">
+    <title>BIG BOSS · Votre caisse 1xBet et Melbet, ouverte 24h/24</title>
+    <meta name="description" content="Rechargez votre compte 1xBet ou Melbet et retirez vos gains par Mobile Money, 24h/24, depuis l’application BIG BOSS. Pronostics du jour, coupons VIP et assistant disponible jour et nuit.">
     <meta name="theme-color" content="#0A1430">
     <link rel="icon" type="image/png" href="/images/favicon.png">
     <meta property="og:type" content="website">
-    <meta property="og:site_name" content="Binho Flash">
-    <meta property="og:title" content="Binho Flash · Votre caisse 1xBet et Melbet, ouverte 24h/24">
+    <meta property="og:site_name" content="BIG BOSS">
+    <meta property="og:title" content="BIG BOSS · Votre caisse 1xBet et Melbet, ouverte 24h/24">
     <meta property="og:description" content="Recharges et retraits par Mobile Money, pronostics du jour, coupons VIP et assistant 24h/24.">
     <meta property="og:image" content="{{ url('/images/site/partage.jpg') }}">
     <meta property="og:url" content="https://binhoflash.com/">
@@ -284,9 +284,9 @@
 <body>
     <header class="nav" id="nav">
         <div class="wrap">
-            <a class="brand" href="#top" aria-label="Binho Flash, accueil">
+            <a class="brand" href="#top" aria-label="BIG BOSS, accueil">
                 <img src="/images/site/logo-mark.png" alt="" width="38" height="38">
-                <span>Binho <b>Flash</b></span>
+                <span>BIG <b>BOSS</b></span>
             </a>
             <nav class="nav-links" aria-label="Navigation principale">
                 <a href="#services">Services</a>
@@ -305,7 +305,7 @@
             <div class="wrap hero-center">
                 <span class="eyebrow"><span class="pulse" aria-hidden="true"></span>Guichet ouvert 24h/24, 7j/7</span>
                 <h1>Votre caisse 1xBet &amp; Melbet, ouverte <em>jour et nuit.</em></h1>
-                <p class="lead">Rechargez votre compte et retirez vos gains par Mobile Money, directement depuis votre téléphone. Pas de file d’attente, pas de déplacement&nbsp;: Binho Flash s’occupe de tout.</p>
+                <p class="lead">Rechargez votre compte et retirez vos gains par Mobile Money, directement depuis votre téléphone. Pas de file d’attente, pas de déplacement&nbsp;: BIG BOSS s’occupe de tout.</p>
                 <div class="hero-ctas">
                     @if ($downloadUrl)
                         <a class="btn btn-gold" href="{{ $downloadUrl }}">
@@ -374,7 +374,7 @@
                     <article class="service">
                         <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></svg></div>
                         <h3>Retrait de vos gains</h3>
-                        <p>Retirez en «&nbsp;Espèces&nbsp;» vers le guichet Binho Flash&nbsp;: l’argent arrive sur votre numéro Mobile Money.</p>
+                        <p>Retirez en «&nbsp;Espèces&nbsp;» vers le guichet BIG BOSS&nbsp;: l’argent arrive sur votre numéro Mobile Money.</p>
                     </article>
                     <article class="service">
                         <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg></div>
@@ -389,7 +389,7 @@
                     <article class="service">
                         <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m22 7-8.5 8.5-5-5L2 17"/><path d="M16 7h6v6"/></svg></div>
                         <h3>Pronostics du jour</h3>
-                        <p>Des combinés analysés par l’IA Binho à partir des vraies statistiques des équipes et des cotes du marché.</p>
+                        <p>Des combinés analysés par l’IA BIG BOSS à partir des vraies statistiques des équipes et des cotes du marché.</p>
                     </article>
                     <article class="service">
                         <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h12l4 6-10 13L2 9Z"/><path d="M11 3 8 9l4 13 4-13-3-6"/><path d="M2 9h20"/></svg></div>
@@ -432,7 +432,7 @@
 
                     <div class="panel panel-retrait trio">
                         <ol class="side steps">
-                            <li><strong>Touchez «&nbsp;Retirer&nbsp;»</strong><span>L’application vous donne l’adresse du guichet Binho Flash&nbsp;: la ville et la rue.</span></li>
+                            <li><strong>Touchez «&nbsp;Retirer&nbsp;»</strong><span>L’application vous donne l’adresse du guichet BIG BOSS&nbsp;: la ville et la rue.</span></li>
                             <li><strong>Retirez en «&nbsp;Espèces&nbsp;»</strong><span>Sur 1xBet ou Melbet, indiquez exactement cette adresse et le montant, puis copiez le code de retrait.</span></li>
                         </ol>
                         <figure class="shot middle">
@@ -440,7 +440,7 @@
                             <figcaption><b>L’adresse</b> toujours sous les yeux</figcaption>
                         </figure>
                         <ol class="side steps second">
-                            <li><strong>Collez le code dans Binho Flash</strong><span>Choisissez votre opérateur et le numéro qui recevra l’argent.</span></li>
+                            <li><strong>Collez le code dans BIG BOSS</strong><span>Choisissez votre opérateur et le numéro qui recevra l’argent.</span></li>
                             <li><strong>Recevez votre argent</strong><span>Dès la validation du code, l’argent part sur votre Mobile Money. Vous êtes notifié.</span></li>
                         </ol>
                     </div>
@@ -453,7 +453,7 @@
                 <div class="heading">
                     <span class="kicker">Assistant 24h/24</span>
                     <h2>Un conseiller dans la poche, même à 3 h du matin.</h2>
-                    <p>Voici George, l’assistant Binho Flash. Il connaît l’application par cœur et répond comme un agent au guichet, avec des mots simples.</p>
+                    <p>Voici George, l’assistant BIG BOSS. Il connaît l’application par cœur et répond comme un agent au guichet, avec des mots simples.</p>
                 </div>
                 <div class="trio" style="margin-top:56px">
                     <div class="side">
@@ -462,7 +462,7 @@
                     </div>
                     <div class="middle">
                         <div class="glow" aria-hidden="true"></div>
-                        <div class="solo-phone"><img src="/images/site/app-assistant.jpg" alt="Conversation avec l’assistant Binho Flash, avec un guide illustré" width="720" height="1560" loading="lazy"></div>
+                        <div class="solo-phone"><img src="/images/site/app-assistant.jpg" alt="Conversation avec l’assistant BIG BOSS, avec un guide illustré" width="720" height="1560" loading="lazy"></div>
                     </div>
                     <div class="side">
                         <div class="feature"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg></span><strong>Il connaît vos demandes</strong><span>«&nbsp;Ma recharge est en attente&nbsp;»&nbsp;: il sait de laquelle vous parlez.</span></div>
@@ -477,7 +477,7 @@
                 <div class="heading">
                     <span class="kicker">Pronostics &amp; VIP</span>
                     <h2>Pariez mieux informé, chaque jour.</h2>
-                    <p>Tout au long de la journée, l’IA Binho analyse les matchs (forme, classement, buts, cotes de plusieurs bookmakers) et compose des coupons prudents. Sans sélection assez fiable, rien n’est publié.</p>
+                    <p>Tout au long de la journée, l’IA BIG BOSS analyse les matchs (forme, classement, buts, cotes de plusieurs bookmakers) et compose des coupons prudents. Sans sélection assez fiable, rien n’est publié.</p>
                 </div>
                 <div class="free">
                     <span class="chip"><i style="background:#14B8A6"></i>Starter · gratuit</span>
@@ -514,7 +514,7 @@
                 <div class="heading">
                     <span class="kicker">Confiance</span>
                     <h2>Votre argent, en sécurité à chaque étape.</h2>
-                    <p>Binho Flash a été pensé pour que vous gardiez le contrôle, du paiement jusqu’à la confirmation.</p>
+                    <p>BIG BOSS a été pensé pour que vous gardiez le contrôle, du paiement jusqu’à la confirmation.</p>
                 </div>
                 <div class="trust">
                     <div>
@@ -562,7 +562,7 @@
                 <div class="faq">
                     <details open>
                         <summary>Combien de temps prend une recharge&nbsp;?</summary>
-                        <p>Dès que Binho Flash a vérifié votre paiement, votre compte 1xBet ou Melbet est crédité. Vous suivez la demande en direct dans l’onglet Historique, et une notification vous prévient quand c’est fait.</p>
+                        <p>Dès que BIG BOSS a vérifié votre paiement, votre compte 1xBet ou Melbet est crédité. Vous suivez la demande en direct dans l’onglet Historique, et une notification vous prévient quand c’est fait.</p>
                     </details>
                     <details>
                         <summary>Quels sont les montants minimums&nbsp;?</summary>
@@ -574,11 +574,11 @@
                     </details>
                     <details>
                         <summary>Où trouver mon ID 1xBet ou Melbet&nbsp;?</summary>
-                        <p>Dans l’application ou sur le site 1xBet / Melbet, ouvrez votre profil&nbsp;: le numéro de compte (ID) s’affiche en haut, sous votre nom. Binho Flash le mémorise ensuite pour vous.</p>
+                        <p>Dans l’application ou sur le site 1xBet / Melbet, ouvrez votre profil&nbsp;: le numéro de compte (ID) s’affiche en haut, sous votre nom. BIG BOSS le mémorise ensuite pour vous.</p>
                     </details>
                     <details>
                         <summary>Comment retirer mes gains&nbsp;?</summary>
-                        <p>Touchez «&nbsp;Retirer&nbsp;» dans l’application&nbsp;: elle vous donne l’adresse du guichet Binho Flash. Faites un retrait «&nbsp;Espèces&nbsp;» sur 1xBet ou Melbet avec exactement cette adresse, collez le code de retrait dans l’application, et l’argent part sur votre Mobile Money.</p>
+                        <p>Touchez «&nbsp;Retirer&nbsp;» dans l’application&nbsp;: elle vous donne l’adresse du guichet BIG BOSS. Faites un retrait «&nbsp;Espèces&nbsp;» sur 1xBet ou Melbet avec exactement cette adresse, collez le code de retrait dans l’application, et l’argent part sur votre Mobile Money.</p>
                     </details>
                     <details>
                         <summary>L’application est-elle gratuite&nbsp;?</summary>
@@ -596,7 +596,7 @@
             <div class="wrap">
                 <div class="cta">
                     <h2>Votre caisse est ouverte.<br>Maintenant.</h2>
-                    <p>Téléchargez la dernière version de Binho Flash et faites votre première recharge en quelques minutes.</p>
+                    <p>Téléchargez la dernière version de BIG BOSS et faites votre première recharge en quelques minutes.</p>
                     <div class="hero-ctas">
                         @if ($downloadUrl)
                             <a class="btn btn-gold" href="{{ $downloadUrl }}">
@@ -634,7 +634,7 @@
 
     <footer>
         <div class="wrap">
-            <a class="brand" href="#top"><img class="tile" src="/images/logo.png" alt="" width="38" height="38"><span>Binho <b>Flash</b></span></a>
+            <a class="brand" href="#top"><img class="tile" src="/images/logo.png" alt="" width="38" height="38"><span>BIG <b>BOSS</b></span></a>
             <p class="about">Votre caisse 1xBet et Melbet par Mobile Money, ouverte 24h/24. Recharges, retraits, pronostics et assistant dans une seule application.</p>
             <ul class="foot-links">
                 @if ($downloadUrl)<li><a href="{{ $downloadUrl }}">Télécharger (Android)</a></li>@endif
@@ -647,7 +647,7 @@
             <p class="legal">
                 <span class="badge-18" aria-hidden="true">18+</span>
                 Réservé aux personnes majeures. Les jeux d’argent comportent des risques&nbsp;: endettement, dépendance. Pariez uniquement ce que vous pouvez vous permettre de perdre. 1xBet et Melbet sont des marques de leurs propriétaires respectifs.
-                <br>© {{ date('Y') }} Binho Flash. Tous droits réservés.
+                <br>© {{ date('Y') }} BIG BOSS. Tous droits réservés.
             </p>
         </div>
     </footer>

@@ -7,7 +7,7 @@
 <body style="margin:0;background:#F5F5F5;font-family:Arial,Helvetica,sans-serif;color:#1A1A1A;">
     <div style="max-width:640px;margin:0 auto;background:#FFFFFF;">
         <div style="background:#1A2E5A;color:#FFFFFF;padding:20px 24px;">
-            <div style="font-size:13px;color:#FFD700;font-weight:bold;letter-spacing:1px;">ADMINISTRATION BINHO FLASH</div>
+            <div style="font-size:13px;color:#FFD700;font-weight:bold;letter-spacing:1px;">ADMINISTRATION BIG BOSS</div>
             <h1 style="margin:6px 0 0;font-size:22px;">{{ $heading }}</h1>
         </div>
         <div style="padding:24px;">

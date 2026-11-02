@@ -102,7 +102,7 @@ class AdminNotifier
         }
 
         return $this->send(new AdminAlert(
-            subjectLine: '✅ Test des alertes Binho Flash',
+            subjectLine: '✅ Test des alertes BIG BOSS',
             heading: 'Les alertes e-mail fonctionnent',
             intro: 'Vous recevrez un e-mail comme celui-ci à chaque nouvelle recharge, chaque nouveau retrait et chaque nouveau message au support.',
             actionUrl: url('/admin'),

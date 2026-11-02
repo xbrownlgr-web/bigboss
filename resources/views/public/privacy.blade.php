@@ -5,7 +5,7 @@
 
 @section('content')
     <h2>Qui sommes-nous ?</h2>
-    <p>Binho Flash est une application mobile qui facilite les recharges et retraits de comptes de paris par Mobile Money et publie des pronostics football. Contact : <a href="mailto:{{ $contact }}">{{ $contact }}</a>.</p>
+    <p>BIG BOSS est une application mobile qui facilite les recharges et retraits de comptes de paris par Mobile Money et publie des pronostics football. Contact : <a href="mailto:{{ $contact }}">{{ $contact }}</a>.</p>
 
     <h2>Réservé aux personnes majeures</h2>
     <p>L’application est réservée aux personnes de 18 ans ou plus. L’âge est confirmé à l’inscription. Si nous apprenons qu’un compte appartient à un mineur, il est supprimé.</p>

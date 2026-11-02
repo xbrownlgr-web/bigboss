@@ -98,7 +98,7 @@ class SendScheduledPronosticNotification extends Command
             $push->sendToUsers(
                 User::query()->whereIn('id', $subscriberIds),
                 "💎 Coupon VIP {$level} · cote {$odd}",
-                "Vos matchs sont disponibles dans l’application Binho Flash.",
+                "Vos matchs sont disponibles dans l’application BIG BOSS.",
                 $data,
             );
             // Jusqu'à 11 coupons VIP par jour : les non-abonnés n'en reçoivent que quelques annonces,
@@ -118,7 +118,7 @@ class SendScheduledPronosticNotification extends Command
         } else {
             $push->sendToActiveUsers(
                 '🔥 Nouveau pronostic disponible',
-                "⚽ {$level} - cote {$odd} disponible maintenant sur Binho Flash.",
+                "⚽ {$level} - cote {$odd} disponible maintenant sur BIG BOSS.",
                 $data,
             );
         }

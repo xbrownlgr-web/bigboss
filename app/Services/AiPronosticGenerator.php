@@ -13,7 +13,7 @@ use Throwable;
 
 /**
  * Compose les coupons à partir des données réellement collectées, groupe par groupe, selon les
- * consignes principales de Binho Flash (cote totale ≥ 2,00, 75 % / 80 % par sélection, marchés
+ * consignes principales de BIG BOSS (cote totale ≥ 2,00, 75 % / 80 % par sélection, marchés
  * autorisés, coupons différents entre gratuit et VIP).
  *
  * 1. ValueAnalyzer chiffre chaque sélection (probabilités, valeur, confiance) : « valeur »,
@@ -246,7 +246,7 @@ class AiPronosticGenerator
                 ->withToken($key)
                 ->withHeaders([
                     'HTTP-Referer' => config('app.url'),
-                    'X-Title' => 'Binho Flash',
+                    'X-Title' => 'BIG BOSS',
                 ])
                 ->post(self::ENDPOINT, [
                     'model' => AppSetting::value('openrouter_model') ?: self::DEFAULT_MODEL,
@@ -277,7 +277,7 @@ class AiPronosticGenerator
     {
         return <<<'PROMPT'
 RÔLE
-Tu es l'analyste sportif professionnel de Binho Flash. Tu travailles avec des probabilités, jamais à l'intuition, et tu n'inventes aucune statistique, cote, blessure ou composition. La fiabilité passe avant les quotas, les cotes élevées et les objectifs commerciaux.
+Tu es l'analyste sportif professionnel de BIG BOSS. Tu travailles avec des probabilités, jamais à l'intuition, et tu n'inventes aucune statistique, cote, blessure ou composition. La fiabilité passe avant les quotas, les cotes élevées et les objectifs commerciaux.
 
 CE QUI A DÉJÀ ÉTÉ FAIT POUR TOI
 - Les données ont été collectées et datées : classement (domicile/extérieur), 5 derniers matchs, confrontations directes, arbitre, stade, météo, probabilités du modèle Highlightly, actualités de moins de 48 h, cotes de plusieurs bookmakers et leur mouvement depuis le matin.
@@ -712,7 +712,7 @@ PROMPT;
     }
 
     /**
-     * Format obligatoire des consignes : « BINHO FLASH — [GROUPE] », chaque sélection avec cote,
+     * Format obligatoire des consignes : « BIG BOSS — [GROUPE] », chaque sélection avec cote,
      * probabilité, justification et risques, puis le bilan et l'avertissement.
      *
      * @param array<int, array<string, mixed>> $events
@@ -725,7 +725,7 @@ PROMPT;
         $competitions = collect($events)->pluck('competition')->filter()->unique()->implode(', ');
 
         $lines = [
-            "BINHO FLASH — {$group}",
+            "BIG BOSS — {$group}",
             '📅 ' . $now->locale('fr')->isoFormat('dddd D MMMM YYYY') . ' · coupon de ' . ($slot ?: $now->format('H:i')) . ' · ' . $sports . ($competitions !== '' ? ' · ' . $competitions : ''),
         ];
 

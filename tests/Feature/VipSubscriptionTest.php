@@ -78,7 +78,7 @@ class VipSubscriptionTest extends TestCase
         $this->assertMatchesRegularExpression('/^BF-GOLD-[A-Z2-9]{5}$/', $first->json('key'));
         $this->assertSame('2290197000000', $first->json('whatsapp'));
         $this->assertSame(
-            "Bonjour, je suis sur votre application Binho Flash et je veux intégrer le VIP Gold qui coûte 5 000 FCFA. Ma clé : {$first->json('key')}",
+            "Bonjour, je suis sur votre application BIG BOSS et je veux intégrer le VIP Gold qui coûte 5 000 FCFA. Ma clé : {$first->json('key')}",
             $first->json('message'),
         );
 

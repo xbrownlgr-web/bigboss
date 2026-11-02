@@ -23,7 +23,7 @@ class WelcomeUser extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Bienvenue sur Binho Flash',
+            subject: 'Bienvenue sur BIG BOSS',
         );
     }
 
