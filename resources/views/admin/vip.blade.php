@@ -117,6 +117,43 @@
                 </div>
             </section>
 
+            {{-- Demandes de Silver OFFERT (parrainage 1xBet) --}}
+            <section class="bf-card">
+                <div class="bf-card-header justify-content-start">
+                    <span class="bf-kpi-icon"><i class="bi bi-gift"></i></span>
+                    <div>
+                        <h2 class="bf-card-title">Silver offert — demandes à vérifier @if($freeClaims->isNotEmpty())<span class="badge bg-success ms-1">{{ $freeClaims->count() }}</span>@endif</h2>
+                        <p class="bf-card-sub">Inscription 1xBet avec code promo + dépôt. Vérifiez la capture, puis offrez 30 jours de Silver.</p>
+                    </div>
+                </div>
+                <div class="bf-card-body vstack gap-2">
+                    @forelse ($freeClaims as $claim)
+                        <div class="d-flex align-items-start gap-3 p-2 rounded-3" style="border:1px solid var(--bf-border);">
+                            <a href="/admin/vip/free-claims/{{ $claim->id }}/screenshot" target="_blank" rel="noopener" title="Voir la capture en grand">
+                                <img src="/admin/vip/free-claims/{{ $claim->id }}/screenshot" alt="Capture dépôt" style="height:72px;width:72px;object-fit:cover;border-radius:10px;border:1px solid var(--bf-border);background:#f1f5f9;">
+                            </a>
+                            <div class="flex-grow-1 min-w-0">
+                                <div class="fw-semibold text-truncate">{{ $claim->user->name }}</div>
+                                <div class="bf-small bf-muted">ID 1xBet : <span class="font-monospace fw-semibold">{{ $claim->account_id }}</span></div>
+                                <div class="bf-small bf-muted">Code : <span class="font-monospace">{{ $claim->promo_code }}</span> · {{ $claim->user->phone ?: $claim->user->email }} · {{ $claim->created_at->timezone($tz)->format('d/m H:i') }}</div>
+                            </div>
+                            <div class="d-flex flex-column gap-1">
+                                <form method="POST" action="/admin/vip/free-claims/{{ $claim->id }}/approve" data-confirm="Dépôt vérifié ? Offrir 30 jours de VIP Silver à {{ $claim->user->name }} ?">
+                                    @csrf
+                                    <button class="btn btn-sm bf-btn-gold w-100" type="submit"><i class="bi bi-check-lg"></i> Offrir</button>
+                                </form>
+                                <form method="POST" action="/admin/vip/free-claims/{{ $claim->id }}/reject" data-confirm="Refuser cette demande ?">
+                                    @csrf
+                                    <button class="btn btn-sm btn-outline-danger w-100" type="submit">Refuser</button>
+                                </form>
+                            </div>
+                        </div>
+                    @empty
+                        <div class="bf-empty py-3"><i class="bi bi-gift"></i>Aucune demande de Silver offert</div>
+                    @endforelse
+                </div>
+            </section>
+
             {{-- Abonnés actifs --}}
             <section class="bf-card">
                 <div class="bf-card-header justify-content-start">

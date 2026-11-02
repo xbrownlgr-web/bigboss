@@ -134,6 +134,23 @@ class VipService
     }
 
     /**
+     * VIP offert (parrainage 1xBet validé par l'admin) : 30 jours, avec une notification dédiée.
+     */
+    public function grantFree(int $userId, string $level): VipSubscription
+    {
+        $subscription = $this->addDays($userId, $level, self::DURATION_DAYS);
+
+        $this->push->sendToUser(
+            $subscription->user,
+            "🎁 VIP {$subscription->level} offert !",
+            "Félicitations ! Votre mois de VIP {$subscription->level} OFFERT est activé jusqu’au {$this->date($subscription->ends_at)}. Les coupons sont maintenant visibles dans l’application.",
+            ['type' => 'vip', 'event' => 'granted_free', 'niveau' => $subscription->level],
+        );
+
+        return $subscription;
+    }
+
+    /**
      * Prolongation à la main (geste commercial, paiement reçu sans clé…).
      */
     public function extend(VipSubscription $subscription, int $days = self::DURATION_DAYS): VipSubscription

@@ -47,6 +47,8 @@ Route::prefix('v1')->group(function () {
         Route::get('/vip/me', [VipController::class, 'me']);
         Route::post('/vip/checkout', [VipController::class, 'checkout'])->middleware('throttle:10,1');
         Route::post('/vip/checkout/confirm', [VipController::class, 'confirm'])->middleware('throttle:30,1');
+        Route::get('/vip/free', [VipController::class, 'freeConfig']);
+        Route::post('/vip/free', [VipController::class, 'submitFreeClaim'])->middleware('throttle:6,1');
 
         Route::get('/messages', [MessageController::class, 'index']);
         Route::post('/messages', [MessageController::class, 'store'])->middleware('throttle:20,1');

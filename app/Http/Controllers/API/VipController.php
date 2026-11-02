@@ -4,6 +4,8 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Models\AppSetting;
+use App\Models\VipFreeClaim;
+use App\Models\VipSubscription;
 use App\Services\MakeTouService;
 use App\Services\VipService;
 use Illuminate\Http\JsonResponse;
@@ -62,6 +64,105 @@ class VipController extends Controller
             ]);
 
         return response()->json(['success' => true, 'subscriptions' => $subscriptions]);
+    }
+
+    // Niveau concerné par l'offre « 1 mois offert » (parrainage 1xBet).
+    private const FREE_LEVEL = 'Silver';
+
+    /**
+     * Offre « VIP Silver offert » : consignes à afficher + état de la demande de l'utilisateur.
+     */
+    public function freeConfig(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        $hasActive = VipSubscription::query()
+            ->where('user_id', $user->id)
+            ->where('level', self::FREE_LEVEL)
+            ->where('ends_at', '>', now())
+            ->exists();
+
+        $latest = VipFreeClaim::query()
+            ->where('user_id', $user->id)
+            ->where('level', self::FREE_LEVEL)
+            ->latest()
+            ->first();
+
+        $pending = $latest && $latest->status === VipFreeClaim::STATUS_PENDING;
+
+        return response()->json([
+            'success' => true,
+            'enabled' => strtolower((string) AppSetting::value('vip_free_enabled', 'oui')) === 'oui',
+            'level' => self::FREE_LEVEL,
+            'promo_code' => AppSetting::value('vip_free_promo_code', 'CR7MILLIONS'),
+            'min_deposit' => (int) AppSetting::value('vip_free_min_deposit', '2000'),
+            'download_url' => AppSetting::value('vip_free_download_url', 'https://1xbet.bj/download/apk'),
+            'instructions' => AppSetting::value('vip_free_instructions', ''),
+            'can_submit' => ! $hasActive && ! $pending,
+            'has_active' => $hasActive,
+            'claim' => $latest ? [
+                'status' => $latest->status,
+                'account_id' => $latest->account_id,
+                'admin_note' => $latest->admin_note,
+                'created_at' => $latest->created_at->toIso8601String(),
+            ] : null,
+        ]);
+    }
+
+    /**
+     * L'utilisateur envoie sa demande : ID de compte 1xBet + capture (base64). Validée en admin.
+     */
+    public function submitFreeClaim(Request $request): JsonResponse
+    {
+        if (strtolower((string) AppSetting::value('vip_free_enabled', 'oui')) !== 'oui') {
+            return response()->json(['success' => false, 'message' => 'L’offre n’est pas disponible pour le moment.'], 422);
+        }
+
+        $validated = $request->validate([
+            'account_id' => ['required', 'string', 'max:60'],
+            'screenshot' => ['required', 'string', 'max:8000000'], // base64, ~6 Mo max
+            'mime' => ['nullable', 'string', 'in:image/jpeg,image/png,image/webp'],
+        ]);
+
+        $user = $request->user();
+
+        $hasActive = VipSubscription::query()
+            ->where('user_id', $user->id)
+            ->where('level', self::FREE_LEVEL)
+            ->where('ends_at', '>', now())
+            ->exists();
+
+        if ($hasActive) {
+            return response()->json(['success' => false, 'message' => 'Vous avez déjà un VIP Silver actif.'], 422);
+        }
+
+        $alreadyPending = VipFreeClaim::query()
+            ->where('user_id', $user->id)
+            ->where('level', self::FREE_LEVEL)
+            ->where('status', VipFreeClaim::STATUS_PENDING)
+            ->exists();
+
+        if ($alreadyPending) {
+            return response()->json(['success' => false, 'message' => 'Votre demande est déjà en cours de vérification.'], 422);
+        }
+
+        // On ne garde que les données base64 (sans l'éventuel préfixe « data:image/...;base64, »).
+        $screenshot = preg_replace('#^data:[^;]+;base64,#', '', $validated['screenshot']);
+
+        VipFreeClaim::create([
+            'user_id' => $user->id,
+            'level' => self::FREE_LEVEL,
+            'promo_code' => AppSetting::value('vip_free_promo_code', 'CR7MILLIONS'),
+            'account_id' => trim($validated['account_id']),
+            'screenshot' => $screenshot,
+            'screenshot_mime' => $validated['mime'] ?? 'image/jpeg',
+            'status' => VipFreeClaim::STATUS_PENDING,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Demande envoyée ! Nous vérifions votre dépôt et activons votre mois offert sous peu.',
+        ]);
     }
 
     /**

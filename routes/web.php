@@ -121,6 +121,9 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::post('/vip/subscriptions/{id}/extend', [VipController::class, 'extend'])->whereNumber('id');
     Route::post('/vip/subscriptions/{id}/cancel', [VipController::class, 'cancel'])->whereNumber('id');
     Route::post('/vip/coupons', [VipController::class, 'storeCoupon']);
+    Route::get('/vip/free-claims/{id}/screenshot', [VipController::class, 'freeClaimScreenshot'])->whereNumber('id');
+    Route::post('/vip/free-claims/{id}/approve', [VipController::class, 'approveFreeClaim'])->whereNumber('id');
+    Route::post('/vip/free-claims/{id}/reject', [VipController::class, 'rejectFreeClaim'])->whereNumber('id');
     Route::get('/pronostics', [AdminController::class, 'pronostics']);
     Route::post('/pronostics', [AdminController::class, 'storePronostic']);
     Route::post('/pronostics/generate', [AdminController::class, 'generatePronostics'])->middleware('throttle:10,1');

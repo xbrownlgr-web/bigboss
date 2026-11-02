@@ -5,11 +5,13 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\AppSetting;
 use App\Models\Pronostic;
+use App\Models\VipFreeClaim;
 use App\Models\VipRequest;
 use App\Models\VipSubscription;
 use App\Services\VipService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Carbon;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
@@ -45,6 +47,7 @@ class VipController extends Controller
             'offers' => AppSetting::vipOffers(),
             'lookup' => $lookup,
             'pending' => VipRequest::query()->usable()->with('user')->latest()->limit(50)->get(),
+            'freeClaims' => VipFreeClaim::query()->pending()->with('user')->latest()->limit(50)->get(),
             'active' => $active,
             'activeByLevel' => $active->countBy('level'),
             'expiringSoon' => $active->filter(fn ($subscription) => $subscription->ends_at->lessThanOrEqualTo(now()->addDays(3)))->count(),
@@ -162,5 +165,71 @@ class VipController extends Controller
         $sent = $this->vip->notifyNewCoupon($pronostic);
 
         return back()->with('success', "Coupon VIP {$niveau} publié. Notification : {$sent['subscribers']} abonné(s) avec le code, {$sent['others']} autre(s) utilisateur(s) sans le code.");
+    }
+
+    /**
+     * Capture d'écran d'une demande de VIP offert (stockée en base64), servie à l'admin seul.
+     */
+    public function freeClaimScreenshot(int $id): Response
+    {
+        $claim = VipFreeClaim::query()->findOrFail($id);
+        $binary = base64_decode((string) $claim->screenshot, true);
+
+        abort_if($binary === false, 404);
+
+        return response($binary, 200, [
+            'Content-Type' => $claim->screenshot_mime ?: 'image/jpeg',
+            'Cache-Control' => 'private, max-age=86400',
+        ]);
+    }
+
+    /**
+     * Dépôt vérifié : on offre 30 jours de VIP Silver et on notifie l'utilisateur.
+     */
+    public function approveFreeClaim(Request $request, int $id): RedirectResponse
+    {
+        $claim = VipFreeClaim::query()->with('user')->findOrFail($id);
+
+        if (! $claim->isPending()) {
+            return back()->with('error', 'Cette demande a déjà été traitée.');
+        }
+
+        $subscription = $this->vip->grantFree($claim->user_id, $claim->level);
+
+        $claim->update([
+            'status' => VipFreeClaim::STATUS_APPROVED,
+            'reviewed_by' => $request->user()->id,
+            'reviewed_at' => now(),
+        ]);
+
+        return back()->with('success', sprintf(
+            'VIP %s offert à %s jusqu’au %s. Une notification lui a été envoyée.',
+            $subscription->level,
+            $claim->user->name,
+            $subscription->ends_at->timezone(config('app.timezone'))->format('d/m/Y'),
+        ));
+    }
+
+    /**
+     * Dépôt non valable : on refuse la demande (motif facultatif renvoyé plus tard si besoin).
+     */
+    public function rejectFreeClaim(Request $request, int $id): RedirectResponse
+    {
+        $validated = $request->validate(['note' => ['nullable', 'string', 'max:255']]);
+
+        $claim = VipFreeClaim::query()->findOrFail($id);
+
+        if (! $claim->isPending()) {
+            return back()->with('error', 'Cette demande a déjà été traitée.');
+        }
+
+        $claim->update([
+            'status' => VipFreeClaim::STATUS_REJECTED,
+            'admin_note' => $validated['note'] ?? null,
+            'reviewed_by' => $request->user()->id,
+            'reviewed_at' => now(),
+        ]);
+
+        return back()->with('success', 'Demande refusée. L’utilisateur pourra en renvoyer une nouvelle.');
     }
 }
