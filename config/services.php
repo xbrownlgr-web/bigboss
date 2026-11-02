@@ -26,7 +26,7 @@ return [
 
     // Dépôt public où sont publiés les APK (lien de téléchargement et numéro de version).
     'github' => [
-        'releases_repo' => env('APK_RELEASES_REPO', 'gobifinancement-ui/binho-flash'),
+        'releases_repo' => env('APK_RELEASES_REPO', 'gobifinancement-ui/big-boss'),
     ],
 
     'brevo' => [
