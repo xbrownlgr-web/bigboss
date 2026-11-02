@@ -37,6 +37,12 @@ class LatestRelease
             return $fromAdmin;
         }
 
+        // APK servi directement depuis le domaine (public/big-boss.apk) : téléchargement direct,
+        // sans page intermédiaire et sans dépendre de GitHub.
+        if (is_file(public_path('big-boss.apk'))) {
+            return url('big-boss.apk');
+        }
+
         $repository = config('services.github.releases_repo');
 
         return $repository && self::githubVersion()
