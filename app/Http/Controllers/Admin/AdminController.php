@@ -186,12 +186,12 @@ class AdminController extends Controller
                 'whatsapp' => 'Notifications WhatsApp',
                 'community' => 'Communautés',
                 'vip' => 'Coupons VIP (Silver, Gold, Platinum)',
-                'assistant' => 'George, l’assistant 24h/24 (onglet Support)',
+                'assistant' => 'LUC, l’assistant 24h/24 (onglet Support)',
             ],
             'groupDescriptions' => [
                 'payment' => 'Paiement des abonnements VIP via MAKETOU. Collez votre clé API (Bearer) et l’identifiant du produit « prix libre » créé dans MAKETOU. Les frais (%) sont ajoutés au prix du VIP au moment du paiement. Le pays du client (connu à l’inscription) sert à proposer les bons moyens de paiement.',
                 'brand' => 'Nom, logo et couleurs de l’application, appliqués automatiquement dans l’application mobile. Choisissez une palette : elle habille tout l’écran (en-têtes, boutons, cartes). Le logo est facultatif (une adresse d’image) ; sans logo, le nom s’affiche.',
-                'assistant' => 'George, l’assistant, répond aux clients à toute heure dans l’onglet Support, avec captures d’écran annotées. Il connaît le fonctionnement de l’application, vos numéros de dépôt, l’adresse de retrait, les prix VIP et les dernières demandes du client. Il utilise la même clé OpenRouter que les pronostics et propose un conseiller humain quand une action est nécessaire.',
+                'assistant' => 'LUC, l’assistant, répond aux clients à toute heure dans l’onglet Support, avec captures d’écran annotées. Il connaît le fonctionnement de l’application, vos numéros de dépôt, l’adresse de retrait, les prix VIP et les dernières demandes du client. Il utilise la même clé OpenRouter que les pronostics et propose un conseiller humain quand une action est nécessaire.',
                 'retrait' => 'Ce que le client doit choisir sur 1xBet / Melbet pour un retrait en espèces : ces infos s’affichent dans les instructions de l’application.',
                 'videos' => 'Cloudinary héberge les vidéos importées depuis Admin > Vidéos (compte gratuit sur cloudinary.com).',
                 'ia' => 'Les cinq groupes sont générés automatiquement à leurs heures (ci-dessous, heure du Bénin) : matchs réels de tous les championnats (Highlightly), cotes de plusieurs bookmakers (The Odds API), analyse puis rédaction par OpenRouter. Le basket et le handball prennent le relais quand le football ne donne rien. Si aucune sélection n’atteint le seuil de probabilité, rien n’est publié.',
@@ -284,7 +284,7 @@ class AdminController extends Controller
     }
 
     /**
-     * « Tester George » : une vraie question envoyée à l'IA de l'assistant, avec la réponse ou la panne exacte.
+     * « Tester LUC » : une vraie question envoyée à l'IA de l'assistant, avec la réponse ou la panne exacte.
      */
     public function testAssistant(Request $request, SupportAssistant $assistant): RedirectResponse
     {
@@ -292,8 +292,8 @@ class AdminController extends Controller
         $result = $assistant->test($request->user());
 
         return $result['ok']
-            ? back()->with('success', 'George répond bien. Exemple : « ' . mb_strimwidth((string) $result['content'], 0, 260, '…') . ' »')
-            : back()->with('error', 'George ne peut pas répondre : ' . $result['error']);
+            ? back()->with('success', 'LUC répond bien. Exemple : « ' . mb_strimwidth((string) $result['content'], 0, 260, '…') . ' »')
+            : back()->with('error', 'LUC ne peut pas répondre : ' . $result['error']);
     }
 
     public function approve(int $id): RedirectResponse

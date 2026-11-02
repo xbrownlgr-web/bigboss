@@ -130,3 +130,19 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::post('/pronostics/{id}/result', [AdminController::class, 'markPronosticResult']);
     Route::post('/pronostics/{id}/delete', [AdminController::class, 'deletePronostic']);
 });
+
+// Retour après un paiement MAKETOU : l'activation se fait via le webhook / l'app.
+Route::get('/vip/paiement/retour', function () {
+    return response(
+        '<!doctype html><html lang="fr"><head><meta charset="utf-8">'
+        . '<meta name="viewport" content="width=device-width, initial-scale=1">'
+        . '<title>Paiement BIG BOSS</title></head>'
+        . '<body style="margin:0;font-family:system-ui,sans-serif;background:#0C2A1E;color:#fff;'
+        . 'min-height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:24px">'
+        . '<div><div style="font-size:48px">✅</div>'
+        . '<h2 style="margin:12px 0">Paiement reçu</h2>'
+        . '<p style="color:#A7F3D0;max-width:320px">Merci ! Retournez dans l\'application BIG BOSS : '
+        . 'votre abonnement VIP s\'active automatiquement dès la confirmation du paiement.</p></div>'
+        . '</body></html>'
+    );
+});

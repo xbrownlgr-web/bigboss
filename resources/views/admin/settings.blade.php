@@ -76,7 +76,7 @@
                                     <button class="btn btn-sm bf-btn-light mt-2" type="submit" form="testEmailForm"><i class="bi bi-envelope-check"></i> Envoyer un e-mail de test</button>
                                 @endif
                                 @if ($groupKey === 'assistant')
-                                    <button class="btn btn-sm bf-btn-light mt-2" type="submit" form="testAssistantForm"><i class="bi bi-chat-dots"></i> Tester George</button>
+                                    <button class="btn btn-sm bf-btn-light mt-2" type="submit" form="testAssistantForm"><i class="bi bi-chat-dots"></i> Tester LUC</button>
                                     @if ($assistantError = \App\Services\SupportAssistant::lastError())
                                         <div class="bf-small mt-2" style="color:#B91C1C;"><i class="bi bi-exclamation-triangle"></i> Dernière panne ({{ \Illuminate\Support\Carbon::parse($assistantError['at'])->timezone(config('app.timezone'))->format('d/m H:i') }}) : {{ $assistantError['error'] }}</div>
                                     @endif

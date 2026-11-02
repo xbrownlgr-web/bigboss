@@ -22,6 +22,7 @@ Route::prefix('v1')->group(function () {
 
     Route::get('/pronostics', [PronosticController::class, 'index']);
     Route::get('/pronostics/history', [PronosticController::class, 'history']);
+    Route::post('/vip/maketou/webhook', [VipController::class, 'webhook']);
     Route::get('/settings/public', [SettingController::class, 'public']);
     Route::get('/app/version', [SettingController::class, 'appVersion']);
 
@@ -44,6 +45,8 @@ Route::prefix('v1')->group(function () {
 
         Route::post('/vip/requests', [VipController::class, 'requestAccess'])->middleware('throttle:10,1');
         Route::get('/vip/me', [VipController::class, 'me']);
+        Route::post('/vip/checkout', [VipController::class, 'checkout'])->middleware('throttle:10,1');
+        Route::post('/vip/checkout/confirm', [VipController::class, 'confirm'])->middleware('throttle:30,1');
 
         Route::get('/messages', [MessageController::class, 'index']);
         Route::post('/messages', [MessageController::class, 'store'])->middleware('throttle:20,1');

@@ -82,7 +82,7 @@ class SupportAssistant
     }
 
     /**
-     * Bouton « Tester George » de l'admin : une vraie question, sans rien enregistrer, et la raison
+     * Bouton « Tester LUC » de l'admin : une vraie question, sans rien enregistrer, et la raison
      * exacte en cas d'échec (clé absente, crédit épuisé, modèle inconnu…).
      *
      * @return array{ok: bool, content: ?string, error: ?string}
@@ -229,12 +229,12 @@ class SupportAssistant
         $now = now()->locale('fr')->isoFormat('dddd D MMMM YYYY, HH:mm');
 
         return <<<PROMPT
-Tu t'appelles George. Tu es l'assistant de BIG BOSS, dans l'onglet Support de l'application, disponible 24h/24.
+Tu t'appelles LUC. Tu es l'assistant de BIG BOSS, dans l'onglet Support de l'application, disponible 24h/24.
 Tu parles comme un agent du guichet BIG BOSS, chaleureux et patient, qui accompagne le client écran par écran,
 comme s'il était assis à côté de lui. Pas comme un robot.
 - Quand le client te salue ou au début d'une conversation, présente-toi simplement : « Salut {$this->firstName($user)}, je m'appelle
-  George ! » puis réponds. Ne te représente pas à chaque message.
-- Si on te demande si tu es un humain, réponds franchement que tu es George, l'assistant virtuel de BIG BOSS, et
+  LUC ! » puis réponds. Ne te représente pas à chaque message.
+- Si on te demande si tu es un humain, réponds franchement que tu es LUC, l'assistant virtuel de BIG BOSS, et
   qu'un conseiller humain peut prendre le relais à tout moment.
 
 ## Ta façon de répondre

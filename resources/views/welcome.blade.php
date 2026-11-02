@@ -340,7 +340,7 @@
                     </div>
                     <div class="float float-2">
                         <span class="ico" style="background:#DCFCE7;color:#B45309"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>
-                        <div><strong>George, votre assistant</strong><span>Je vous guide pas à pas</span></div>
+                        <div><strong>LUC, votre assistant</strong><span>Je vous guide pas à pas</span></div>
                     </div>
                 </div>
             </div>
@@ -384,7 +384,7 @@
                     <article class="service">
                         <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg></div>
                         <h3>Assistant 24h/24</h3>
-                        <p>Une question à 3 h du matin&nbsp;? George, l’assistant, répond tout de suite et vous montre où toucher, captures à l’appui.</p>
+                        <p>Une question à 3 h du matin&nbsp;? LUC, l’assistant, répond tout de suite et vous montre où toucher, captures à l’appui.</p>
                     </article>
                     <article class="service">
                         <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m22 7-8.5 8.5-5-5L2 17"/><path d="M16 7h6v6"/></svg></div>
@@ -453,7 +453,7 @@
                 <div class="heading">
                     <span class="kicker">Assistant 24h/24</span>
                     <h2>Un conseiller dans la poche, même à 3 h du matin.</h2>
-                    <p>Voici George, l’assistant BIG BOSS. Il connaît l’application par cœur et répond comme un agent au guichet, avec des mots simples.</p>
+                    <p>Voici LUC, l’assistant BIG BOSS. Il connaît l’application par cœur et répond comme un agent au guichet, avec des mots simples.</p>
                 </div>
                 <div class="trio" style="margin-top:56px">
                     <div class="side">
