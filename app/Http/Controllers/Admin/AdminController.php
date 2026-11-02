@@ -177,6 +177,7 @@ class AdminController extends Controller
             'palettes' => BrandPalettes::PALETTES,
             'groupLabels' => [
                 'brand' => 'Marque & couleurs',
+                'payment' => 'Paiement VIP (MAKETOU)',
                 'app' => 'Mise à jour de l’application',
                 'ia' => 'Intelligence artificielle (pronostics)',
                 'videos' => 'Vidéos tutoriels',
@@ -188,6 +189,7 @@ class AdminController extends Controller
                 'assistant' => 'George, l’assistant 24h/24 (onglet Support)',
             ],
             'groupDescriptions' => [
+                'payment' => 'Paiement des abonnements VIP via MAKETOU. Collez votre clé API (Bearer) et l’identifiant du produit « prix libre » créé dans MAKETOU. Les frais (%) sont ajoutés au prix du VIP au moment du paiement. Le pays du client (connu à l’inscription) sert à proposer les bons moyens de paiement.',
                 'brand' => 'Nom, logo et couleurs de l’application, appliqués automatiquement dans l’application mobile. Choisissez une palette : elle habille tout l’écran (en-têtes, boutons, cartes). Le logo est facultatif (une adresse d’image) ; sans logo, le nom s’affiche.',
                 'assistant' => 'George, l’assistant, répond aux clients à toute heure dans l’onglet Support, avec captures d’écran annotées. Il connaît le fonctionnement de l’application, vos numéros de dépôt, l’adresse de retrait, les prix VIP et les dernières demandes du client. Il utilise la même clé OpenRouter que les pronostics et propose un conseiller humain quand une action est nécessaire.',
                 'retrait' => 'Ce que le client doit choisir sur 1xBet / Melbet pour un retrait en espèces : ces infos s’affichent dans les instructions de l’application.',
@@ -215,6 +217,7 @@ class AdminController extends Controller
                     $setting->key === 'ai_vip_teasers_per_day' => ['nullable', 'integer', 'min:0', 'max:12'],
                     // Palette de couleurs : seulement une des clés proposées.
                     $setting->type === 'palette' => ['nullable', 'string', Rule::in(BrandPalettes::keys())],
+                    $setting->key === 'maketou_fee_percent' => ['nullable', 'integer', 'min:0', 'max:50'],
                     $setting->type === 'email' => ['nullable', 'email', 'max:255'],
                     $setting->type === 'url' => ['nullable', 'url', 'max:500'],
                     $setting->type === 'textarea' => ['nullable', 'string', 'max:10000'],

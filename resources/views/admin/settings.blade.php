@@ -6,6 +6,7 @@
 @php
     $groupIcons = [
         'brand' => 'bi-palette',
+        'payment' => 'bi-credit-card',
         'app' => 'bi-phone',
         'ia' => 'bi-stars',
         'assistant' => 'bi-robot',

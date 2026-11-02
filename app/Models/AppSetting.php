@@ -39,7 +39,7 @@ class AppSetting extends Model
 
     public static function grouped(): Collection
     {
-        $order = ['brand', 'app', 'mobile_money', 'retrait', 'vip', 'assistant', 'ia', 'videos', 'whatsapp', 'general', 'community'];
+        $order = ['brand', 'app', 'mobile_money', 'retrait', 'vip', 'payment', 'assistant', 'ia', 'videos', 'whatsapp', 'general', 'community'];
 
         return self::query()
             ->orderBy('id')
