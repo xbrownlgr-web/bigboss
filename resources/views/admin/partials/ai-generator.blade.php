@@ -6,19 +6,20 @@
     $defaultSource = old('source', $aiReady['football'] ? 'auto' : 'manual');
 @endphp
 
-<section class="bf-card mb-3">
-    <div class="bf-card-header">
-        <div class="d-flex align-items-center gap-3">
+<details class="bf-card bf-fold mb-3" data-desktop-open @if ($errors->any()) open @endif>
+    <summary class="bf-card-header">
+        <div class="d-flex align-items-center gap-3 min-w-0">
             <span class="bf-kpi-icon" style="background:#F3EEFF;color:#6D28D9;"><i class="bi bi-stars"></i></span>
-            <div>
+            <div class="min-w-0">
                 <h2 class="bf-card-title">Générer les combinés avec l’IA</h2>
                 <p class="bf-card-sub">Modèle {{ $aiReady['model'] }} via OpenRouter · vous relisez avant de publier</p>
             </div>
         </div>
         @unless ($aiReady['openrouter'])
-            <a href="/admin/settings" class="btn btn-sm bf-btn-gold"><i class="bi bi-key"></i> Ajouter la clé OpenRouter</a>
+            <a href="/admin/settings" class="btn btn-sm bf-btn-gold flex-shrink-0"><i class="bi bi-key"></i> <span class="d-none d-sm-inline">Clé OpenRouter</span></a>
         @endunless
-    </div>
+        <i class="bi bi-chevron-down bf-chev"></i>
+    </summary>
 
     <form method="POST" action="/admin/pronostics/generate" class="bf-card-body" id="aiForm">
         @csrf
@@ -151,7 +152,7 @@
             </div>
         </div>
     @endif
-</section>
+</details>
 
 @if ($aiDrafts)
     <section class="bf-card mb-3" style="border-color:#D8C8FB;">

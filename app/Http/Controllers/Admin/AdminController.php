@@ -23,6 +23,7 @@ use App\Services\VipService;
 use App\Services\WhatsAppNotifier;
 use App\Support\BrandPalettes;
 use App\Support\PronosticRules;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
@@ -365,6 +366,7 @@ class AdminController extends Controller
     public function messages(Request $request): View
     {
         $search = trim((string) $request->input('search', ''));
+        $filter = $request->input('filter') === 'unread' ? 'unread' : 'all';
 
         $threads = Message::query()
             ->selectRaw("user_id, MAX(id) as last_id, SUM(CASE WHEN sender = 'user' AND is_read = 0 THEN 1 ELSE 0 END) as unread")
@@ -397,9 +399,22 @@ class AdminController extends Controller
                 ] : null;
             })
             ->filter()
+            // Rangement lisible : conversations non lues d'abord, puis les plus récentes.
+            ->sort(fn ($a, $b) => [$b->unread > 0, $b->last->id] <=> [$a->unread > 0, $a->last->id])
             ->values();
 
-        $selectedUserId = (int) ($request->integer('user_id') ?: ($conversations->first()?->user_id ?? 0));
+        $counts = [
+            'all' => $conversations->count(),
+            'unread' => $conversations->where('unread', '>', 0)->count(),
+        ];
+
+        if ($filter === 'unread') {
+            $conversations = $conversations->where('unread', '>', 0)->values();
+        }
+
+        // Plus d'ouverture automatique : sur téléphone la liste s'affiche d'abord, et une
+        // conversation n'est marquée lue que lorsque l'admin l'ouvre vraiment.
+        $selectedUserId = $request->integer('user_id');
         $selectedUser = $selectedUserId ? User::find($selectedUserId) : null;
         $messages = collect();
 
@@ -430,7 +445,51 @@ class AdminController extends Controller
             'selectedUser' => $selectedUser,
             'messages' => $messages,
             'search' => $search,
+            'filter' => $filter,
+            'counts' => $counts,
         ]);
+    }
+
+    /**
+     * Nouveaux messages d'une conversation ouverte (rafraîchissement automatique côté admin).
+     */
+    public function messagesFeed(Request $request, int $userId): JsonResponse
+    {
+        $after = max(0, $request->integer('after'));
+
+        $messages = Message::query()
+            ->where('user_id', $userId)
+            ->where('id', '>', $after)
+            ->orderBy('id')
+            ->limit(100)
+            ->get();
+
+        if ($messages->contains('sender', 'user')) {
+            Message::query()
+                ->where('user_id', $userId)
+                ->where('sender', 'user')
+                ->where('is_read', false)
+                ->update(['is_read' => true]);
+        }
+
+        return response()->json([
+            'messages' => $messages->map(fn (Message $message) => $this->messagePayload($message))->values(),
+        ]);
+    }
+
+    private function messagePayload(Message $message): array
+    {
+        return [
+            'id' => $message->id,
+            'sender' => $message->sender === 'admin' ? 'admin' : 'user',
+            'content' => $message->content,
+            'time' => $message->created_at->format('H:i'),
+            'day' => $message->created_at->toDateString(),
+            'day_label' => $message->created_at->isToday()
+                ? 'Aujourd’hui'
+                : $message->created_at->locale('fr')->isoFormat('dddd D MMMM'),
+            'transaction_id' => $message->transaction_id,
+        ];
     }
 
     public function users(Request $request): View
@@ -539,7 +598,7 @@ class AdminController extends Controller
             : back()->with('error', 'Notification refusée : ' . $error);
     }
 
-    public function reply(Request $request, int $userId): RedirectResponse
+    public function reply(Request $request, int $userId): RedirectResponse|JsonResponse
     {
         $validated = $request->validate([
             'content' => ['required', 'string', 'max:2000'],
@@ -547,21 +606,34 @@ class AdminController extends Controller
 
         $user = User::findOrFail($userId);
 
-        Message::create([
+        $message = Message::create([
             'user_id' => $user->id,
             'sender' => 'admin',
             'content' => $validated['content'],
             'is_read' => false,
         ]);
 
-        $this->pushService->sendToUser(
-            $user,
-            '💬 Nouveau message du support',
-            \Illuminate\Support\Str::limit($validated['content'], 120),
-            [
-                'type' => 'support',
-            ],
-        );
+        // La notification ne doit jamais faire échouer l'envoi : le message est déjà enregistré
+        // et visible dans l'application, même si le téléphone n'est pas joignable.
+        try {
+            $pushError = $this->pushService->sendToUser(
+                $user,
+                '💬 Nouveau message du support',
+                \Illuminate\Support\Str::limit($validated['content'], 120),
+                ['type' => 'support'],
+            );
+        } catch (Throwable $exception) {
+            report($exception);
+            $pushError = 'service de notification indisponible';
+        }
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => $this->messagePayload($message),
+                'push' => $pushError,
+            ]);
+        }
 
         return redirect('/admin/messages?user_id=' . $user->id)
             ->with('success', 'Message envoyé avec succès.');

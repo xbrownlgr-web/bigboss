@@ -67,27 +67,29 @@
         <div class="row g-3">
             @foreach ($groups as $groupKey => $settings)
                 <div class="col-12 {{ in_array($groupKey, ['general', 'whatsapp'], true) ? 'col-xl-6' : '' }}">
-                    <section class="bf-card h-100" id="{{ $groupKey }}">
-                        <div class="bf-card-header justify-content-start">
+                    <details class="bf-card bf-fold h-100" id="{{ $groupKey }}" @if ($errors->hasAny($settings->pluck('key')->all())) open @endif data-desktop-open>
+                        <summary class="bf-card-header justify-content-start">
                             <span class="bf-kpi-icon"><i class="bi {{ $groupIcons[$groupKey] ?? 'bi-gear' }}"></i></span>
-                            <div>
+                            <div class="min-w-0">
                                 <h2 class="bf-card-title">{{ $groupLabels[$groupKey] ?? ucfirst($groupKey) }}</h2>
-                                @if ($groupKey === 'general')
-                                    <button class="btn btn-sm bf-btn-light mt-2" type="submit" form="testEmailForm"><i class="bi bi-envelope-check"></i> Envoyer un e-mail de test</button>
-                                @endif
-                                @if ($groupKey === 'assistant')
-                                    <button class="btn btn-sm bf-btn-light mt-2" type="submit" form="testAssistantForm"><i class="bi bi-chat-dots"></i> Tester LUC</button>
-                                    @if ($assistantError = \App\Services\SupportAssistant::lastError())
-                                        <div class="bf-small mt-2" style="color:#B91C1C;"><i class="bi bi-exclamation-triangle"></i> Dernière panne ({{ \Illuminate\Support\Carbon::parse($assistantError['at'])->timezone(config('app.timezone'))->format('d/m H:i') }}) : {{ $assistantError['error'] }}</div>
-                                    @endif
-                                @endif
-                                @if ($groupKey === 'whatsapp')
-                                    <button class="btn btn-sm bf-btn-light mt-2" type="submit" form="testWhatsAppForm"><i class="bi bi-whatsapp"></i> Envoyer un WhatsApp de test</button>
-                                @endif
                                 <p class="bf-card-sub">{{ $groupDescriptions[$groupKey] ?? '' }}</p>
                             </div>
-                        </div>
+                            <span class="bf-pill muted ms-auto">{{ $settings->count() }}</span>
+                            <i class="bi bi-chevron-down bf-chev"></i>
+                        </summary>
                         <div class="bf-card-body">
+                            @if ($groupKey === 'general')
+                                <button class="btn btn-sm bf-btn-light mb-3" type="submit" form="testEmailForm"><i class="bi bi-envelope-check"></i> Envoyer un e-mail de test</button>
+                            @endif
+                            @if ($groupKey === 'assistant')
+                                <button class="btn btn-sm bf-btn-light mb-2" type="submit" form="testAssistantForm"><i class="bi bi-chat-dots"></i> Tester LUC</button>
+                                @if ($assistantError = \App\Services\SupportAssistant::lastError())
+                                    <div class="bf-small mb-3" style="color:#B91C1C;"><i class="bi bi-exclamation-triangle"></i> Dernière panne ({{ \Illuminate\Support\Carbon::parse($assistantError['at'])->timezone(config('app.timezone'))->format('d/m H:i') }}) : {{ $assistantError['error'] }}</div>
+                                @endif
+                            @endif
+                            @if ($groupKey === 'whatsapp')
+                                <button class="btn btn-sm bf-btn-light mb-3" type="submit" form="testWhatsAppForm"><i class="bi bi-whatsapp"></i> Envoyer un WhatsApp de test</button>
+                            @endif
                             <div class="row g-3">
                                 @foreach ($settings as $setting)
                                     @php
@@ -102,7 +104,7 @@
                                                     .bf-palette-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
                                                     .bf-swatch { position: relative; display: flex; align-items: center; gap: 10px; padding: 10px; border: 2px solid #E4E9F2; border-radius: 12px; cursor: pointer; background: #fff; transition: border-color .15s, box-shadow .15s; margin: 0; }
                                                     .bf-swatch:hover { border-color: #C7D0E0; }
-                                                    .bf-swatch.is-selected { border-color: #1A2E5A; box-shadow: 0 0 0 3px rgba(26,46,90,.12); }
+                                                    .bf-swatch.is-selected { border-color: #15803D; box-shadow: 0 0 0 3px rgba(34,197,94,.18); }
                                                     .bf-swatch input { position: absolute; opacity: 0; pointer-events: none; }
                                                     .bf-swatch-colors { display: flex; border-radius: 8px; overflow: hidden; width: 46px; height: 30px; flex: 0 0 auto; border: 1px solid rgba(0,0,0,.08); }
                                                     .bf-swatch-colors span { flex: 1; }
@@ -147,17 +149,17 @@
                                 @endforeach
                             </div>
                         </div>
-                    </section>
+                    </details>
                 </div>
             @endforeach
         </div>
 
-        <div class="bf-card mt-3" style="position:sticky;bottom:16px;z-index:5;">
-            <div class="bf-card-body d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 py-3">
-                <div class="bf-small bf-muted">
+        <div class="bf-card bf-sticky-save mt-3" style="position:sticky;bottom:16px;z-index:5;">
+            <div class="bf-card-body d-flex align-items-center justify-content-between gap-3 py-2">
+                <div class="bf-small bf-muted d-none d-md-block">
                     <i class="bi bi-lightning-charge"></i> Les nouvelles valeurs sont utilisées immédiatement par l’API et l’application mobile.
                 </div>
-                <button class="btn bf-btn-primary px-4" type="submit"><i class="bi bi-check2"></i> Enregistrer les paramètres</button>
+                <button class="btn bf-btn-primary px-4 flex-grow-1 flex-md-grow-0" type="submit"><i class="bi bi-check2"></i> Enregistrer</button>
             </div>
         </div>
     </form>

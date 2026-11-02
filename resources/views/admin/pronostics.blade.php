@@ -45,13 +45,14 @@
 
     <div class="row g-3">
         <div class="col-12 col-xl-4">
-            <div class="bf-card" style="position:sticky;top:96px;">
-                <div class="bf-card-header">
-                    <div>
-                        <h2 class="bf-card-title">Nouveau combiné</h2>
+            <details class="bf-card bf-fold" style="position:sticky;top:96px;" data-desktop-open>
+                <summary class="bf-card-header">
+                    <div class="min-w-0">
+                        <h2 class="bf-card-title"><i class="bi bi-plus-circle"></i> Nouveau combiné</h2>
                         <p class="bf-card-sub">Publié immédiatement + notification à tous</p>
                     </div>
-                </div>
+                    <i class="bi bi-chevron-down bf-chev"></i>
+                </summary>
                 <form method="POST" action="/admin/pronostics" class="bf-card-body vstack gap-3" id="pronosticForm" data-confirm="Publier ce combiné et notifier tous les utilisateurs ?">
                     @csrf
                     <div class="row g-2">
@@ -109,7 +110,7 @@
 
                     <button class="btn bf-btn-gold" type="submit"><i class="bi bi-send-fill"></i> Publier le combiné</button>
                 </form>
-            </div>
+            </details>
         </div>
 
         <div class="col-12 col-xl-8">

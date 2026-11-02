@@ -2,7 +2,8 @@
 <html lang="fr">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+    <meta name="theme-color" content="#04140D">
     <meta name="robots" content="noindex, nofollow">
     <title>@yield('title', 'Administration') · BIG BOSS Admin</title>
     <link rel="icon" type="image/png" href="/images/favicon.png">
@@ -14,11 +15,12 @@
     <style>
         :root {
             color-scheme: light;
-            --bf-navy: #1A2E5A;
-            --bf-navy-deep: #0E1A36;
-            --bf-gold: #FFD700;
-            --bf-gold-soft: #FFF7CC;
-            --bf-bg: #F3F5FA;
+            /* Palette BIG BOSS : vert profond & noir, accent vert vif. */
+            --bf-navy: #0B2A1C;
+            --bf-navy-deep: #04140D;
+            --bf-gold: #22C55E;
+            --bf-gold-soft: #DCFCE7;
+            --bf-bg: #F2F5F3;
             --bf-surface: #FFFFFF;
             --bf-surface-2: #F8F9FC;
             --bf-border: #E4E7EF;
@@ -39,8 +41,8 @@
             --bs-body-font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
             --bs-body-color: var(--bf-text);
             --bs-border-color: var(--bf-border);
-            --bs-link-color-rgb: 26, 46, 90;
-            --bs-link-hover-color-rgb: 14, 26, 54;
+            --bs-link-color-rgb: 21, 128, 61;
+            --bs-link-hover-color-rgb: 11, 42, 28;
         }
 
         body {
@@ -80,8 +82,8 @@
             height: 100%;
             padding: 20px 14px 16px;
             overflow-y: auto;
-            background: linear-gradient(180deg, #15284F 0%, var(--bf-navy-deep) 100%);
-            color: #C6CEE0;
+            background: linear-gradient(180deg, #0F3323 0%, var(--bf-navy-deep) 100%);
+            color: #C3D3CA;
         }
 
         .bf-brand {
@@ -127,8 +129,8 @@
         .bf-nav-link:hover { background: rgba(255, 255, 255, .06); color: #fff; }
 
         .bf-nav-link.active {
-            background: rgba(255, 215, 0, .12);
-            color: var(--bf-gold);
+            background: rgba(34, 197, 94, .14);
+            color: #4ADE80;
             box-shadow: inset 3px 0 0 var(--bf-gold);
         }
 
@@ -256,7 +258,7 @@
         .bf-kpi-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 8px; color: var(--bf-muted); font-size: .78rem; }
 
         .bf-kpi.is-alert { border-color: #F5D565; background: linear-gradient(180deg, #FFFCEB 0%, #FFFFFF 70%); }
-        .bf-kpi.is-alert .bf-kpi-icon { background: var(--bf-gold); color: var(--bf-navy-deep); }
+        .bf-kpi.is-alert .bf-kpi-icon { background: #F59E0B; color: #fff; }
 
         .bf-delta { display: inline-flex; align-items: center; gap: 2px; padding: 1px 7px; border-radius: 999px; font-size: .74rem; font-weight: 600; }
         .bf-delta.up { background: var(--bf-success-bg); color: var(--bf-success); }
@@ -281,7 +283,7 @@
         .bf-badge.completed, .bf-badge.success { background: var(--bf-success-bg); color: var(--bf-success); }
         .bf-badge.rejected, .bf-badge.danger { background: var(--bf-danger-bg); color: var(--bf-danger); }
         .bf-badge.neutral { background: var(--bf-surface-2); color: var(--bf-text-2); border: 1px solid var(--bf-border); }
-        .bf-badge.vip { background: var(--bf-gold-soft); color: #7A5B00; }
+        .bf-badge.vip { background: #FEF3C7; color: #92400E; }
 
         .bf-type { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; }
         .bf-type i { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 8px; font-size: .9rem; }
@@ -358,8 +360,8 @@
         }
 
         .form-control:focus, .form-select:focus {
-            border-color: #8DA2CF;
-            box-shadow: 0 0 0 4px rgba(26, 46, 90, .08);
+            border-color: #4ADE80;
+            box-shadow: 0 0 0 4px rgba(34, 197, 94, .15);
         }
 
         .form-label { margin-bottom: 6px; color: var(--bf-text-2); font-size: .8rem; font-weight: 600; }
@@ -420,6 +422,111 @@
         .modal-header, .modal-footer { border-color: var(--bf-border); }
         .dropdown-menu { border-color: var(--bf-border); border-radius: 12px; box-shadow: 0 12px 32px rgba(16, 24, 40, .12); font-size: .85rem; }
         .dropdown-item { display: flex; align-items: center; gap: 8px; padding: 7px 14px; }
+
+        /* ---------- Sections repliables (moins de scroll) ---------- */
+        .bf-fold > summary { list-style: none; cursor: pointer; user-select: none; }
+        .bf-fold > summary::-webkit-details-marker { display: none; }
+        .bf-fold > summary .bf-chev { margin-left: auto; color: var(--bf-subtle); transition: transform .2s ease; }
+        .bf-fold[open] > summary .bf-chev { transform: rotate(180deg); }
+        .bf-fold:not([open]) > summary { border-bottom: 0; }
+        .bf-fold > summary.bf-card-header { flex-wrap: nowrap !important; }
+        .bf-fold > summary .bf-pill + .bf-chev { margin-left: 8px; }
+        .bf-pill { display: inline-grid; place-items: center; min-width: 22px; height: 22px; padding: 0 7px; border-radius: 999px; background: var(--bf-gold); color: var(--bf-navy-deep); font-size: .72rem; font-weight: 800; }
+        .bf-pill.muted { background: var(--bf-surface-2); color: var(--bf-muted); border: 1px solid var(--bf-border); }
+        .bf-pill.warn { background: #F59E0B; color: #fff; }
+        .bf-empty-line { padding: 4px 2px; color: var(--bf-muted); font-size: .82rem; }
+        .bf-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--bf-border); border-radius: 12px; background: var(--bf-surface); }
+
+        /* ---------- Barre de navigation mobile ---------- */
+        .bf-bottomnav { display: none; }
+
+        @media (max-width: 991.98px) {
+            .bf-menu-btn { display: none !important; }
+            .bf-bottomnav {
+                position: fixed;
+                right: 0;
+                bottom: 0;
+                left: 0;
+                z-index: 1030;
+                display: grid;
+                grid-template-columns: repeat(5, 1fr);
+                gap: 4px;
+                padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
+                border-top: 1px solid rgba(255, 255, 255, .08);
+                background: rgba(4, 20, 13, .97);
+                backdrop-filter: blur(12px);
+            }
+            .bf-bottomnav a,
+            .bf-bottomnav button {
+                position: relative;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 3px;
+                padding: 7px 2px 5px;
+                border: 0;
+                border-radius: 12px;
+                background: transparent;
+                color: #8FA89B;
+                font-size: .66rem;
+                font-weight: 600;
+                line-height: 1;
+            }
+            .bf-bottomnav i { font-size: 1.22rem; }
+            .bf-bottomnav .active { background: rgba(34, 197, 94, .14); color: #fff; }
+            .bf-bottomnav .active i { color: #4ADE80; }
+            .bf-bottomnav .bf-badge-dot {
+                position: absolute;
+                top: 2px;
+                left: calc(50% + 5px);
+                display: grid;
+                place-items: center;
+                min-width: 17px;
+                height: 17px;
+                padding: 0 4px;
+                border-radius: 999px;
+                background: #EF4444;
+                color: #fff;
+                font-size: .6rem;
+                font-weight: 800;
+            }
+            .bf-content { padding-bottom: calc(88px + env(safe-area-inset-bottom)); }
+            .bf-sticky-save { bottom: calc(78px + env(safe-area-inset-bottom)) !important; }
+        }
+
+        /* ---------- Téléphone : version compacte ---------- */
+        @media (max-width: 767.98px) {
+            body { font-size: .875rem; }
+            .bf-topbar { gap: 10px; padding: 10px 14px; }
+            .bf-topbar h1 { font-size: 1.05rem; }
+            .bf-topbar-actions { gap: 6px; }
+            .bf-topbar-actions .btn { padding: .3rem .6rem; }
+            .bf-content { padding-top: 12px; padding-right: 12px; padding-left: 12px; }
+            .bf-content .row { --bs-gutter-x: .75rem; --bs-gutter-y: .75rem; }
+            .bf-content .mb-4 { margin-bottom: 1rem !important; }
+            .bf-content .vstack.gap-3 { gap: .75rem !important; }
+            .bf-card-header { flex-wrap: wrap; padding: 12px 14px; }
+            .bf-card-header .bf-card-sub:not(.keep) { display: none; }
+            .bf-card-title { font-size: .92rem; }
+            .bf-card-body { padding: 14px; }
+            .bf-kpi { padding: 12px; }
+            .bf-kpi-top { margin-bottom: 6px; }
+            .bf-kpi-icon { width: 30px; height: 30px; border-radius: 9px; font-size: .9rem; }
+            .bf-kpi-label { font-size: .72rem; }
+            .bf-kpi-value { font-size: 1.28rem; }
+            .bf-kpi-foot { margin-top: 4px; font-size: .68rem; }
+            .row > [class*="col-"]:has(> .bf-kpi) { flex: 0 0 50%; max-width: 50%; }
+            .bf-tabs { flex-wrap: nowrap; margin-right: -12px; padding-right: 12px; overflow-x: auto; scrollbar-width: none; }
+            .bf-tabs::-webkit-scrollbar { display: none; }
+            .bf-tab { white-space: nowrap; }
+            .bf-table > :not(caption) > * > * { padding: 10px 12px; }
+            .table-responsive { -webkit-overflow-scrolling: touch; }
+            .bf-flash { margin-bottom: 12px; padding: 10px 12px; font-size: .84rem; }
+            .bf-empty { padding: 22px 14px; }
+            .bf-empty i { font-size: 1.4rem; }
+            .form-text { font-size: .74rem; }
+            .modal-dialog { margin: .75rem; }
+        }
     </style>
     @stack('head')
 </head>
@@ -540,6 +647,28 @@
         </div>
     </div>
 
+    {{-- Téléphone : les 4 rubriques du quotidien à portée de pouce, le reste dans « Menu ». --}}
+    <nav class="bf-bottomnav" aria-label="Navigation rapide">
+        @foreach ([
+            ['/admin', 'admin', 'bi-grid-1x2-fill', 'Accueil', 0],
+            ['/admin/transactions', 'admin/transactions*', 'bi-arrow-left-right', 'Opérations', $navCounts['transactions'] ?? 0],
+            ['/admin/messages', 'admin/messages*', 'bi-chat-dots-fill', 'Messages', $navCounts['messages'] ?? 0],
+            ['/admin/vip', 'admin/vip*', 'bi-gem', 'VIP', $navCounts['vip'] ?? 0],
+        ] as [$navUrl, $navMatch, $navIcon, $navText, $navCount])
+            <a href="{{ $navUrl }}" class="{{ request()->is($navMatch) ? 'active' : '' }}">
+                <i class="bi {{ $navIcon }}"></i>
+                <span>{{ $navText }}</span>
+                @if ($navCount)
+                    <span class="bf-badge-dot">{{ $navCount > 99 ? '99+' : $navCount }}</span>
+                @endif
+            </a>
+        @endforeach
+        <button type="button" data-bs-toggle="offcanvas" data-bs-target="#bfSidebar" aria-controls="bfSidebar">
+            <i class="bi bi-list"></i>
+            <span>Menu</span>
+        </button>
+    </nav>
+
     <div class="modal fade" id="bfConfirmModal" tabindex="-1" aria-labelledby="bfConfirmTitle" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" style="max-width:420px;">
             <div class="modal-content">
@@ -624,6 +753,26 @@
         document.querySelectorAll('.bf-flash.success').forEach(function (flash) {
             setTimeout(function () { flash.remove(); }, 6000);
         });
+
+        // Sections repliables : tout ouvert sur ordinateur (place disponible), compact sur téléphone.
+        // Un lien vers une ancre (ex. /admin/settings#vip) ouvre la bonne section.
+        (function () {
+            if (window.matchMedia('(min-width: 992px)').matches) {
+                document.querySelectorAll('details[data-desktop-open]').forEach(function (fold) { fold.open = true; });
+            }
+
+            const openTarget = function () {
+                const target = location.hash ? document.getElementById(decodeURIComponent(location.hash.slice(1))) : null;
+                const fold = target && (target.matches('details') ? target : target.closest('details'));
+                if (fold) {
+                    fold.open = true;
+                    fold.scrollIntoView({ block: 'start' });
+                }
+            };
+
+            openTarget();
+            window.addEventListener('hashchange', openTarget);
+        })();
     </script>
     @stack('scripts')
 </body>
