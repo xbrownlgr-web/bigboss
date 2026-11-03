@@ -35,7 +35,7 @@
     <p>Vos données de compte sont conservées tant que votre compte existe. L’historique des opérations est conservé pour nos obligations comptables et en cas de litige, sans vos coordonnées après la suppression du compte.</p>
 
     <h2>Vos droits</h2>
-    <p>Vous pouvez consulter et corriger vos informations en écrivant au support, et <strong>supprimer votre compte à tout moment</strong> depuis l’application (Profil › Supprimer mon compte) ou sur la page <a href="/suppression-compte">binhoflash.com/suppression-compte</a>.</p>
+    <p>Vous pouvez consulter et corriger vos informations en écrivant au support, et <strong>supprimer votre compte à tout moment</strong> depuis l’application (Profil › Supprimer mon compte) ou sur la page <a href="/suppression-compte">{{ request()->getHost() }}/suppression-compte</a>.</p>
 
     <h2>Jeu responsable</h2>
     <p>Les pronostics ne sont jamais garantis : des pertes sont normales. Ne misez que ce que vous pouvez vous permettre de perdre. Si le jeu devient un problème, faites une pause et parlez-en à un proche ou à un professionnel.</p>

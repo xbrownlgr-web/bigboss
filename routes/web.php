@@ -27,10 +27,10 @@ Route::get('/', function () {
 
 // Pages publiques exigées par le Play Store : confidentialité et suppression de compte.
 Route::get('/confidentialite', fn () => view('public.privacy', [
-    'contact' => AppSetting::value('support_email') ?: 'support@binhoflash.com',
+    'contact' => AppSetting::value('support_email') ?: config('app.admin_email'),
 ]));
 Route::get('/suppression-compte', fn () => view('public.account-deletion', [
-    'contact' => AppSetting::value('support_email') ?: 'support@binhoflash.com',
+    'contact' => AppSetting::value('support_email') ?: config('app.admin_email'),
 ]));
 Route::post('/suppression-compte', function (Request $request, AccountDeletionService $deletion) {
     $credentials = $request->validate([

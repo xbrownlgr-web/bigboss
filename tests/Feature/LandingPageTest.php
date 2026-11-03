@@ -30,7 +30,9 @@ class LandingPageTest extends TestCase
             ->assertSee('Orange Money</span>', false)
             ->assertDontSee('Celtiis</span>', false)
             ->assertSee('https://t.me/binho_test')
-            ->assertSee('/images/site/partage.jpg')
+            // Aperçu des liens partagés : image et adresse de BIG BOSS (plus jamais binhoflash.com).
+            ->assertSee('/images/site/partage-bigboss.jpg')
+            ->assertDontSee('binhoflash.com')
             // Jamais de numéro de dépôt sur la page publique : il ne s'affiche que dans l'application.
             ->assertDontSee('01 97 00 00 00')
             ->assertDontSee('6 99 00 00 00');

@@ -22,15 +22,22 @@
     <meta name="description" content="Rechargez votre compte 1xBet ou Melbet et retirez vos gains par Mobile Money, 24h/24, depuis l’application BIG BOSS. Pronostics du jour, coupons VIP et assistant disponible jour et nuit.">
     <meta name="theme-color" content="#061A12">
     <link rel="icon" type="image/png" href="/images/favicon.png">
+    {{-- Aperçu des liens partagés (WhatsApp, Facebook, Telegram…) : adresse et image de BIG BOSS. --}}
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="BIG BOSS">
+    <meta property="og:locale" content="fr_FR">
     <meta property="og:title" content="BIG BOSS · Votre caisse 1xBet et Melbet, ouverte 24h/24">
     <meta property="og:description" content="Recharges et retraits par Mobile Money, pronostics du jour, coupons VIP et assistant 24h/24.">
-    <meta property="og:image" content="{{ url('/images/site/partage.jpg') }}">
-    <meta property="og:url" content="https://binhoflash.com/">
-    {{-- Adresse officielle : l'ancienne adresse onrender reste ouverte pour les anciennes versions de l'app. --}}
-    <link rel="canonical" href="https://binhoflash.com/">
+    <meta property="og:image" content="{{ url('/images/site/partage-bigboss.jpg') }}">
+    <meta property="og:image:type" content="image/jpeg">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="BIG BOSS — caisse 1xBet et Melbet 24h/24">
+    <meta property="og:url" content="{{ url('/') }}">
+    <link rel="canonical" href="{{ url('/') }}">
     <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="BIG BOSS · Votre caisse 1xBet et Melbet, ouverte 24h/24">
+    <meta name="twitter:image" content="{{ url('/images/site/partage-bigboss.jpg') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">

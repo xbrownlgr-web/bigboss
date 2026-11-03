@@ -27,7 +27,7 @@
             <p>Vous recevrez une notification dès que la demande sera traitée.</p>
         </div>
         <div style="background:#F5F5F5;padding:18px;text-align:center;color:#888888;font-size:13px;">
-            Support BIG BOSS : support@binhoflash.com
+            Support BIG BOSS{{ ($supportEmail = \App\Models\AppSetting::value('support_email')) ? ' : ' . $supportEmail : '' }}
         </div>
     </div>
 </body>
