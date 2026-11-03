@@ -8,8 +8,16 @@ case "$APP_KEY" in
     *) export APP_KEY="base64:$APP_KEY" ;;
 esac
 
-# Certificat de la base (Secret File Render) : copié là où Apache (www-data) peut le lire.
-if [ -n "$MYSQL_ATTR_SSL_CA" ]; then
+# Certificat de la base, copié là où Apache (www-data) peut le lire. Deux sources possibles :
+# - DB_CA_CERT : le contenu PEM dans une variable d'environnement (prioritaire, se change sans
+#   toucher aux fichiers secrets, pratique pour changer de base) ;
+# - MYSQL_ATTR_SSL_CA : le chemin d'un Secret File Render.
+if [ -n "$DB_CA_CERT" ]; then
+    printf '%s\n' "$DB_CA_CERT" > storage/db-ca.pem
+    chown www-data:www-data storage/db-ca.pem
+    chmod 0444 storage/db-ca.pem
+    export MYSQL_ATTR_SSL_CA=/var/www/html/storage/db-ca.pem
+elif [ -n "$MYSQL_ATTR_SSL_CA" ]; then
     if [ -r "$MYSQL_ATTR_SSL_CA" ]; then
         cp "$MYSQL_ATTR_SSL_CA" storage/db-ca.pem
         chown www-data:www-data storage/db-ca.pem
