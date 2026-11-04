@@ -678,14 +678,15 @@ class AiPronosticTest extends TestCase
             'niveau' => 'Silver', 'cote_totale' => 2.2, 'probabilite' => 64, 'analysis' => 'Test',
             'evenements' => [['match' => 'Arsenal vs Chelsea', 'pronostic' => 'Double chance 1X (Arsenal ou nul)', 'cote' => 1.45, 'kickoff_at' => now()->addHours(3)->toIso8601String()]],
         ]);
-        $bronze = $publish->invoke($command, [
-            'niveau' => 'Bronze', 'cote_totale' => 2.1, 'probabilite' => 60, 'analysis' => 'Test',
+        $starter = $publish->invoke($command, [
+            'niveau' => 'Starter', 'cote_totale' => 2.1, 'probabilite' => 60, 'analysis' => 'Test',
             'evenements' => [['match' => 'PSG vs Lyon', 'pronostic' => 'Double chance 12 (PSG ou Lyon)', 'cote' => 1.4]],
         ]);
 
         $this->assertTrue($silver->is_vip);
         $this->assertSame('VIP Silver', $silver->competition);
-        $this->assertFalse($bronze->is_vip);
+        // Un seul niveau gratuit désormais : Starter. Bronze a rejoint les niveaux VIP.
+        $this->assertFalse($starter->is_vip);
 
         $player = User::factory()->create(['is_active' => true]);
         \Laravel\Sanctum\Sanctum::actingAs($player);

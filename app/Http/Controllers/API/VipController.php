@@ -172,18 +172,22 @@ class VipController extends Controller
     {
         $validated = $request->validate([
             'level' => ['required', 'string', Rule::in(AppSetting::VIP_LEVELS)],
+            // Semaine (essai moins engageant) ou mois complet. Mois par défaut (comportement inchangé).
+            'duration' => ['nullable', 'string', Rule::in(['week', 'month'])],
         ]);
+        $duration = $validated['duration'] ?? 'month';
 
         try {
-            $result = $maketou->checkout($request->user(), $validated['level']);
+            $result = $maketou->checkout($request->user(), $validated['level'], $duration);
         } catch (Throwable $exception) {
             return response()->json(['success' => false, 'message' => $exception->getMessage()], 422);
         }
 
-        // Mémorise le panier -> (utilisateur, niveau) pour activer le VIP à la confirmation.
+        // Mémorise le panier -> (utilisateur, niveau, durée) pour activer le VIP à la confirmation.
         Cache::put('maketou:cart:' . $result['cart_id'], [
             'user_id' => $request->user()->id,
             'level' => $validated['level'],
+            'days' => $duration === 'week' ? 7 : 30,
         ], now()->addDay());
 
         return response()->json([
@@ -239,7 +243,7 @@ class VipController extends Controller
             return false;
         }
 
-        $this->vip->grantPaid((int) $info['user_id'], (string) $info['level']);
+        $this->vip->grantPaid((int) $info['user_id'], (string) $info['level'], (int) ($info['days'] ?? 30));
         Cache::put($key, [...$info, 'done' => true], now()->addDays(2));
 
         return true;

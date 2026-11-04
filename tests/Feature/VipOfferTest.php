@@ -41,7 +41,8 @@ class VipOfferTest extends TestCase
     public function test_vip_coupons_never_reveal_their_content_to_the_app(): void
     {
         $this->pronostic('Gold');
-        $this->pronostic('Bronze');
+        // Un seul niveau gratuit désormais : Starter. Bronze a rejoint les niveaux VIP.
+        $this->pronostic('Starter');
 
         $response = $this->getJson('/api/v1/pronostics')->assertOk();
 
@@ -55,9 +56,9 @@ class VipOfferTest extends TestCase
         $this->assertStringNotContainsString('Arsenal', json_encode($gold));
         $this->assertStringNotContainsString('secrète', json_encode($gold));
 
-        $bronze = collect($response->json('pronostics'))->firstWhere('niveau', 'Bronze');
-        $this->assertFalse($bronze['locked']);
-        $this->assertCount(2, $bronze['evenements']);
+        $starter = collect($response->json('pronostics'))->firstWhere('niveau', 'Starter');
+        $this->assertFalse($starter['locked']);
+        $this->assertCount(2, $starter['evenements']);
     }
 
     public function test_the_app_receives_prices_details_and_whatsapp_number(): void
@@ -81,7 +82,7 @@ class VipOfferTest extends TestCase
         $this->actingAs($admin)
             ->get('/admin/settings')
             ->assertOk()
-            ->assertSee('Coupons VIP (Silver, Gold, Platinum)')
+            ->assertSee('Coupons VIP (Bronze, Silver, Gold, Platinum)')
             ->assertSee('Prix du VIP Platinum (FCFA)');
 
         $this->actingAs($admin)

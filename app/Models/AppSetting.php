@@ -17,7 +17,8 @@ class AppSetting extends Model
     ];
 
     // Coupons VIP payants : leur contenu n'est jamais envoyé à l'application (voir PronosticController).
-    public const VIP_LEVELS = ['Silver', 'Gold', 'Platinum'];
+    // Un seul niveau gratuit (Starter) : Bronze, Silver, Gold et Platinum sont VIP.
+    public const VIP_LEVELS = ['Bronze', 'Silver', 'Gold', 'Platinum'];
 
     public static function value(string $key, ?string $default = null): ?string
     {
@@ -73,9 +74,12 @@ class AppSetting extends Model
         foreach (self::VIP_LEVELS as $level) {
             $key = 'vip_' . strtolower($level);
             $price = (int) preg_replace('/\D+/', '', (string) self::value($key . '_price'));
+            $priceWeek = (int) preg_replace('/\D+/', '', (string) self::value($key . '_price_week'));
 
             $offers[$level] = [
                 'price' => $price > 0 ? $price : null,
+                // Abonnement à la semaine (facultatif) : essai payant moins engageant que le mois.
+                'price_week' => $priceWeek > 0 ? $priceWeek : null,
                 'details' => trim((string) self::value($key . '_details')) ?: null,
             ];
         }

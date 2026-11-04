@@ -186,7 +186,7 @@ class AdminController extends Controller
                 'general' => 'Général',
                 'whatsapp' => 'Notifications WhatsApp',
                 'community' => 'Communautés',
-                'vip' => 'Coupons VIP (Silver, Gold, Platinum)',
+                'vip' => 'Coupons VIP (Bronze, Silver, Gold, Platinum)',
                 'assistant' => 'LUC, l’assistant 24h/24 (onglet Support)',
             ],
             'groupDescriptions' => [

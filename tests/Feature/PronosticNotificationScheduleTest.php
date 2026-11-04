@@ -27,6 +27,10 @@ class PronosticNotificationScheduleTest extends TestCase
     {
         $this->fakeGeneration();
         User::factory()->create(['is_active' => true, 'fcm_token' => 'ExponentPushToken[abc]']);
+        // Ce test vérifie l'espacement des envois, pas le plafond quotidien d'annonces VIP (qui a
+        // son propre test) : Bronze étant désormais VIP, les 3 niveaux VIP demandés dépasseraient
+        // le plafond par défaut (2) et fausseraient le compte attendu.
+        AppSetting::setValue('ai_vip_teasers_per_day', '10');
 
         // La génération de 08:00 dure quelques secondes (IA) : la première notification part tout de suite.
         Carbon::setTestNow(Carbon::parse('2026-10-14 08:00:25', 'Africa/Porto-Novo'));

@@ -118,15 +118,17 @@ class VipService
 
     /**
      * Active (ou prolonge) un VIP après un paiement en ligne réussi (MAKETOU), puis notifie.
+     * $days = 7 pour un abonnement à la semaine, 30 (par défaut) pour le mois complet.
      */
-    public function grantPaid(int $userId, string $level): VipSubscription
+    public function grantPaid(int $userId, string $level, int $days = self::DURATION_DAYS): VipSubscription
     {
-        $subscription = $this->addDays($userId, $level, self::DURATION_DAYS);
+        $subscription = $this->addDays($userId, $level, $days);
+        $duration = $days <= 7 ? 'semaine' : 'mois';
 
         $this->push->sendToUser(
             $subscription->user,
             "💎 VIP {$subscription->level} activé",
-            "Votre paiement est confirmé. Votre VIP {$subscription->level} est actif jusqu’au {$this->date($subscription->ends_at)} : les coupons sont maintenant visibles dans l’application.",
+            "Votre paiement est confirmé. Votre VIP {$subscription->level} ({$duration}) est actif jusqu’au {$this->date($subscription->ends_at)} : les coupons sont maintenant visibles dans l’application.",
             ['type' => 'vip', 'event' => 'activated', 'niveau' => $subscription->level],
         );
 

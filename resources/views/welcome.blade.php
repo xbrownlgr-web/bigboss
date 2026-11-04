@@ -413,7 +413,7 @@
                     <article class="service">
                         <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h12l4 6-10 13L2 9Z"/><path d="M11 3 8 9l4 13 4-13-3-6"/><path d="M2 9h20"/></svg></div>
                         <h3>Coupons VIP</h3>
-                        <p>Silver, Gold et Platinum&nbsp;: les coupons les plus travaillés, réservés aux membres, avec les codes prêts à charger.</p>
+                        <p>Bronze, Silver, Gold et Platinum&nbsp;: les coupons les plus travaillés, réservés aux membres, avec les codes prêts à charger.</p>
                     </article>
                 </div>
             </div>
@@ -601,7 +601,7 @@
                     </details>
                     <details>
                         <summary>L’application est-elle gratuite&nbsp;?</summary>
-                        <p>Oui. Recharges, retraits, suivi, assistant et pronostics Starter et Bronze sont gratuits. Seuls les coupons VIP (Silver, Gold, Platinum) sont payants, si vous le souhaitez.</p>
+                        <p>Oui. Recharges, retraits, suivi, assistant et pronostics Starter sont gratuits. Seuls les coupons VIP (Bronze, Silver, Gold, Platinum) sont payants, si vous le souhaitez.</p>
                     </details>
                     <details>
                         <summary>Comment installer l’application&nbsp;?</summary>

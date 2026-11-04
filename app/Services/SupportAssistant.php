@@ -35,7 +35,7 @@ class SupportAssistant
         'recharge' => 'recharger un compte 1xBet ou Melbet',
         'retrait' => 'retirer ses gains vers Mobile Money',
         'suivi' => 'suivre une demande et lire son statut',
-        'vip' => 'devenir VIP (Silver, Gold, Platinum)',
+        'vip' => 'devenir VIP (Bronze, Silver, Gold, Platinum)',
     ];
 
     private const STATUS_LABELS = [

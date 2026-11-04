@@ -24,6 +24,7 @@ use RuntimeException;
 class VipController extends Controller
 {
     private const LEVEL_COLORS = [
+        'Bronze' => '#92400E',
         'Silver' => '#9CA3AF',
         'Gold' => '#FFD700',
         'Platinum' => '#7C3AED',

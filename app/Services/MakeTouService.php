@@ -20,9 +20,10 @@ class MakeTouService
     /**
      * Crée le paiement d'un niveau VIP pour un utilisateur.
      *
+     * @param 'week'|'month' $duration abonnement à la semaine (essai moins engageant) ou au mois
      * @return array{cart_id: string, redirect_url: string, amount: int}
      */
-    public function checkout(User $user, string $level): array
+    public function checkout(User $user, string $level, string $duration = 'month'): array
     {
         $apiKey = trim((string) AppSetting::value('maketou_api_key'));
         $productId = trim((string) AppSetting::value('maketou_product_id'));
@@ -31,10 +32,12 @@ class MakeTouService
             throw new RuntimeException('Paiement indisponible : MAKETOU n’est pas encore configuré (Admin > Paiement).');
         }
 
-        $price = AppSetting::vipOffers()[$level]['price'] ?? null;
+        $offer = AppSetting::vipOffers()[$level] ?? [];
+        $price = $duration === 'week' ? ($offer['price_week'] ?? null) : ($offer['price'] ?? null);
 
         if (! $price || $price <= 0) {
-            throw new RuntimeException('Le prix du VIP ' . $level . ' n’est pas défini.');
+            $label = $duration === 'week' ? 'à la semaine' : 'au mois';
+            throw new RuntimeException('Le prix du VIP ' . $level . ' ' . $label . ' n’est pas défini.');
         }
 
         $fee = (float) (AppSetting::value('maketou_fee_percent') ?? 7);
@@ -55,7 +58,7 @@ class MakeTouService
                 'customerPrice' => $amount,
                 'redirectURL' => $base . '/vip/paiement/retour',
                 'webhookUrl' => $base . '/api/v1/vip/maketou/webhook',
-                'meta' => ['user_id' => $user->id, 'level' => $level],
+                'meta' => ['user_id' => $user->id, 'level' => $level, 'duration' => $duration],
             ]);
 
         if (! $response->successful()) {
