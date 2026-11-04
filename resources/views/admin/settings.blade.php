@@ -87,6 +87,9 @@
                             @if ($groupKey === 'general')
                                 <button class="btn btn-sm bf-btn-light mb-3" type="submit" form="testEmailForm"><i class="bi bi-envelope-check"></i> Envoyer un e-mail de test</button>
                             @endif
+                            @if ($groupKey === 'app')
+                                <button class="btn btn-sm bf-btn-gold mb-3" type="submit" form="notifyAppUpdateForm" data-confirm="Prévenir tous les utilisateurs qu'une mise à jour de BIG BOSS est prête ?"><i class="bi bi-megaphone"></i> Notifier une mise à jour disponible</button>
+                            @endif
                             @if ($groupKey === 'assistant')
                                 <button class="btn btn-sm bf-btn-light mb-2" type="submit" form="testAssistantForm"><i class="bi bi-chat-dots"></i> Tester LUC</button>
                                 @if ($assistantError = \App\Services\SupportAssistant::lastError())
@@ -180,6 +183,9 @@
         @csrf
     </form>
     <form method="POST" action="/admin/settings/test-assistant" id="testAssistantForm" hidden>
+        @csrf
+    </form>
+    <form method="POST" action="/admin/settings/notify-app-update" id="notifyAppUpdateForm" hidden>
         @csrf
     </form>
 @endpush

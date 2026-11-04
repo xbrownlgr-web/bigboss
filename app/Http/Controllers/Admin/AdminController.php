@@ -598,6 +598,22 @@ class AdminController extends Controller
             : back()->with('error', 'Notification refusée : ' . $error);
     }
 
+    /**
+     * Prévient tous les utilisateurs qu'une mise à jour (OTA ou APK) est prête. Touchée pendant
+     * que l'app est ouverte, la notification relance tout de suite la vérification (sans attendre
+     * le prochain lancement) ; sinon elle est appliquée normalement à la prochaine ouverture.
+     */
+    public function notifyAppUpdate(): RedirectResponse
+    {
+        $sent = $this->pushService->sendToActiveUsers(
+            '🔄 Mise à jour disponible',
+            'Une amélioration de BIG BOSS est prête. Touchez cette notification ou rouvrez l’application.',
+            ['type' => 'app_update'],
+        );
+
+        return back()->with('success', "Notification de mise à jour envoyée à {$sent} appareil(s).");
+    }
+
     public function reply(Request $request, int $userId): RedirectResponse|JsonResponse
     {
         $validated = $request->validate([

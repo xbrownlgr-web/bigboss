@@ -116,6 +116,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::post('/users/{userId}/vip', [AdminController::class, 'toggleVip']);
     Route::post('/users/{userId}/active', [AdminController::class, 'toggleActive']);
     Route::post('/users/{userId}/test-push', [AdminController::class, 'testPush']);
+    Route::post('/settings/notify-app-update', [AdminController::class, 'notifyAppUpdate'])->middleware('throttle:5,1');
     Route::get('/vip', [VipController::class, 'index']);
     Route::post('/vip/lookup', [VipController::class, 'lookup'])->middleware('throttle:30,1');
     Route::post('/vip/requests/{id}/activate', [VipController::class, 'activate'])->whereNumber('id');
