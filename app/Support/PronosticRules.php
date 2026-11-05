@@ -22,27 +22,30 @@ class PronosticRules
     // Cote d'une sélection : jamais sous 1,15.
     public const MIN_SELECTION_ODDS = 1.15;
 
-    // Mêmes règles que Binho Flash (combinés fiables, à cote modérée) : un pari à 75/80 % est
-    // un favori à petite cote (1,15–1,30), et quelques-uns suffisent rarement à atteindre 2,00.
-    // Garder un plancher à 2,00 revenait à ne (presque) jamais publier. On publie donc des
-    // combinés fiables mais à cote modérée (le combiné affiche toujours sa vraie probabilité).
-    // La fiabilité par pari (75/80 %) reste intacte ; c'est le plancher de cote qui a été abaissé.
+    // Échelle BIG BOSS (règle établie avec le fondateur — voir CLAUDE.md) : chaque niveau VIP a
+    // UN événement de plus que le précédent. Starter = 1 (entrée gratuite), Bronze = 2, Silver = 3,
+    // Gold = 4, Platinum = 5 (le maximum). C'est une règle business (différenciation des offres),
+    // indépendante de la fiabilité d'une sélection (MIN_SELECTION_ODDS + seuils de probabilité
+    // ai_min_probability_free/vip, eux inspirés de Binho) : ne jamais remplacer cette échelle en
+    // copiant une autre config, même si on copie par ailleurs des réglages de fiabilité.
     private const LIMITS = [
         // max sélections, cote totale minimale, cote totale maximale
-        'Starter' => [3, 1.50, 3.00],
-        'Bronze' => [3, 1.60, 3.50],
-        'Silver' => [3, 1.60, 3.50],
-        'Gold' => [3, 1.70, 4.50],
-        // Platinum peut aller jusqu'à 4 sélections sans sacrifier la fiabilité.
-        'Platinum' => [4, 1.85, 5.50],
+        'Starter' => [1, 1.15, 1.40],
+        'Bronze' => [2, 1.45, 2.10],
+        'Silver' => [3, 1.90, 3.20],
+        'Gold' => [4, 2.60, 4.80],
+        'Platinum' => [5, 3.40, 7.00],
     ];
 
+    // Une seule génération par niveau et par jour (pas plusieurs créneaux qui s'empilent) : le
+    // nombre d'événements du jour doit correspondre à l'échelle ci-dessus. Starter a deux créneaux
+    // (matin + soir) car il reste à 1 événement à chaque fois.
     private const DEFAULT_SCHEDULE = [
-        'Starter' => '09:00',
-        'Bronze' => '16:30',
-        'Silver' => '10:00, 15:00, 20:00',
-        'Gold' => '09:00, 13:00, 18:00, 23:30',
-        'Platinum' => '08:00, 12:00, 16:00, 21:00',
+        'Starter' => '09:00, 19:00',
+        'Bronze' => '11:00',
+        'Silver' => '13:00',
+        'Gold' => '16:00',
+        'Platinum' => '20:00',
     ];
 
     public static function isFree(string $level): bool

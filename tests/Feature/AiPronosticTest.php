@@ -253,25 +253,26 @@ class AiPronosticTest extends TestCase
         $this->assertSame('Bronze', $drafts[0]['niveau']);
 
         // C99 (inventée) est écartée ; cotes et probabilités viennent du serveur, pas de l'IA.
+        // Bronze = 2 événements (échelle BIG BOSS — voir CLAUDE.md).
         $events = $drafts[0]['evenements'];
-        $this->assertCount(3, $events);
-        $this->assertSame(['Arsenal vs Chelsea', 'Real Madrid vs Getafe', 'PSG vs Lyon'], array_column($events, 'match'));
-        $this->assertSame('Double chance 12 (Arsenal ou Chelsea)', $events[0]['pronostic']);
-        $this->assertSame('home_away', $events[0]['selection_key']);
+        $this->assertCount(2, $events);
+        $this->assertSame('Double chance 1X (Arsenal ou nul)', $events[0]['pronostic']);
+        $this->assertSame('home_draw', $events[0]['selection_key']);
         $this->assertSame(1001, $events[0]['fixture_id']);
         $this->assertSame(33973, $events[0]['league_id']);
         $this->assertNotEmpty($events[0]['kickoff_at']);
-        $this->assertEqualsWithDelta(1.30, $events[0]['cote'], 0.001);
+        $this->assertEqualsWithDelta(1.19, $events[0]['cote'], 0.001);
         // L'IA ne peut pas relever la confiance calculée (Moyenne), et 2 raisons au maximum.
         $this->assertSame('Moyenne', $events[0]['confiance']);
         $this->assertCount(2, $events[0]['raisons']);
 
         foreach ($events as $event) {
-            $this->assertGreaterThanOrEqual(75, $event['probabilite']);
+            $this->assertGreaterThanOrEqual(80, $event['probabilite']);
         }
 
-        $this->assertGreaterThanOrEqual(2.0, $drafts[0]['cote_totale']);
-        $this->assertStringStartsWith('BIG BOSS — BRONZE', $drafts[0]['analysis']);
+        // Bronze est VIP (voir CLAUDE.md) : cote comprise dans sa fourchette ([1,45 ; 2,10]).
+        $this->assertGreaterThanOrEqual(1.45, $drafts[0]['cote_totale']);
+        $this->assertStringStartsWith('BIG BOSS — VIP BRONZE', $drafts[0]['analysis']);
         $this->assertStringContainsString('Trois double chances', $drafts[0]['analysis']);
         $this->assertStringContainsString(AiPronosticGenerator::DISCLAIMER, $drafts[0]['analysis']);
 
@@ -280,8 +281,8 @@ class AiPronosticTest extends TestCase
             && str_contains($request['messages'][1]['content'], 'Emirates Stadium')
             && str_contains($request['messages'][1]['content'], 'Forme Arsenal (5 derniers matchs)')
             && str_contains($request['messages'][1]['content'], 'blessés et suspendus : donnée manquante')
-            && str_contains($request['messages'][1]['content'], 'GROUPE : Bronze (gratuit)')
-            && str_contains($request['messages'][1]['content'], 'd’au moins 75 %')
+            && str_contains($request['messages'][1]['content'], 'GROUPE : Bronze (VIP payant)')
+            && str_contains($request['messages'][1]['content'], 'd’au moins 80 %')
             && ! str_contains($request['messages'][1]['content'], '| Victoire Arsenal |')
             && ! str_contains($request['messages'][1]['content'], 'Club amateur'));
     }
@@ -391,10 +392,11 @@ class AiPronosticTest extends TestCase
 
         $pronostic = Pronostic::query()->sole();
         $this->assertSame('Bronze', $pronostic->niveau);
-        $this->assertFalse($pronostic->is_vip);
-        $this->assertSame('Combiné Bronze', $pronostic->competition);
-        $this->assertCount(3, $pronostic->evenements);
-        $this->assertGreaterThanOrEqual(2.0, $pronostic->cote_totale);
+        // Bronze est VIP (voir CLAUDE.md), 2 événements (échelle progressive BIG BOSS).
+        $this->assertTrue($pronostic->is_vip);
+        $this->assertSame('VIP Bronze', $pronostic->competition);
+        $this->assertCount(2, $pronostic->evenements);
+        $this->assertGreaterThanOrEqual(1.45, $pronostic->cote_totale);
 
         foreach ($pronostic->evenements as $event) {
             // Tout ce qu'il faut pour valider le résultat automatiquement après les matchs.
@@ -404,7 +406,7 @@ class AiPronosticTest extends TestCase
             $this->assertNotEmpty($event['kickoff_at']);
         }
 
-        $this->assertStringStartsWith('BIG BOSS — BRONZE', $pronostic->analysis);
+        $this->assertStringStartsWith('BIG BOSS — VIP BRONZE', $pronostic->analysis);
         $this->assertStringContainsString('coupon de 16:30', $pronostic->analysis);
         $this->assertStringContainsString(AiPronosticGenerator::DISCLAIMER, $pronostic->analysis);
 
@@ -528,7 +530,10 @@ class AiPronosticTest extends TestCase
     {
         AppSetting::setValue('openrouter_api_key', 'sk-or-test');
         Http::fake(['openrouter.ai/*' => Http::response(['choices' => [['message' => ['content' => '{"coupon": {"selections": []}}']]]])]);
-        $this->fakeCandidates($this->candidatePool());
+        // L'échelle BIG BOSS consomme 5+4+3+2 = 14 sélections pour les 4 niveaux VIP (voir CLAUDE.md) :
+        // le pool doit donc fournir une 15e sélection, la plus faible, pour que Starter (1 événement)
+        // ait encore un candidat disponible une fois les VIP servis en premier.
+        $this->fakeCandidates([...$this->candidatePool(), $this->candidate(15, 'under', 1.20, 0.76)]);
 
         $drafts = collect(app(AiPronosticGenerator::class)->generate([], PronosticRules::LEVELS))->keyBy('niveau');
 
@@ -619,22 +624,23 @@ class AiPronosticTest extends TestCase
         $this->football = false;
         $this->fakeServices();
         // Heures du Bénin, même si le serveur (et ce test) tournent en UTC.
-        $this->travelTo(Carbon::parse('today 16:35', 'Africa/Porto-Novo'));
+        // Échelle BIG BOSS (voir CLAUDE.md) : Bronze à 11:00, un seul créneau par niveau VIP.
+        $this->travelTo(Carbon::parse('today 11:05', 'Africa/Porto-Novo'));
 
-        // 16:35 : seul le Bronze de 16:30 est dû (Platinum 16:00 dépasse les 20 min de rattrapage).
-        $this->artisan('binho:run-pronostic-slots')->expectsOutputToContain('Créneau 16:30 : Bronze')->assertSuccessful();
+        // 11:05 : seul le Bronze de 11:00 est dû (Starter 09:00/19:00 dépasse les 20 min de rattrapage).
+        $this->artisan('binho:run-pronostic-slots')->expectsOutputToContain('Créneau 11:00 : Bronze')->assertSuccessful();
         $this->artisan('binho:run-pronostic-slots')->expectsOutputToContain('Aucun créneau')->assertSuccessful();
 
         $run = PronosticRun::query()->sole();
-        $this->assertSame(['Bronze', '16:30', PronosticRun::STATUS_EMPTY], [$run->level, $run->slot, $run->status]);
+        $this->assertSame(['Bronze', '11:00', PronosticRun::STATUS_EMPTY], [$run->level, $run->slot, $run->status]);
 
         // Les heures se règlent dans Admin > Paramètres.
-        AppSetting::setValue('ai_schedule_gold', '09:00, 16:40');
-        $this->travelTo(Carbon::parse('today 16:41', 'Africa/Porto-Novo'));
-        $this->artisan('binho:run-pronostic-slots')->expectsOutputToContain('Créneau 16:40 : Gold')->assertSuccessful();
+        AppSetting::setValue('ai_schedule_gold', '09:00, 11:10');
+        $this->travelTo(Carbon::parse('today 11:11', 'Africa/Porto-Novo'));
+        $this->artisan('binho:run-pronostic-slots')->expectsOutputToContain('Créneau 11:10 : Gold')->assertSuccessful();
 
         $this->assertSame(['Bronze', 'Gold'], PronosticRun::query()->orderBy('id')->pluck('level')->all());
-        $this->assertSame(['09:00', '16:40'], PronosticRules::schedule()['Gold']);
+        $this->assertSame(['09:00', '11:10'], PronosticRules::schedule()['Gold']);
     }
 
     public function test_the_admin_can_only_save_valid_publication_times(): void
@@ -643,7 +649,8 @@ class AiPronosticTest extends TestCase
             ->post('/admin/settings', ['ai_schedule_silver' => 'le matin', 'ai_min_probability_vip' => '40'])
             ->assertSessionHasErrors(['ai_schedule_silver', 'ai_min_probability_vip']);
 
-        $this->assertSame(['10:00', '15:00', '20:00'], PronosticRules::schedule()['Silver']);
+        // Échelle BIG BOSS (voir CLAUDE.md) : un seul créneau par niveau VIP, Silver = 13:00.
+        $this->assertSame(['13:00'], PronosticRules::schedule()['Silver']);
     }
 
     public function test_an_exhausted_odds_quota_is_reported_to_the_admin(): void
@@ -694,15 +701,18 @@ class AiPronosticTest extends TestCase
         $this->assertTrue($locked['locked']);
     }
 
-    public function test_the_admin_instructions_follow_the_binho_flash_document(): void
+    public function test_the_admin_instructions_follow_the_big_boss_document(): void
     {
         $instructions = AppSetting::value('ai_pronostic_instructions');
 
         $this->assertStringStartsWith('BIG BOSS — INSTRUCTIONS PRINCIPALES', $instructions);
-        $this->assertStringContainsString('75 % par sélection pour Starter/Bronze et 80 % pour les VIP', $instructions);
+        // Bronze est VIP (voir CLAUDE.md) : seul Starter reste au seuil 75 %.
+        $this->assertStringContainsString('75 % par sélection pour Starter (seul niveau gratuit) et 80 % pour les VIP', $instructions);
         $this->assertStringContainsString('corners, cartons', $instructions);
         $this->assertStringContainsString('BIG BOSS — [NOM DU GROUPE]', $instructions);
         $this->assertStringContainsString('ne publie rien', $instructions);
+        // Échelle progressive BIG BOSS (voir CLAUDE.md) : une sélection de plus par niveau VIP.
+        $this->assertStringContainsString('une sélection de plus que le précédent', $instructions);
         // Les prix restent ceux de Admin > VIP, jamais dans les consignes de l'IA.
         $this->assertStringNotContainsString('FCFA', $instructions);
     }

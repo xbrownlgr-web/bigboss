@@ -285,12 +285,14 @@ class VipSubscriptionTest extends TestCase
     public function test_the_ai_generates_all_five_groups_at_their_own_times(): void
     {
         $this->assertSame(['Starter', 'Bronze', 'Silver', 'Gold', 'Platinum'], \App\Services\AiPronosticGenerator::AI_LEVELS);
+        // Échelle BIG BOSS (voir CLAUDE.md) : un seul créneau par niveau VIP, Starter en a deux
+        // (matin + soir) puisqu'il reste à 1 événement à chaque fois.
         $this->assertSame([
-            'Starter' => ['09:00'],
-            'Bronze' => ['16:30'],
-            'Silver' => ['10:00', '15:00', '20:00'],
-            'Gold' => ['09:00', '13:00', '18:00', '23:30'],
-            'Platinum' => ['08:00', '12:00', '16:00', '21:00'],
+            'Starter' => ['09:00', '19:00'],
+            'Bronze' => ['11:00'],
+            'Silver' => ['13:00'],
+            'Gold' => ['16:00'],
+            'Platinum' => ['20:00'],
         ], \App\Support\PronosticRules::schedule());
 
         $this->actingAs($this->admin())

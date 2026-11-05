@@ -29,8 +29,9 @@ class AiPronosticGenerator
 
     public const DEFAULT_MODEL = 'anthropic/claude-sonnet-5.5';
 
-    // Plafond absolu de sélections dans un coupon (Platinum) ; chaque groupe a le sien.
-    public const MAX_SELECTIONS = 4;
+    // Plafond absolu de sélections dans un coupon (Platinum, le niveau le plus haut de l'échelle
+    // progressive — voir CLAUDE.md) ; chaque groupe a le sien via PronosticRules::LIMITS.
+    public const MAX_SELECTIONS = 5;
 
     // Tous les groupes sont générés automatiquement (heures dans Admin > Paramètres).
     public const AI_LEVELS = PronosticRules::LEVELS;
