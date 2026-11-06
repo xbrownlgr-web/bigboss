@@ -107,6 +107,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::post('/settings', [AdminController::class, 'updateSettings']);
     Route::post('/settings/test-email', [AdminController::class, 'testEmail'])->middleware('throttle:5,1');
     Route::post('/settings/test-whatsapp', [AdminController::class, 'testWhatsApp'])->middleware('throttle:5,1');
+    Route::post('/settings/test-whatsapp-cloud', [AdminController::class, 'testWhatsAppCloud'])->middleware('throttle:5,1');
     Route::post('/settings/test-assistant', [AdminController::class, 'testAssistant'])->middleware('throttle:5,1');
     Route::get('/messages', [AdminController::class, 'messages']);
     Route::post('/messages/{userId}/reply', [AdminController::class, 'reply'])->whereNumber('userId');

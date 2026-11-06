@@ -98,7 +98,9 @@
                                 @endif
                             @endif
                             @if ($groupKey === 'whatsapp')
-                                <button class="btn btn-sm bf-btn-light mb-3" type="submit" form="testWhatsAppForm"><i class="bi bi-whatsapp"></i> Envoyer un WhatsApp de test</button>
+                                <button class="btn btn-sm bf-btn-light mb-2" type="submit" form="testWhatsAppForm"><i class="bi bi-whatsapp"></i> Envoyer un WhatsApp de test (CallMeBot)</button>
+                                <button class="btn btn-sm bf-btn-light mb-3" type="submit" form="testWhatsAppCloudForm"><i class="bi bi-whatsapp"></i> Tester l’alerte Cloud API (recharges/retraits)</button>
+                                <div class="bf-small mb-3">L’alerte Cloud API (Meta) n’est utilisée que pour les nouvelles recharges/retraits, configurée par variables d’environnement (Render), pas ici. Si elle échoue, le message ci-dessus (CallMeBot) prend automatiquement le relais.</div>
                             @endif
                             <div class="row g-3">
                                 @foreach ($settings as $setting)
@@ -181,6 +183,9 @@
         @csrf
     </form>
     <form method="POST" action="/admin/settings/test-whatsapp" id="testWhatsAppForm" hidden>
+        @csrf
+    </form>
+    <form method="POST" action="/admin/settings/test-whatsapp-cloud" id="testWhatsAppCloudForm" hidden>
         @csrf
     </form>
     <form method="POST" action="/admin/settings/test-assistant" id="testAssistantForm" hidden>

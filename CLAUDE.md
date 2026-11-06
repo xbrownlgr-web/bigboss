@@ -73,6 +73,16 @@ compte. Ne pas revenir en arrière sur ce point sans qu'on en reparle explicitem
   exporte la base toutes les 6 h vers `E:\Sauvegardes-BIGBOSS-Binho\` (hors dépôt, sur la machine du
   fondateur). Si cette tâche est désactivée un jour, le rappeler.
 - **Compte admin** : lu via `config('app.admin_email')` (env `ADMIN_EMAIL`), **jamais codé en dur**.
+- **Alertes WhatsApp** : `WhatsAppNotifier` (CallMeBot, réglages `callmebot_phone`/`callmebot_apikey`
+  dans Admin > Paramètres) reste la source pour les alertes pronostics, messages support et le
+  bouton de test générique. **Seule l'alerte « nouvelle recharge/retrait »** (`TransactionController`)
+  passe par `WhatsAppCloudService` (API Cloud officielle Meta, variables d'environnement
+  `WHATSAPP_*`/`ADMIN_WHATSAPP_NUMBER`, jamais dans Admin > Paramètres) : envoyée via
+  `dispatch(...)->afterResponse()` (jamais de queue/worker, inexistant dans cette archi Render à un
+  seul service) pour ne jamais bloquer la réponse à l'app, avec repli automatique sur CallMeBot si la
+  Cloud API échoue après ses 2 nouvelles tentatives. Avant d'étendre ce repli à d'autres alertes :
+  un template Meta approuvé est figé (variables fixes), il ne couvre PAS le texte libre des 3 autres
+  déclencheurs — ne jamais y toucher sans faire approuver un nouveau template adapté.
 - **Sources de données foot** : Highlightly (100 req/jour gratuit, souvent épuisé en journée — cause
   principale des coupons vides/trop petits, voir le reste de ce fichier) reste la source de **tous**
   les championnats pour le classement/forme, SAUF les 10 couverts par **football-data.org**

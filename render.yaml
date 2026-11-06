@@ -73,4 +73,16 @@ services:
       - key: ADMIN_PASSWORD
         sync: false
 
-      # Alertes WhatsApp (CallMeBot) : à renseigner dans Admin > Paramètres.
+      # Alerte WhatsApp « nouvelle recharge/retrait » (Cloud API officielle Meta). Les autres
+      # alertes WhatsApp (pronostics, messages support, test générique) restent sur CallMeBot,
+      # à renseigner dans Admin > Paramètres (pas ici).
+      - key: WHATSAPP_API_VERSION
+        value: v21.0
+      - key: WHATSAPP_PHONE_NUMBER_ID
+        sync: false
+      - key: WHATSAPP_ACCESS_TOKEN
+        sync: false
+      - key: WHATSAPP_TEMPLATE_NAME
+        sync: false
+      - key: ADMIN_WHATSAPP_NUMBER
+        sync: false

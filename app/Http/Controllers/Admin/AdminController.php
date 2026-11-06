@@ -20,6 +20,7 @@ use App\Services\MatchDataService;
 use App\Services\OddsService;
 use App\Services\SupportAssistant;
 use App\Services\VipService;
+use App\Services\WhatsAppCloudService;
 use App\Services\WhatsAppNotifier;
 use App\Support\BrandPalettes;
 use App\Support\PronosticRules;
@@ -282,6 +283,24 @@ class AdminController extends Controller
         return $error === null
             ? back()->with('success', 'Message WhatsApp envoyé à ' . WhatsAppNotifier::normalizePhone(AppSetting::value('callmebot_phone')) . '. Il arrive en quelques secondes.')
             : back()->with('error', 'WhatsApp non envoyé : ' . $error);
+    }
+
+    /**
+     * Teste uniquement l'alerte Cloud API (recharges/retraits) : utilise le vrai modèle approuvé,
+     * avec des valeurs de démonstration dans ses 4 variables. N'utilise jamais le repli CallMeBot :
+     * on veut ici savoir si la Cloud API elle-même fonctionne.
+     */
+    public function testWhatsAppCloud(WhatsAppCloudService $whatsAppCloud): RedirectResponse
+    {
+        if (! WhatsAppCloudService::configured()) {
+            return back()->with('error', 'WhatsApp Cloud non configuré : variables d’environnement manquantes (voir Render).');
+        }
+
+        $error = $whatsAppCloud->sendTransactionAlert('recharge', '1 000', 'Test', 'Client de test', ['test' => true]);
+
+        return $error === null
+            ? back()->with('success', 'Message WhatsApp Cloud envoyé. Il arrive en quelques secondes.')
+            : back()->with('error', 'WhatsApp Cloud non envoyé : ' . $error);
     }
 
     /**

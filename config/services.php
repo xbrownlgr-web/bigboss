@@ -44,4 +44,14 @@ return [
         ],
     ],
 
+    // Alerte WhatsApp « nouvelle recharge/retrait » (WhatsAppCloudService) : uniquement ce
+    // déclencheur, les autres alertes WhatsApp restent sur CallMeBot (WhatsAppNotifier).
+    'whatsapp_cloud' => [
+        'version' => env('WHATSAPP_API_VERSION', 'v21.0'),
+        'phone_number_id' => env('WHATSAPP_PHONE_NUMBER_ID'),
+        'token' => env('WHATSAPP_ACCESS_TOKEN'),
+        'template' => env('WHATSAPP_TEMPLATE_NAME'),
+        'admin_number' => env('ADMIN_WHATSAPP_NUMBER'),
+    ],
+
 ];
