@@ -39,6 +39,10 @@ class MatchDataService
 
     private const NATIONAL_TEAM_LEAGUES = [5039, 5890, 1635];
 
+    public function __construct(private readonly FootballDataService $footballData)
+    {
+    }
+
     /**
      * @param array<int, array<string, mixed>> $fixtures matchs déjà munis de leurs cotes (OddsService)
      * @return array<int, array<string, mixed>> les matchs analysables, chacun avec une clé « data »
@@ -61,13 +65,19 @@ class MatchDataService
         $requests = [];
 
         foreach ($fixtures as $fixture) {
-            if (! empty($fixture['league_id']) && ! empty($fixture['season'])) {
+            // Championnat couvert par football-data.org (plan gratuit) et clé réglée : classement et
+            // forme viennent de là, ça décharge d'autant le quota Highlightly (voir FootballDataService).
+            $onFootballData = $this->footballData->covers($fixture['odds_key'] ?? null);
+
+            if (! $onFootballData && ! empty($fixture['league_id']) && ! empty($fixture['season'])) {
                 $requests["standings:{$fixture['league_id']}:{$fixture['season']}"] = ['/standings', ['leagueId' => $fixture['league_id'], 'season' => $fixture['season']]];
             }
 
-            foreach (['home_id', 'away_id'] as $side) {
-                if (! empty($fixture[$side])) {
-                    $requests["last5:{$fixture[$side]}"] = ['/last-five-games', ['teamId' => $fixture[$side]]];
+            if (! $onFootballData) {
+                foreach (['home_id', 'away_id'] as $side) {
+                    if (! empty($fixture[$side])) {
+                        $requests["last5:{$fixture[$side]}"] = ['/last-five-games', ['teamId' => $fixture[$side]]];
+                    }
                 }
             }
 
@@ -85,16 +95,28 @@ class MatchDataService
         return array_map(function (array $fixture) use ($responses) {
             $homeId = (int) ($fixture['home_id'] ?? 0);
             $awayId = (int) ($fixture['away_id'] ?? 0);
-            $standings = $responses['standings:' . ($fixture['league_id'] ?? '') . ':' . ($fixture['season'] ?? '')] ?? null;
             $details = $responses['match:' . ($fixture['id'] ?? '')] ?? null;
+            $onFootballData = $this->footballData->covers($fixture['odds_key'] ?? null);
+
+            if ($onFootballData) {
+                $standings = $this->footballData->standings((string) $fixture['odds_key'], $homeId, $awayId);
+                $form = [
+                    'home' => $this->footballData->recentForm($homeId),
+                    'away' => $this->footballData->recentForm($awayId),
+                ];
+            } else {
+                $rawStandings = $responses['standings:' . ($fixture['league_id'] ?? '') . ':' . ($fixture['season'] ?? '')] ?? null;
+                $standings = $rawStandings !== null ? $this->standings($rawStandings, $fixture) : null;
+                $form = [
+                    'home' => $this->form($responses["last5:{$homeId}"] ?? null, $homeId),
+                    'away' => $this->form($responses["last5:{$awayId}"] ?? null, $awayId),
+                ];
+            }
 
             return [...$fixture, 'data' => [
                 'type' => $this->competitionType((int) ($fixture['league_id'] ?? 0)),
-                'standings' => $standings !== null ? $this->standings($standings, $fixture) : null,
-                'form' => [
-                    'home' => $this->form($responses["last5:{$homeId}"] ?? null, $homeId),
-                    'away' => $this->form($responses["last5:{$awayId}"] ?? null, $awayId),
-                ],
+                'standings' => $standings,
+                'form' => $form,
                 'h2h' => null,
                 'details' => $details !== null ? $this->details($details) : null,
                 'collected_at' => now()->toIso8601String(),
