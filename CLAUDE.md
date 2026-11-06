@@ -73,6 +73,16 @@ compte. Ne pas revenir en arrière sur ce point sans qu'on en reparle explicitem
   exporte la base toutes les 6 h vers `E:\Sauvegardes-BIGBOSS-Binho\` (hors dépôt, sur la machine du
   fondateur). Si cette tâche est désactivée un jour, le rappeler.
 - **Compte admin** : lu via `config('app.admin_email')` (env `ADMIN_EMAIL`), **jamais codé en dur**.
+- **Sources de données foot** : Highlightly (100 req/jour gratuit, souvent épuisé en journée — cause
+  principale des coupons vides/trop petits, voir le reste de ce fichier) reste la source de **tous**
+  les championnats pour le classement/forme, SAUF les 10 couverts par **football-data.org**
+  (`FootballDataService`/`FootballDataLeagues`, 10 req/min gratuit, sans plafond quotidien, vérifié en
+  direct le 2026-11-06 : PL, Liga, Bundesliga, Ligue 1, Serie A, Eredivisie, Liga Portugal,
+  Championship, Brésil, Ligue des champions). Clé optionnelle dans Admin > Paramètres > IA
+  (`football_data_api_key`), vide par défaut = aucun changement. ⚠️ **Ne jamais utiliser
+  football-data.org pour régler un combiné (gagné/perdu)** : ses identifiants de match ne
+  correspondent pas à ceux de Highlightly (`fixture_id`), un rapprochement par nom serait risqué avec
+  de l'argent réel — `FixtureService::resultsForEvents` reste 100 % Highlightly, volontairement.
 
 ## Règles générales
 
