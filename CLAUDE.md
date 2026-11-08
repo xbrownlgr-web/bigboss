@@ -63,6 +63,9 @@ par ailleurs ses réglages de fiabilité (voir ci-dessous). Les deux sont indép
 d'événements du jour pour un niveau doit correspondre à son échelle (ex. Gold = 4, pas plus).
 `PronosticRules::DEFAULT_SCHEDULE` doit donc avoir **un seul créneau par niveau VIP**, Starter ayant
 exceptionnellement 2 créneaux (matin + soir) puisqu'il reste à 1 événement à chaque fois.
+**Horaires (décision du fondateur, 2026-11-08)** : Starter 09:00 + 19:00, Bronze 11:00, Silver
+13:00, **Gold 12:00, Platinum 14:00** (avant : 16:00 et 20:00, trop tard — plus assez de matchs
+pour 4 et 5 événements). Ne pas remettre les gros coupons en soirée.
 
 **Fusion en une seule offre par jour** (déjà implémenté côté mobile, `PronosticsScreen.tsx` —
 `couponsToShow` / `mapApiPronostic`) : si plusieurs pronostics du même niveau sont publiés le même

@@ -286,13 +286,15 @@ class VipSubscriptionTest extends TestCase
     {
         $this->assertSame(['Starter', 'Bronze', 'Silver', 'Gold', 'Platinum'], \App\Services\AiPronosticGenerator::AI_LEVELS);
         // Échelle BIG BOSS (voir CLAUDE.md) : un seul créneau par niveau VIP, Starter en a deux
-        // (matin + soir) puisqu'il reste à 1 événement à chaque fois.
+        // (matin + soir) puisqu'il reste à 1 événement à chaque fois. Gold et Platinum avancés à
+        // 12:00 et 14:00 le 2026-11-08 (décision du fondateur) : à 16:00/20:00, il restait trop
+        // peu de matchs pour 4 et 5 événements.
         $this->assertSame([
             'Starter' => ['09:00', '19:00'],
             'Bronze' => ['11:00'],
             'Silver' => ['13:00'],
-            'Gold' => ['16:00'],
-            'Platinum' => ['20:00'],
+            'Gold' => ['12:00'],
+            'Platinum' => ['14:00'],
         ], \App\Support\PronosticRules::schedule());
 
         $this->actingAs($this->admin())

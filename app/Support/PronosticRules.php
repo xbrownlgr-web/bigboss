@@ -44,8 +44,10 @@ class PronosticRules
         'Starter' => '09:00, 19:00',
         'Bronze' => '11:00',
         'Silver' => '13:00',
-        'Gold' => '16:00',
-        'Platinum' => '20:00',
+        // Avancés le 2026-11-08 (décision du fondateur) : à 16:00 / 20:00 il ne restait plus assez
+        // de matchs dans la journée pour 4 et 5 événements (coupons de secours à 1-2 sélections).
+        'Gold' => '12:00',
+        'Platinum' => '14:00',
     ];
 
     public static function isFree(string $level): bool
