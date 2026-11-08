@@ -29,7 +29,7 @@ class AdminConsoleTest extends TestCase
 
     private function admin(): User
     {
-        return User::factory()->create(['email' => 'admin@binhoflash.com', 'is_active' => true, 'name' => 'Admin BIG BOSS']);
+        return User::factory()->create(['email' => 'admin@bigboss.app', 'is_active' => true, 'name' => 'Admin BIG BOSS']);
     }
 
     private function client(array $attributes = []): User

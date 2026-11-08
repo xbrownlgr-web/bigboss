@@ -74,6 +74,9 @@ class ExpoPushService
             'body' => $body,
             'sound' => 'default',
             'priority' => 'high',
+            // Identifiant TECHNIQUE du canal Android créé par l'app BIG BOSS (affiché « Alertes BIG BOSS »
+            // sur le téléphone). Hérité du fork : NE PAS le renommer, les APK déjà installés ne
+            // connaissent que celui-ci (sinon notifications sans son ni bannière).
             'channelId' => 'binho_alerts',
             'interruptionLevel' => 'active',
             'data' => $data,

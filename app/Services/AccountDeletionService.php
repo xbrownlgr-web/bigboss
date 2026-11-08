@@ -32,7 +32,7 @@ class AccountDeletionService
 
             $user->forceFill([
                 'name' => 'Compte supprimé',
-                'email' => 'supprime-' . $user->id . '-' . Str::lower(Str::random(8)) . '@binhoflash.invalid',
+                'email' => 'supprime-' . $user->id . '-' . Str::lower(Str::random(8)) . '@bigboss.invalid',
                 'phone' => null,
                 'country' => null,
                 'password' => Hash::make(Str::random(40)),

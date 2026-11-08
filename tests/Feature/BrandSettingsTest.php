@@ -16,9 +16,9 @@ class BrandSettingsTest extends TestCase
         $response = $this->getJson('/api/v1/settings/public')->assertSuccessful();
 
         $response->assertJsonPath('branding.app_name', 'BIG BOSS');
-        $response->assertJsonPath('branding.palette.key', 'navy_gold');
-        $response->assertJsonPath('branding.palette.primary', '#1A2E5A');
-        $response->assertJsonPath('branding.palette.accent', '#FFD700');
+        $response->assertJsonPath('branding.palette.key', 'green_black');
+        $response->assertJsonPath('branding.palette.primary', '#0C2A1E');
+        $response->assertJsonPath('branding.palette.accent', '#22C55E');
     }
 
     public function test_the_chosen_name_and_palette_are_served_to_the_app(): void
@@ -39,6 +39,6 @@ class BrandSettingsTest extends TestCase
 
         $this->getJson('/api/v1/settings/public')
             ->assertSuccessful()
-            ->assertJsonPath('branding.palette.key', 'navy_gold');
+            ->assertJsonPath('branding.palette.key', 'green_black');
     }
 }

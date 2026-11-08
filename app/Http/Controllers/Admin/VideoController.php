@@ -54,7 +54,8 @@ class VideoController extends Controller
         $params = [
             'eager' => self::PLAYBACK_TRANSFORMATION,
             'eager_async' => 'true',
-            'folder' => 'binhoflash/tutoriels',
+            // Dossier propre à BIG BOSS (jamais celui de Binho Flash, même compte Cloudinary ou non).
+            'folder' => 'bigboss/tutoriels',
             'timestamp' => (string) time(),
         ];
 

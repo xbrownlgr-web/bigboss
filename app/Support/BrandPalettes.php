@@ -10,7 +10,7 @@ namespace App\Support;
  */
 class BrandPalettes
 {
-    public const DEFAULT = 'navy_gold';
+    public const DEFAULT = 'green_black'; // BIG BOSS = vert & noir (navy_gold était la palette de Binho)
 
     /**
      * @var array<string, array{label: string, primary: string, primary_dark: string, accent: string, on_accent: string}>

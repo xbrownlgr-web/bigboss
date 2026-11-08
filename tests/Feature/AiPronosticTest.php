@@ -29,7 +29,7 @@ class AiPronosticTest extends TestCase
 
     private function admin(): User
     {
-        return User::factory()->create(['email' => 'admin@binhoflash.com', 'is_active' => true]);
+        return User::factory()->create(['email' => 'admin@bigboss.app', 'is_active' => true]);
     }
 
     private function configureKeys(bool $football = true): void

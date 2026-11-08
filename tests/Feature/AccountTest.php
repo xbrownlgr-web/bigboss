@@ -96,7 +96,7 @@ class AccountTest extends TestCase
         $this->assertNull($deleted->phone);
         $this->assertNull($deleted->fcm_token);
         $this->assertFalse($deleted->is_active);
-        $this->assertStringEndsWith('@binhoflash.invalid', $deleted->email);
+        $this->assertStringEndsWith('@bigboss.invalid', $deleted->email);
         $this->assertSame(0, $deleted->tokens()->count());
         $this->assertSame(0, Message::query()->where('user_id', $user->id)->count());
         $this->assertSame(0, VipSubscription::query()->where('user_id', $user->id)->count());

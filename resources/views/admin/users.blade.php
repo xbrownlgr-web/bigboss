@@ -50,7 +50,7 @@
                 <tbody>
                     @forelse ($users as $user)
                         @php
-                            $isMainAdmin = $user->email === 'admin@binhoflash.com';
+                            $isMainAdmin = strcasecmp($user->email, (string) config('app.admin_email')) === 0;
                         @endphp
                         <tr>
                             <td>

@@ -14,7 +14,7 @@ return [
     */
 
     'name' => env('APP_NAME', 'Laravel'),
-    'admin_email' => env('ADMIN_EMAIL', 'admin@binhoflash.com'),
+    'admin_email' => env('ADMIN_EMAIL', 'admin@bigboss.app'),
 
     /*
     |--------------------------------------------------------------------------

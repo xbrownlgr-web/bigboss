@@ -96,7 +96,7 @@ class LatestRelease
         try {
             $location = Http::timeout(5)
                 ->withoutRedirecting()
-                ->withHeaders(['User-Agent' => 'binhoflash'])
+                ->withHeaders(['User-Agent' => 'bigboss'])
                 ->head("https://github.com/{$repository}/releases/latest")
                 ->header('Location');
 
@@ -109,7 +109,7 @@ class LatestRelease
 
         try {
             $tag = Http::timeout(5)
-                ->withHeaders(['Accept' => 'application/vnd.github+json', 'User-Agent' => 'binhoflash'])
+                ->withHeaders(['Accept' => 'application/vnd.github+json', 'User-Agent' => 'bigboss'])
                 ->get("https://api.github.com/repos/{$repository}/releases/latest")
                 ->json('tag_name');
 

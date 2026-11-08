@@ -25,11 +25,11 @@
     $hints = [
         'app_latest_version' => 'Suivi automatiquement : la dernière version publiée sur GitHub est utilisée si elle est plus récente.',
         'app_min_version' => 'En dessous de cette version, l’application est bloquée jusqu’à la mise à jour.',
-        'app_download_url' => 'Lien direct vers le fichier .apk (ex. https://binhoflash.com/app.apk).',
+        'app_download_url' => 'Lien direct vers le fichier .apk (ex. https://big-boss-gure.onrender.com/big-boss.apk).',
         'cloudinary_cloud_name' => 'Visible en haut du tableau de bord Cloudinary (Dashboard > Product environment).',
         'video_recharge_url' => 'Rempli automatiquement depuis Admin > Vidéos.',
         'video_retrait_url' => 'Rempli automatiquement depuis Admin > Vidéos.',
-        'retrait_ville' => 'Ex. Natitingou : la ville à choisir après « Espèces » sur 1xBet / Melbet.',
+        'retrait_ville' => 'Ex. Cotonou : la ville à choisir après « Espèces » sur 1xBet / Melbet.',
         'retrait_point' => 'Ex. Chez Boss17 : la rue exacte du guichet, telle qu’elle apparaît sur 1xBet / Melbet.',
         'callmebot_phone' => 'Votre numéro WhatsApp au format international, avec l’indicatif : +229 01 97 00 00 00. Le numéro qui a envoyé le message d’activation à CallMeBot.',
         'callmebot_apikey' => 'La clé reçue de CallMeBot sur WhatsApp après l’activation.',

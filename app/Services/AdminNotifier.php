@@ -16,7 +16,10 @@ use Throwable;
 class AdminNotifier
 {
     // Valeur d'origine du paramètre : une boîte qui n'existe pas.
-    public const PLACEHOLDER_EMAIL = 'admin@binhoflash.com';
+    public const PLACEHOLDER_EMAIL = 'admin@bigboss.app';
+
+    // BIG BOSS n'écrit JAMAIS à une adresse de Binho Flash (héritage du fork) : filtrée d'office.
+    private const FOREIGN_DOMAIN = '@binhoflash.com';
 
     /**
      * Adresses valides du paramètre « E-mail administrateur » (plusieurs possibles, séparées par des virgules).
@@ -27,7 +30,9 @@ class AdminNotifier
     {
         return collect(explode(',', (string) AppSetting::value('admin_email')))
             ->map(fn ($email) => trim($email))
-            ->filter(fn ($email) => filter_var($email, FILTER_VALIDATE_EMAIL) && strcasecmp($email, self::PLACEHOLDER_EMAIL) !== 0)
+            ->filter(fn ($email) => filter_var($email, FILTER_VALIDATE_EMAIL)
+                && strcasecmp($email, self::PLACEHOLDER_EMAIL) !== 0
+                && ! str_ends_with(strtolower($email), self::FOREIGN_DOMAIN))
             ->unique()
             ->values()
             ->all();

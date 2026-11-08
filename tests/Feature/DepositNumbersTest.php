@@ -16,7 +16,7 @@ class DepositNumbersTest extends TestCase
 
     private function admin(): User
     {
-        return User::factory()->create(['email' => 'admin@binhoflash.com', 'is_active' => true]);
+        return User::factory()->create(['email' => 'admin@bigboss.app', 'is_active' => true]);
     }
 
     private function number(string $country, string $operator, string $number, bool $active = true): DepositNumber
@@ -132,9 +132,9 @@ class DepositNumbersTest extends TestCase
 
     public function test_the_binho_withdrawal_address_is_set_by_default(): void
     {
-        // Posée par la migration : Natitingou, « Chez Binho17 ».
+        // Posée par la migration : Cotonou, « BIG BOSS ».
         $this->getJson('/api/v1/settings/public')
-            ->assertJsonPath('retrait.ville', 'Natitingou')
-            ->assertJsonPath('retrait.point', 'Chez Binho17');
+            ->assertJsonPath('retrait.ville', 'Cotonou')
+            ->assertJsonPath('retrait.point', 'BIG BOSS');
     }
 }

@@ -62,7 +62,7 @@ class AdminEmailAlertTest extends TestCase
 
     public function test_the_placeholder_address_never_receives_alerts(): void
     {
-        // Valeur d'origine : admin@binhoflash.com, une boîte qui n'existe pas.
+        // Valeur d'origine du réglage : une boîte qui n'existe pas (jamais d'adresse Binho Flash).
         $this->actingAs($this->member(), 'sanctum')->postJson('/api/v1/transactions', [
             'type' => 'recharge', 'platform' => '1xbet', 'player_id' => '1', 'amount' => 500, 'reference_code' => 'X1234',
         ])->assertCreated();
@@ -83,7 +83,7 @@ class AdminEmailAlertTest extends TestCase
 
     public function test_the_admin_can_send_a_test_email(): void
     {
-        $admin = User::factory()->create(['email' => 'admin@binhoflash.com', 'is_active' => true]);
+        $admin = User::factory()->create(['email' => 'admin@bigboss.app', 'is_active' => true]);
 
         $this->actingAs($admin)->post('/admin/settings/test-email')->assertSessionHas('error');
 

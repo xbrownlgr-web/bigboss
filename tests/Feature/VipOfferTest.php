@@ -77,7 +77,7 @@ class VipOfferTest extends TestCase
 
     public function test_the_admin_sets_vip_prices_in_settings(): void
     {
-        $admin = User::factory()->create(['email' => 'admin@binhoflash.com', 'is_active' => true]);
+        $admin = User::factory()->create(['email' => 'admin@bigboss.app', 'is_active' => true]);
 
         $this->actingAs($admin)
             ->get('/admin/settings')

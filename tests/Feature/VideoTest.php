@@ -14,7 +14,7 @@ class VideoTest extends TestCase
 
     private function admin(): User
     {
-        return User::factory()->create(['email' => 'admin@binhoflash.com', 'is_active' => true]);
+        return User::factory()->create(['email' => 'admin@bigboss.app', 'is_active' => true]);
     }
 
     public function test_the_signature_matches_cloudinary_documentation_example(): void
@@ -31,7 +31,7 @@ class VideoTest extends TestCase
 
     public function test_the_admin_saves_a_video_and_the_app_receives_it(): void
     {
-        $url = 'https://res.cloudinary.com/demo/video/upload/f_mp4,vc_h264,q_auto/v1/binhoflash/tutoriels/recharge.mp4';
+        $url = 'https://res.cloudinary.com/demo/video/upload/f_mp4,vc_h264,q_auto/v1/bigboss/tutoriels/recharge.mp4';
 
         $admin = $this->admin();
 

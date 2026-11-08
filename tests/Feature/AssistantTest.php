@@ -34,8 +34,8 @@ class AssistantTest extends TestCase
         AppSetting::setValue('openrouter_api_key', 'sk-or-test');
         DepositNumber::create(['country' => 'benin', 'operator' => 'MTN MoMo', 'number' => '01 97 00 00 00', 'account_name' => 'JEAN DUPONT']);
         DepositNumber::create(['country' => 'cameroun', 'operator' => 'Orange Money', 'number' => '6 99 00 00 00', 'account_name' => 'AUTRE PAYS']);
-        AppSetting::setValue('retrait_ville', 'Natitingou');
-        AppSetting::setValue('retrait_point', 'Chez Binho17');
+        AppSetting::setValue('retrait_ville', 'Cotonou');
+        AppSetting::setValue('retrait_point', 'Chez Boss17');
         AppSetting::setValue('assistant_instructions', 'Les recharges sont validées en 10 minutes.');
         $user = $this->customer();
         Transaction::create([
@@ -67,10 +67,10 @@ class AssistantTest extends TestCase
                 && str_contains($system, '01 97 00 00 00')
                 && str_contains($system, 'JEAN DUPONT')
                 && ! str_contains($system, 'AUTRE PAYS')
-                && str_contains($system, 'Natitingou')
+                && str_contains($system, 'Cotonou')
                 && str_contains($system, 'Les recharges sont validées en 10 minutes.')
                 && str_contains($system, 'Prénom : Kofi')
-                && str_contains($system, "Tu t'appelles George")
+                && str_contains($system, "Tu t'appelles LUC")
                 && str_contains($system, 'Salut Kofi, je m\'appelle')
                 && str_contains($system, 'ID de transaction introuvable')
                 && collect($request['messages'])->last()['content'] === 'Comment recharger ?';
@@ -79,7 +79,7 @@ class AssistantTest extends TestCase
         $this->assertSame(2, AssistantMessage::query()->where('user_id', $user->id)->count());
     }
 
-    public function test_george_says_when_recharging_is_not_yet_possible_in_the_client_country(): void
+    public function test_luc_says_when_recharging_is_not_yet_possible_in_the_client_country(): void
     {
         AppSetting::setValue('openrouter_api_key', 'sk-or-test');
         DepositNumber::create(['country' => 'benin', 'operator' => 'MTN MoMo', 'number' => '01 97 00 00 00', 'account_name' => 'JEAN DUPONT']);
@@ -185,14 +185,14 @@ class AssistantTest extends TestCase
         $this->postJson('/api/v1/assistant/messages', ['content' => 'Bonjour'])->assertUnauthorized();
     }
 
-    public function test_the_admin_can_test_george_and_sees_the_exact_failure(): void
+    public function test_the_admin_can_test_luc_and_sees_the_exact_failure(): void
     {
-        $admin = User::factory()->create(['email' => 'admin@binhoflash.com', 'is_active' => true]);
+        $admin = User::factory()->create(['email' => 'admin@bigboss.app', 'is_active' => true]);
 
         // Réponses successives d'OpenRouter : crédit épuisé, puis une vraie réponse.
         Http::fake(['openrouter.ai/*' => Http::sequence()
             ->push(['error' => ['message' => 'Insufficient credits']], 402)
-            ->push(['choices' => [['message' => ['content' => 'Salut ! Je m’appelle George. Touchez **Recharger**. [[GUIDE:recharge]]']]]])]);
+            ->push(['choices' => [['message' => ['content' => 'Salut ! Je m’appelle LUC. Touchez **Recharger**. [[GUIDE:recharge]]']]]])]);
 
         $this->actingAs($admin)->post('/admin/settings/test-assistant')
             ->assertSessionHas('error', fn ($message) => str_contains($message, 'Clé OpenRouter absente'));
@@ -202,7 +202,7 @@ class AssistantTest extends TestCase
             ->assertSessionHas('error', fn ($message) => str_contains($message, 'Crédit OpenRouter épuisé'));
 
         $this->actingAs($admin)->post('/admin/settings/test-assistant')
-            ->assertSessionHas('success', fn ($message) => str_contains($message, 'George répond bien') && ! str_contains($message, '[[GUIDE'));
+            ->assertSessionHas('success', fn ($message) => str_contains($message, 'LUC répond bien') && ! str_contains($message, '[[GUIDE'));
     }
 
     public function test_a_client_side_failure_is_shown_to_the_admin(): void
@@ -212,19 +212,19 @@ class AssistantTest extends TestCase
 
         $this->actingAs($this->customer())->postJson('/api/v1/assistant/messages', ['content' => 'Bonjour'])->assertCreated();
 
-        $admin = User::factory()->create(['email' => 'admin@binhoflash.com', 'is_active' => true]);
+        $admin = User::factory()->create(['email' => 'admin@bigboss.app', 'is_active' => true]);
         $this->actingAs($admin)->get('/admin/settings')->assertSee('Crédit OpenRouter épuisé', false);
     }
 
     public function test_the_admin_settings_page_shows_the_assistant_section(): void
     {
         Http::fake();
-        $admin = User::factory()->create(['email' => 'admin@binhoflash.com', 'is_active' => true]);
+        $admin = User::factory()->create(['email' => 'admin@bigboss.app', 'is_active' => true]);
 
         $this->actingAs($admin)
             ->get('/admin/settings')
             ->assertOk()
-            ->assertSee('George, l’assistant 24h/24 (onglet Support)', false)
+            ->assertSee('LUC, l’assistant 24h/24 (onglet Support)', false)
             ->assertSee('Informations pour l’assistant', false);
     }
 }

@@ -139,12 +139,14 @@ class AppSetting extends Model
      */
     public static function communityLinks(): array
     {
+        // Aucun lien par défaut : ceux hérités du fork pointaient vers les pages de Binho Flash.
+        // Un réseau sans lien saisi dans l'admin n'est simplement pas affiché.
         return [
             'telegram' => self::value('telegram_url', ''),
-            'whatsapp' => self::value('whatsapp_channel_url', 'https://whatsapp.com/channel/0029VbCycEHISTkBkokScd0K'),
-            'facebook' => self::value('facebook_url', 'https://www.facebook.com/binhoflash'),
-            'tiktok' => self::value('tiktok_url', 'https://www.tiktok.com/@binhoflash'),
-            'instagram' => self::value('instagram_url', 'https://www.instagram.com/binhoflash'),
+            'whatsapp' => self::value('whatsapp_channel_url', ''),
+            'facebook' => self::value('facebook_url', ''),
+            'tiktok' => self::value('tiktok_url', ''),
+            'instagram' => self::value('instagram_url', ''),
         ];
     }
 }

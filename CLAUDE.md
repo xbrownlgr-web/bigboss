@@ -136,7 +136,19 @@ qu'un score est publié**, avec l'avertissement « ça peut perdre » partout.
 
 - Ne jamais committer de secret (mots de passe DB, clés API, compte de service Firebase).
 - Avant de pousser un changement de pronostics/VIP, relancer la suite de tests
-  (`vendor/bin/phpunit`) — une dizaine d'échecs préexistants sans rapport sont normaux (anciens
-  tests hérités de Binho jamais adaptés), mais **aucun nouvel échec** ne doit apparaître.
+  (`vendor/bin/phpunit`) : **tout doit passer** (145/145 au 2026-11-08 — les anciens « échecs
+  préexistants » étaient des restes de Binho : George, palette bleu/or, admin@binhoflash.com).
+
+## Séparation stricte BIG BOSS / Binho Flash (incident du 2026-11-08)
+
+Le fondateur exige que rien de Binho n'apparaisse dans BIG BOSS (et inversement). Nettoyé le
+2026-11-08 : liens réseaux sociaux par défaut (pages Facebook/TikTok/Instagram de Binho affichées
+dans l'app BIG BOSS), protection de l'admin principal liée à admin@binhoflash.com, palette par
+défaut bleu/or, guichet de retrait « Natitingou / Chez Binho17 », dossier Cloudinary
+`binhoflash/`, tests « George ». `AdminNotifier` filtre d'office toute adresse `@binhoflash.com`.
+Seuls restent, **volontairement**, des identifiants techniques invisibles : le préfixe des
+commandes artisan `binho:*` (planificateur) et le canal Android `binho_alerts` (les APK installés
+ne connaissent que lui). Avant de copier quoi que ce soit depuis `c:\Binho Flash`, vérifier qu'aucune
+URL, adresse, nom ou valeur de Binho n'est importé.
 - Les prix et avantages VIP (`vip_{niveau}_price`, `_price_week`, `_details`) sont éditables dans
   Admin > Paramètres > VIP, jamais codés en dur dans les vues.

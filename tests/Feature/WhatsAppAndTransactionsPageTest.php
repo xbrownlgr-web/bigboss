@@ -18,7 +18,7 @@ class WhatsAppAndTransactionsPageTest extends TestCase
 
     private function admin(): User
     {
-        return User::factory()->create(['email' => 'admin@binhoflash.com', 'is_active' => true]);
+        return User::factory()->create(['email' => 'admin@bigboss.app', 'is_active' => true]);
     }
 
     public function test_any_phone_format_becomes_international(): void

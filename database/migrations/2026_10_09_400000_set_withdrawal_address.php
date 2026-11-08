@@ -5,14 +5,14 @@ use Illuminate\Support\Facades\DB;
 
 /**
  * Adresse de retrait « Espèces » sur 1xBet / Melbet : la plateforme demande une ville et une rue.
- * Le guichet Binho Flash est à Natitingou, « Chez Binho17 ». Les valeurs ne sont posées que si
+ * Guichet BIG BOSS : Cotonou, « BIG BOSS » (valeurs de Binho retirées : jamais les mélanger). Les valeurs ne sont posées que si
  * elles sont encore vides : une adresse déjà saisie dans l'admin n'est jamais écrasée.
  */
 return new class extends Migration
 {
     private const DEFAULTS = [
-        'retrait_ville' => ['label' => 'Ville à choisir sur 1xBet / Melbet', 'value' => 'Natitingou'],
-        'retrait_point' => ['label' => 'Rue à choisir sur 1xBet / Melbet', 'value' => 'Chez Binho17'],
+        'retrait_ville' => ['label' => 'Ville à choisir sur 1xBet / Melbet', 'value' => 'Cotonou'],
+        'retrait_point' => ['label' => 'Rue à choisir sur 1xBet / Melbet', 'value' => 'BIG BOSS'],
     ];
 
     public function up(): void

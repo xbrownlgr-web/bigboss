@@ -13,7 +13,7 @@ class AdminSeeder extends Seeder
 {
     public function run(): void
     {
-        $email = env('ADMIN_EMAIL', 'admin@binhoflash.com');
+        $email = (string) config('app.admin_email');
         $password = env('ADMIN_PASSWORD');
 
         if (! $password || User::query()->where('email', $email)->exists()) {
@@ -21,7 +21,7 @@ class AdminSeeder extends Seeder
         }
 
         User::create([
-            'name' => env('ADMIN_NAME', 'Admin Binho'),
+            'name' => env('ADMIN_NAME', 'Admin BIG BOSS'),
             'email' => $email,
             'password' => $password,
             'is_active' => true,

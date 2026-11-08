@@ -10,7 +10,7 @@
 
 @php
     $fcfa = fn ($value) => number_format((float) $value, 0, ',', ' ');
-    $isMainAdmin = $user->email === 'admin@binhoflash.com';
+    $isMainAdmin = strcasecmp($user->email, (string) config('app.admin_email')) === 0;
     $recharges = $totals->get('recharge');
     $retraits = $totals->get('retrait');
 @endphp
