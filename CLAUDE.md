@@ -39,6 +39,12 @@ et le réservoir est limité à 2 sélections par match pour garder assez de mat
 dernier palier (pas assez de matchs du tout) accepte moins, en prenant alors le plus grand coupon
 possible. **Ne jamais réintroduire de logique qui réduit le nombre de sélections pour gagner en
 probabilité** : c'est la probabilité minimale par sélection qui s'assouplit, pas la taille du coupon.
+⚠️ **Diversité du réservoir** (2026-11-08) : malgré ce correctif, Gold sortait encore à 2 sélections
+en « coupon de secours ». Cause : `ValueAnalyzer::candidates()`/`fallbackCandidates()` gardaient
+les 40 paris les plus probables, qui venaient de 4-5 matchs seulement (~10 paris par match : 1X, 12,
+lignes de buts…) ; une fois retirés les matchs pris par les autres coupons, pas assez de matchs
+différents. Désormais **au plus 3 paris par match** dans ces réserves (`MAX_PER_MATCH`) → les 40
+couvrent au moins 13 matchs. Test : `test_gold_keeps_four_events_when_the_most_probable_bets_crowd_on_a_few_matches`.
 **Ne jamais écraser cette échelle** en copiant une autre config (ex. celle de Binho), même si on copie
 par ailleurs ses réglages de fiabilité (voir ci-dessous). Les deux sont indépendants :
 - Fiabilité d'une sélection individuelle → `MIN_SELECTION_ODDS` (1,15) + seuils de probabilité
@@ -58,6 +64,12 @@ jamais en plusieurs cartes qui se dupliquent. La **cote totale affichée** est l
 cotes du jour pour ce niveau (plus grande, plus attractive qu'une petite cote isolée). Les cotes
 individuelles de chaque événement ne s'affichent **plus** sur les coupons VIP — seule la cote totale
 compte. Ne pas revenir en arrière sur ce point sans qu'on en reparle explicitement.
+
+**Onglet « Du jour » = coupons du jour SEULEMENT** (depuis le 2026-11-08) : un niveau sans coupon
+aujourd'hui n'affiche plus son coupon de la veille (le fondateur l'a pris pour « pas de pronostics
+aujourd'hui, rien que les résultats d'hier »). La veille est dans « Historique » ; l'app affiche
+« Prochains coupons aujourd'hui : Platinum à 20:00… » à partir de `pronostic_schedule` (heures du
+Bénin envoyées par `/settings/public`).
 
 ## Offre « Score exact » (niveau VIP `Score`, depuis le 2026-11-08)
 

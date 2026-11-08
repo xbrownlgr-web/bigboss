@@ -54,6 +54,15 @@ class ValueAnalyzer
     // Basket, handball : sans statistiques de forme, le consensus d'au moins 3 bookmakers est exigé.
     private const MIN_CONSENSUS_BOOKMAKERS = 3;
 
+    // Réserves de paris (valeur/solide et secours) : 40 paris, au plus 3 par match. Sans cette
+    // limite, chaque match apportant ~10 paris très probables (1X, 12, +1,5 but…), les 40 venaient
+    // de 4 ou 5 matchs seulement : une fois retirés les matchs déjà pris par les autres coupons,
+    // Gold (4) et Platinum (5) ne pouvaient plus atteindre leur nombre d'événements et sortaient en
+    // « coupon de secours » à 1-2 sélections (constat du 2026-11-08, plainte du fondateur).
+    private const RESERVE_SIZE = 40;
+
+    private const MAX_PER_MATCH = 3;
+
     /**
      * @param array<int, array<string, mixed>> $fixtures matchs enrichis (OddsService + MatchDataService)
      * @return array<int, array<string, mixed>> candidats (« valeur » d'abord, par valeur décroissante,
@@ -76,7 +85,7 @@ class ValueAnalyzer
 
         usort($value, fn ($a, $b) => $b['valeur'] <=> $a['valeur']);
         usort($solid, fn ($a, $b) => self::score($b) <=> self::score($a));
-        $candidates = array_slice([...$value, ...$solid], 0, 40);
+        $candidates = $this->diversified([...$value, ...$solid]);
 
         foreach ($candidates as $index => &$candidate) {
             $candidate['id'] = 'C' . ($index + 1);
@@ -115,13 +124,42 @@ class ValueAnalyzer
         }
 
         usort($fallback, fn ($a, $b) => (float) $b['probabilite'] <=> (float) $a['probabilite']);
-        $fallback = array_slice($fallback, 0, 40);
+        $fallback = $this->diversified($fallback);
 
         foreach ($fallback as $index => &$candidate) {
             $candidate['id'] = 'S' . ($index + 1);
         }
 
         return $fallback;
+    }
+
+    /**
+     * Les RESERVE_SIZE premiers paris dans l'ordre reçu, au plus MAX_PER_MATCH par match.
+     *
+     * @param array<int, array<string, mixed>> $selections
+     * @return array<int, array<string, mixed>>
+     */
+    private function diversified(array $selections): array
+    {
+        $perMatch = [];
+        $kept = [];
+
+        foreach ($selections as $selection) {
+            $match = (string) $selection['match'];
+
+            if (($perMatch[$match] ?? 0) >= self::MAX_PER_MATCH) {
+                continue;
+            }
+
+            $perMatch[$match] = ($perMatch[$match] ?? 0) + 1;
+            $kept[] = $selection;
+
+            if (count($kept) >= self::RESERVE_SIZE) {
+                break;
+            }
+        }
+
+        return $kept;
     }
 
     /**

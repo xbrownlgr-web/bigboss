@@ -608,6 +608,34 @@ class AiPronosticTest extends TestCase
         }
     }
 
+    public function test_gold_keeps_four_events_when_the_most_probable_bets_crowd_on_a_few_matches(): void
+    {
+        // Cas réel du 2026-11-08 : les paris les plus probables (1X, +1,5 but…) venaient tous de
+        // quelques matchs ; ces matchs étant déjà pris par d'autres coupons, Gold sortait à 2.
+        AppSetting::setValue('openrouter_api_key', 'sk-or-test');
+        Http::fake(['openrouter.ai/*' => Http::response(['choices' => [['message' => ['content' => '{"coupon": {"selections": []}}']]]])]);
+
+        $fixtures = [];
+        foreach (range(1, 12) as $n) {
+            $base = $n <= 5 ? 0.88 : 0.70;
+            $selections = [];
+            foreach (range(0, 9) as $k) {
+                $fair = $base - $k * 0.01;
+                $selections[] = ['key' => $k % 2 ? 'over' : 'home_draw', 'point' => 0.5 + $k, 'label' => "Pari {$k} match {$n}", 'cote' => round(1 / $fair * 1.04, 2), 'fair' => $fair];
+            }
+            $fixtures[] = ['id' => $n, 'match' => "Équipe {$n} vs Adversaire {$n}", 'competition' => 'Ligue test', 'sport' => 'football',
+                'kickoff_at' => now()->addHours(3)->toIso8601String(), 'kickoff' => '19:00', 'selections' => $selections, 'data' => []];
+        }
+
+        $usedElsewhere = ['Équipe 1 vs Adversaire 1', 'Équipe 2 vs Adversaire 2', 'Équipe 3 vs Adversaire 3', 'Équipe 4 vs Adversaire 4'];
+        $gold = app(AiPronosticGenerator::class)->generate($fixtures, ['Gold'], ['exclude' => $usedElsewhere])[0];
+
+        $this->assertCount(4, $gold['evenements']);
+        $this->assertCount(4, array_unique(array_column($gold['evenements'], 'match')));
+        $this->assertSame([], array_intersect($usedElsewhere, array_column($gold['evenements'], 'match')));
+        $this->assertNotSame(5, $gold['palier'] ?? null, 'Gold ne doit plus tomber au dernier recours');
+    }
+
     public function test_vip_below_eighty_percent_is_published_with_an_adjusted_threshold_note(): void
     {
         AppSetting::setValue('openrouter_api_key', 'sk-or-test');
