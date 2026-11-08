@@ -45,6 +45,13 @@ les 40 paris les plus probables, qui venaient de 4-5 matchs seulement (~10 paris
 lignes de buts…) ; une fois retirés les matchs pris par les autres coupons, pas assez de matchs
 différents. Désormais **au plus 3 paris par match** dans ces réserves (`MAX_PER_MATCH`) → les 40
 couvrent au moins 13 matchs. Test : `test_gold_keeps_four_events_when_the_most_probable_bets_crowd_on_a_few_matches`.
+⚠️ **2e limite : les cotes** (offre gratuite The Odds API, 500 crédits/mois) : seulement
+`OddsService::MAX_SPORTS = 4` championnats relevés (payants) par génération. Le soir, ces 4
+championnats n'ont presque plus de matchs (Platinum 20:00 du 2026-11-08 = 1 sélection MÊME avec le
+correctif ci-dessus). Depuis : tous les championnats déjà relevés dans la journée (cache < 8 h)
+servent en plus, gratuitement (`cachedFeaturedOdds`, test `OddsCoverageTest`). La vraie solution
+reste l'abonnement The Odds API ≥ 5 000 crédits/mois (~30 $/mois pour 20 000) : le code passe
+alors tout seul à 16 championnats + marchés supplémentaires (`extended()`). Décision du fondateur.
 **Ne jamais écraser cette échelle** en copiant une autre config (ex. celle de Binho), même si on copie
 par ailleurs ses réglages de fiabilité (voir ci-dessous). Les deux sont indépendants :
 - Fiabilité d'une sélection individuelle → `MIN_SELECTION_ODDS` (1,15) + seuils de probabilité

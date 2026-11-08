@@ -50,19 +50,25 @@ class OddsService
             return $matches;
         }
 
-        // Championnats à relever : les plus prioritaires, puis ceux qui ont le plus de matchs.
+        // Championnats à relever : les plus prioritaires, puis ceux qui ont le plus de matchs. Seuls
+        // les MAX_SPORTS premiers peuvent coûter des crédits ; les autres championnats déjà relevés
+        // dans la journée (cotes encore fraîches en cache) sont utilisés GRATUITEMENT. Sans ça, le
+        // créneau du soir ne voyait que 4 championnats presque terminés (Platinum à 1 sélection le
+        // 2026-11-08) alors que d'autres avaient été relevés quelques heures plus tôt.
         $sports = collect($matches)
             ->filter(fn ($match) => ! empty($this->sportKeyFor($match)))
             ->groupBy(fn ($match) => $this->sportKeyFor($match))
             ->sortBy(fn ($group) => [(int) ($group->first()['priority'] ?? 2), -$group->count()])
             ->keys()
-            ->take(self::extended() ? self::MAX_SPORTS_EXTENDED : self::MAX_SPORTS)
-            ->all();
+            ->values();
+        $paid = self::extended() ? self::MAX_SPORTS_EXTENDED : self::MAX_SPORTS;
 
         $events = [];
 
-        foreach ($sports as $sport) {
-            foreach ($this->featuredOdds($key, $sport) as $event) {
+        foreach ($sports as $index => $sport) {
+            $odds = $index < $paid ? $this->featuredOdds($key, $sport) : $this->cachedFeaturedOdds($sport);
+
+            foreach ($odds as $event) {
                 $events[$sport][] = $event;
             }
         }
@@ -261,6 +267,21 @@ class OddsService
         Cache::put($cacheKey, ['at' => now()->toIso8601String(), 'events' => $events], now()->addHours(24));
 
         return $events;
+    }
+
+    /**
+     * Cotes d'un championnat déjà relevées et encore fraîches, sans jamais appeler l'API (0 crédit).
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function cachedFeaturedOdds(string $sport, string $markets = 'h2h,totals'): array
+    {
+        $cached = Cache::get('odds:sport:' . $sport . ':' . $markets);
+        $freshHours = self::extended() ? 2 : 8;
+
+        return is_array($cached) && Carbon::parse($cached['at'])->gt(now()->subHours($freshHours))
+            ? $cached['events']
+            : [];
     }
 
     /**
