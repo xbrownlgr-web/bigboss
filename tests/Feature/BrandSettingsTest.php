@@ -21,6 +21,20 @@ class BrandSettingsTest extends TestCase
         $response->assertJsonPath('branding.palette.accent', '#22C55E');
     }
 
+    public function test_nothing_from_binho_flash_is_ever_sent_to_the_big_boss_app(): void
+    {
+        // Séparation stricte exigée par le fondateur (incident du 2026-11-08 : liens de Binho
+        // affichés dans l'app BIG BOSS). Champs vides = réseau non affiché, jamais Binho.
+        foreach (['/api/v1/settings/public', '/api/v1/app/version'] as $url) {
+            $content = $this->getJson($url)->assertSuccessful()->getContent();
+            $this->assertStringNotContainsStringIgnoringCase('binho', $content, $url);
+        }
+
+        $links = $this->getJson('/api/v1/settings/public')->json('community_links');
+        $this->assertSame('', $links['facebook']);
+        $this->assertSame('', $links['instagram']);
+    }
+
     public function test_the_chosen_name_and_palette_are_served_to_the_app(): void
     {
         AppSetting::setValue('brand_app_name', 'BIG BOSS');
