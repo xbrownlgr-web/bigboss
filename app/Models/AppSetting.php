@@ -129,6 +129,12 @@ class AppSetting extends Model
                 'stats' => app(\App\Services\VipService::class)->stats(),
             ],
             'community_links' => self::communityLinks(),
+            // Heures de publication du jour (heure du Bénin, « HH:MM ») par niveau, Score exact compris :
+            // l'app affiche « Prochains coupons : Platinum à 20:00 » au lieu d'un vieux coupon de la veille.
+            'pronostic_schedule' => [
+                ...\App\Support\PronosticRules::schedule(),
+                \App\Services\ExactScoreGenerator::LEVEL => \App\Console\Commands\GenerateExactScores::schedule(),
+            ],
         ];
     }
 

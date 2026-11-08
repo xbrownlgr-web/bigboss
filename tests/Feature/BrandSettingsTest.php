@@ -35,6 +35,15 @@ class BrandSettingsTest extends TestCase
         $this->assertSame('', $links['instagram']);
     }
 
+    public function test_the_app_receives_todays_publication_times(): void
+    {
+        $schedule = $this->getJson('/api/v1/settings/public')->assertSuccessful()->json('pronostic_schedule');
+
+        $this->assertSame(['08:00', '12:00', '16:00', '20:00'], $schedule['Score']);
+        $this->assertNotEmpty($schedule['Platinum']);
+        $this->assertMatchesRegularExpression('/^\d{2}:\d{2}$/', $schedule['Platinum'][0]);
+    }
+
     public function test_the_chosen_name_and_palette_are_served_to_the_app(): void
     {
         AppSetting::setValue('brand_app_name', 'BIG BOSS');
