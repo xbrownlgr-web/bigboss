@@ -28,6 +28,17 @@ chaque niveau VIP a **plus d'événements que le précédent**, dans cet ordre :
 - Platinum : 5 événements/jour (le maximum)
 
 C'est une règle **business** (différenciation des offres), distincte de la fiabilité des pronostics.
+
+⚠️ **C'est un nombre EXACT, pas un plafond.** Jusqu'au 2026-11-08, `buildCombo()` cherchait la
+combinaison la plus probable avec `max_selections` comme simple plafond : une seule sélection étant
+toujours « plus probable » que 5, les coupons VIP sortaient à 1 sélection et ~1,28 de cote (plainte
+du fondateur, à juste titre). La consigne IA disait aussi « Privilégie les coupons courts ». Corrigé :
+`minSelections()` = nombre de l'échelle à tous les paliers, la consigne IA exige « exactement N
+sélections », un coupon IA incomplet est complété par le serveur (choix de l'IA gardés en priorité),
+et le réservoir est limité à 2 sélections par match pour garder assez de matchs différents. Seul le
+dernier palier (pas assez de matchs du tout) accepte moins, en prenant alors le plus grand coupon
+possible. **Ne jamais réintroduire de logique qui réduit le nombre de sélections pour gagner en
+probabilité** : c'est la probabilité minimale par sélection qui s'assouplit, pas la taille du coupon.
 **Ne jamais écraser cette échelle** en copiant une autre config (ex. celle de Binho), même si on copie
 par ailleurs ses réglages de fiabilité (voir ci-dessous). Les deux sont indépendants :
 - Fiabilité d'une sélection individuelle → `MIN_SELECTION_ODDS` (1,15) + seuils de probabilité

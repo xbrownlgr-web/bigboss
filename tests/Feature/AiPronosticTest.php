@@ -545,7 +545,8 @@ class AiPronosticTest extends TestCase
             $rules = PronosticRules::for($level);
             $events = collect($draft['evenements']);
 
-            $this->assertLessThanOrEqual($rules['max_selections'], $events->count(), $level);
+            // Échelle BIG BOSS : le nombre exact d'événements, jamais moins (1, 2, 3, 4, 5).
+            $this->assertSame($rules['max_selections'], $events->count(), $level);
             $this->assertGreaterThanOrEqual($rules['min_odds'], $draft['cote_totale'], $level);
             $this->assertLessThanOrEqual($rules['max_odds'], $draft['cote_totale'], $level);
             $this->assertTrue($events->every(fn ($event) => $event['probabilite'] >= $rules['min_probability'] * 100), $level);
@@ -562,6 +563,49 @@ class AiPronosticTest extends TestCase
 
         // Un pronostic gratuit n'est jamais revendu comme VIP (et inversement).
         $this->assertSame([], array_values(array_intersect($freeMatches, $vipMatches)));
+    }
+
+    public function test_a_one_selection_ai_coupon_is_completed_to_the_ladder_count_keeping_the_ai_pick(): void
+    {
+        AppSetting::setValue('openrouter_api_key', 'sk-or-test');
+        // L'IA ne propose qu'une sélection (C3) : c'est ce qui produisait les coupons VIP à 1,28.
+        Http::fake(['openrouter.ai/*' => Http::response(['choices' => [['message' => ['content' => json_encode([
+            'coupon' => ['selections' => [['id' => 'C3', 'confiance' => 'Moyenne']]],
+        ])]]]])]);
+        $this->fakeCandidates($this->candidatePool());
+
+        $platinum = app(AiPronosticGenerator::class)->generate([], ['Platinum'])[0];
+        $rules = PronosticRules::for('Platinum');
+
+        $this->assertCount(5, $platinum['evenements']);
+        $this->assertContains('Équipe 3 vs Adversaire 3', array_column($platinum['evenements'], 'match'));
+        $this->assertGreaterThanOrEqual($rules['min_odds'], $platinum['cote_totale']);
+        $this->assertLessThanOrEqual($rules['max_odds'], $platinum['cote_totale']);
+        $this->assertCount(5, array_unique(array_column($platinum['evenements'], 'match')));
+    }
+
+    public function test_the_ladder_count_holds_even_when_a_single_safe_pick_would_be_more_probable(): void
+    {
+        AppSetting::setValue('openrouter_api_key', 'sk-or-test');
+        Http::fake(['openrouter.ai/*' => Http::response(['choices' => [['message' => ['content' => '{"coupon": {"selections": []}}']]]])]);
+        // Plusieurs sélections par match en tête du pool (le cas réel : 1X, 12, plus de 1,5 but…) :
+        // sans limite par match, les premières sélections ne couvraient pas assez de matchs différents.
+        $pool = [];
+        foreach (range(1, 6) as $n) {
+            $pool[] = $this->candidate($n, 'home_draw', 1.30, 0.86);
+            $pool[] = [...$this->candidate($n, 'over', 1.32, 0.85), 'id' => "C{$n}B", 'pronostic' => "Plus de 1,5 but {$n}"];
+            $pool[] = [...$this->candidate($n, 'home_away', 1.28, 0.84), 'id' => "C{$n}C", 'pronostic' => "Double chance 12 {$n}"];
+        }
+        $this->fakeCandidates($pool);
+
+        $drafts = collect(app(AiPronosticGenerator::class)->generate([], ['Silver', 'Gold', 'Platinum']))->keyBy('niveau');
+
+        foreach (['Silver' => 3, 'Gold' => 4, 'Platinum' => 5] as $level => $count) {
+            $events = $drafts[$level]['evenements'];
+            $this->assertCount($count, $events, $level);
+            $this->assertCount($count, array_unique(array_column($events, 'match')), $level);
+            $this->assertGreaterThan(1.5, $drafts[$level]['cote_totale'], $level);
+        }
     }
 
     public function test_vip_below_eighty_percent_is_published_with_an_adjusted_threshold_note(): void

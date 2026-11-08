@@ -50,8 +50,15 @@ class AiPronosticGenerator
 
     private const CLEAR_FAVOURITE_MARKET = 0.75;
 
-    // Taille du réservoir exploré par le serveur quand il compose lui-même un coupon.
-    private const BUILDER_POOL = 16;
+    // Taille du réservoir exploré par le serveur quand il compose lui-même un coupon, et nombre
+    // maximal de sélections d'un même match dans ce réservoir : sans cette limite, les 16 premières
+    // sélections pouvaient venir de 3 ou 4 matchs seulement, impossible d'en aligner 5 différents.
+    private const BUILDER_POOL = 20;
+
+    private const BUILDER_PER_MATCH = 2;
+
+    // Dernier recours : aucune combinaison au nombre exact de l'échelle — le plus grand coupon possible.
+    private const LAST_RESORT_TIER = 5;
 
     private const CONFIDENCE_RANK = ['Faible' => 0, 'Moyenne' => 1, 'Élevée' => 2];
 
@@ -143,9 +150,10 @@ class AiPronosticGenerator
     }
 
     /**
-     * Paliers essayés dans l'ordre jusqu'à obtenir un coupon :
-     * 0 règles du groupe ; 1 seuil −5 points ; 2 seuil −10 points et cote totale un peu plus basse ;
-     * 3 secours (tous les paris cotés, 58 % minimum) ; 4 dernier recours (le pari le plus probable).
+     * Paliers essayés dans l'ordre jusqu'à obtenir un coupon, toujours au nombre exact de sélections
+     * de l'échelle : 0 règles du groupe ; 1 seuil −5 points ; 2 seuil −10 points et cote totale un peu
+     * plus basse ; 3 secours (tous les paris cotés, 58 % minimum) ; 4 secours à 50 % ; 5 dernier
+     * recours, seulement s'il n'existe pas assez de matchs : le plus grand coupon possible.
      *
      * @return array<int, array<string, mixed>>
      */
@@ -158,7 +166,10 @@ class AiPronosticGenerator
             1 => [...$rules, 'min_probability' => max($floor, $rules['min_probability'] - 0.05)],
             2 => [...$rules, 'min_probability' => max($floor, $rules['min_probability'] - 0.10), 'min_odds' => max(1.30, $rules['min_odds'] - 0.20), 'relaxed_wins' => true],
             3 => [...$rules, 'min_probability' => 0.58, 'min_odds' => 1.25, 'relaxed_wins' => true],
-            4 => [...$rules, 'min_probability' => 0.50, 'min_odds' => PronosticRules::MIN_SELECTION_ODDS, 'max_selections' => 1, 'relaxed_wins' => true],
+            // Le nombre d'événements de l'échelle (Silver 3, Gold 4, Platinum 5) n'est jamais réduit
+            // par les paliers : c'est la probabilité minimale qui s'assouplit, pas la taille du coupon.
+            4 => [...$rules, 'min_probability' => 0.50, 'min_odds' => PronosticRules::MIN_SELECTION_ODDS, 'relaxed_wins' => true],
+            self::LAST_RESORT_TIER => [...$rules, 'min_probability' => 0.50, 'min_odds' => PronosticRules::MIN_SELECTION_ODDS, 'min_selections' => 1, 'relaxed_wins' => true],
         ];
     }
 
@@ -287,7 +298,7 @@ CE QUI A DÉJÀ ÉTÉ FAIT POUR TOI
 
 TON TRAVAIL
 1. Relis le dossier de chaque match. Écarte une sélection (liste « ecartees », avec la raison) pour un risque concret : match déjà commencé, équipe diminuée, composition incertaine, outsider en déplacement difficile, derby imprévisible, enjeu flou, coupe avec rotation probable, actualité inquiétante, cote en forte baisse.
-2. Compose UN coupon pour le groupe demandé, avec la cote totale et le nombre de sélections indiqués, un match une seule fois. Privilégie les coupons courts. Ne force jamais : si rien n'est fiable, renvoie "selections": [].
+2. Compose UN coupon pour le groupe demandé, avec EXACTEMENT le nombre de sélections indiqué (c'est ce qui distingue les offres : chaque niveau VIP a un événement de plus que le précédent) et une cote totale dans la fourchette indiquée, un match une seule fois. Choisis les sélections les plus fiables de la liste. Ne force jamais une sélection que tu juges dangereuse : écarte-la, le serveur complétera avec la suivante la plus fiable.
 3. Tu peux baisser la confiance (Moyenne → Faible), jamais la relever.
 4. Pour chaque sélection défendable, écris dans « analyses » 2 justifications statistiques tirées du dossier et les risques principaux, en signalant les données manquantes (xG, blessures, compositions).
 
@@ -338,7 +349,7 @@ PROMPT;
         $custom = $custom !== '' ? "\nCONSIGNES DE L’ADMINISTRATEUR\n{$custom}\n" : '';
 
         return sprintf(
-            "DOSSIERS (données collectées le %s)\n%s\n\nSÉLECTIONS AUTORISÉES POUR CE GROUPE (identifiants à utiliser)\n%s\n\nGROUPE : %s%s — 1 à %d sélections, cote totale de %s à %s, probabilité estimée d’au moins %d %% par sélection.\n%s\nFORMAT ATTENDU\n%s",
+            "DOSSIERS (données collectées le %s)\n%s\n\nSÉLECTIONS AUTORISÉES POUR CE GROUPE (identifiants à utiliser)\n%s\n\nGROUPE : %s%s — exactement %d sélection(s), cote totale de %s à %s, probabilité estimée d’au moins %d %% par sélection.\n%s\nFORMAT ATTENDU\n%s",
             now()->format('d/m/Y à H:i'),
             $dossiers,
             $lines,
@@ -492,6 +503,7 @@ PROMPT;
             ->all();
 
         $events = [];
+        $pickedIds = [];
 
         foreach ((array) ($answer['coupon']['selections'] ?? []) as $choice) {
             $id = strtoupper(trim((string) ($choice['id'] ?? '')));
@@ -511,13 +523,16 @@ PROMPT;
             }
 
             $events[] = $this->event($candidate, $confidence, $choice + ($analyses[$id] ?? []));
+            $pickedIds[] = $id;
         }
 
         $total = $this->total($events);
 
-        if ($events === [] || $total < $rules['min_odds'] || $total > $rules['max_odds']) {
+        // Le coupon de l'IA n'est gardé tel quel que s'il a le nombre exact de sélections de
+        // l'échelle : sinon le serveur le complète, en gardant les choix de l'IA en priorité.
+        if (count($events) < $this->minSelections($rules) || $total < $rules['min_odds'] || $total > $rules['max_odds']) {
             $available = array_values(array_filter($pool, fn ($candidate) => ! in_array($candidate['id'], $vetoed, true)));
-            $combo = $this->buildCombo($rules, $available, $avoid);
+            $combo = $this->buildCombo($rules, $available, $avoid, $pickedIds);
 
             if ($combo === null) {
                 return null;
@@ -549,24 +564,40 @@ PROMPT;
     }
 
     /**
-     * Combinaison avec la plus forte chance de passer (produit des probabilités) parmi celles
-     * dont la cote totale respecte le groupe ; les matchs déjà proposés ailleurs passent après.
+     * Nombre minimal de sélections : celui de l'échelle (règle BIG BOSS, voir CLAUDE.md), sauf au
+     * dernier recours où le plus grand coupon possible est accepté.
+     */
+    private function minSelections(array $rules): int
+    {
+        return (int) ($rules['min_selections'] ?? $rules['max_selections']);
+    }
+
+    /**
+     * Combinaison au nombre exact de sélections de l'échelle, avec la plus forte chance de passer
+     * (produit des probabilités) parmi celles dont la cote totale respecte le groupe ; les choix de
+     * l'IA passent avant, les matchs déjà proposés ailleurs après. Au dernier recours (moins de
+     * sélections permises), le plus grand coupon possible l'emporte sur la probabilité.
      *
      * @param array<int, array<string, mixed>> $pool
      * @param array<int, string> $avoid
+     * @param array<int, string> $preferred identifiants choisis par l'IA
      * @return array<int, array<string, mixed>>|null
      */
-    private function buildCombo(array $rules, array $pool, array $avoid): ?array
+    private function buildCombo(array $rules, array $pool, array $avoid, array $preferred = []): ?array
     {
-        $pool = array_slice($pool, 0, self::BUILDER_POOL);
+        $pool = $this->builderPool($pool, $preferred);
+        $minSelections = $this->minSelections($rules);
+        $fillAsMuchAsPossible = $minSelections < $rules['max_selections'];
         $best = null;
         $bestScore = -INF;
 
-        $search = function (int $start, array $combo, float $odds, float $probability) use (&$search, &$best, &$bestScore, $pool, $rules, $avoid) {
-            if ($combo !== [] && $odds >= $rules['min_odds'] && $odds <= $rules['max_odds']) {
+        $search = function (int $start, array $combo, float $odds, float $probability) use (&$search, &$best, &$bestScore, $pool, $rules, $avoid, $preferred, $minSelections, $fillAsMuchAsPossible) {
+            if (count($combo) >= $minSelections && $odds >= $rules['min_odds'] && $odds <= $rules['max_odds']) {
                 $reused = count(array_filter($combo, fn ($candidate) => in_array($candidate['match'], $avoid, true)));
                 $valueBets = count(array_filter($combo, fn ($candidate) => $candidate['categorie'] === 'valeur'));
-                $score = $probability + 0.02 * $valueBets - 0.05 * $reused;
+                $fromAi = count(array_filter($combo, fn ($candidate) => in_array($candidate['id'], $preferred, true)));
+                $score = $probability + 0.02 * $valueBets + 0.03 * $fromAi - 0.05 * $reused
+                    + ($fillAsMuchAsPossible ? 10 * count($combo) : 0);
 
                 if ($score > $bestScore) {
                     $bestScore = $score;
@@ -592,6 +623,39 @@ PROMPT;
         $search(0, [], 1.0, 1.0);
 
         return $best;
+    }
+
+    /**
+     * Réservoir exploré par buildCombo : choix de l'IA d'abord, puis l'ordre du pool, au plus
+     * BUILDER_PER_MATCH sélections par match pour garder assez de matchs différents.
+     *
+     * @param array<int, array<string, mixed>> $pool
+     * @param array<int, string> $preferred
+     * @return array<int, array<string, mixed>>
+     */
+    private function builderPool(array $pool, array $preferred): array
+    {
+        usort($pool, fn ($a, $b) => (int) in_array($b['id'], $preferred, true) <=> (int) in_array($a['id'], $preferred, true));
+
+        $perMatch = [];
+        $selected = [];
+
+        foreach ($pool as $candidate) {
+            $match = $candidate['match'];
+
+            if (($perMatch[$match] ?? 0) >= self::BUILDER_PER_MATCH) {
+                continue;
+            }
+
+            $perMatch[$match] = ($perMatch[$match] ?? 0) + 1;
+            $selected[] = $candidate;
+
+            if (count($selected) >= self::BUILDER_POOL) {
+                break;
+            }
+        }
+
+        return $selected;
     }
 
     /**
