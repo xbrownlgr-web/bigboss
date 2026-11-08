@@ -7,6 +7,7 @@ use App\Models\AppSetting;
 use App\Models\Pronostic;
 use App\Models\User;
 use App\Models\VipSubscription;
+use App\Services\ExactScoreGenerator;
 use App\Services\ExpoPushService;
 use Illuminate\Support\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -106,7 +107,11 @@ class PronosticController extends Controller
             : [];
 
         $since = now()->subDays(90);
-        $settled = Pronostic::query()->whereNotNull('result_status')->where('published_at', '>=', $since);
+        $notScore = fn ($query) => $query->whereNull('niveau')->orWhere('niveau', '!=', ExactScoreGenerator::LEVEL);
+
+        // Taux de réussite des combinés seulement : les scores exacts (pari à haut risque, règle du
+        // fondateur) n'y entrent pas, ni en gagné ni en perdu, pour ne pas fausser le taux.
+        $settled = Pronostic::query()->whereNotNull('result_status')->where('published_at', '>=', $since)->where($notScore);
 
         $won = (clone $settled)->where('result_status', 'won')->count();
         $total = $settled->count();
@@ -114,6 +119,8 @@ class PronosticController extends Controller
         $items = Pronostic::query()
             ->whereNotNull('result_status')
             ->where('published_at', '>=', $since)
+            // Score exact : ajouté à l'historique quand il gagne, jamais mélangé quand il perd.
+            ->where(fn ($query) => $query->where($notScore)->orWhere('result_status', 'won'))
             ->orderByDesc('published_at')
             ->limit(60)
             ->get()
@@ -158,6 +165,20 @@ class PronosticController extends Controller
             return [...$data, ...$vip, 'locked' => false, 'evenements_count' => count($pronostic->evenements ?? [])];
         }
 
+        // Score exact GAGNÉ : le match est terminé, le dévoiler ne coûte rien et c'est la preuve de
+        // l'offre (« BIG BOSS avait annoncé 2-1 ») pour les non-abonnés. L'analyse reste réservée.
+        if ($pronostic->niveau === ExactScoreGenerator::LEVEL && $pronostic->result_status === 'won') {
+            return [
+                ...$data,
+                ...$vip,
+                'locked' => true,
+                'evenements_count' => count($pronostic->evenements ?? []),
+                'analysis' => '',
+                'code_1xbet' => null,
+                'code_melbet' => null,
+            ];
+        }
+
         return [
             ...$data,
             ...$vip,
@@ -168,10 +189,10 @@ class PronosticController extends Controller
             'code_1xbet' => null,
             'code_melbet' => null,
             // Anciennes versions de l'application : elles affichent ces champs à la place des matchs.
-            'team_home' => 'Coupon',
-            'team_away' => 'VIP ' . $pronostic->niveau,
-            'competition' => 'Combiné ' . $pronostic->niveau,
-            'prediction' => 'Réservé aux membres VIP',
+            'team_home' => $pronostic->niveau === ExactScoreGenerator::LEVEL ? 'Score' : 'Coupon',
+            'team_away' => $pronostic->niveau === ExactScoreGenerator::LEVEL ? 'exact' : 'VIP ' . $pronostic->niveau,
+            'competition' => $pronostic->niveau === ExactScoreGenerator::LEVEL ? 'Score exact' : 'Combiné ' . $pronostic->niveau,
+            'prediction' => $pronostic->niveau === ExactScoreGenerator::LEVEL ? 'Réservé aux membres Score exact' : 'Réservé aux membres VIP',
             'result_note' => null,
         ];
     }

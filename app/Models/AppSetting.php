@@ -17,8 +17,18 @@ class AppSetting extends Model
     ];
 
     // Coupons VIP payants : leur contenu n'est jamais envoyé à l'application (voir PronosticController).
-    // Un seul niveau gratuit (Starter) : Bronze, Silver, Gold et Platinum sont VIP.
-    public const VIP_LEVELS = ['Bronze', 'Silver', 'Gold', 'Platinum'];
+    // Un seul niveau gratuit (Starter) : Bronze, Silver, Gold et Platinum sont VIP. « Score » est
+    // l'offre Score exact (abonnement à part, voir ExactScoreGenerator) : elle profite du même
+    // abonnement / paiement / verrouillage, mais n'est PAS dans PronosticRules::LEVELS (pas de combiné).
+    public const VIP_LEVELS = ['Bronze', 'Silver', 'Gold', 'Platinum', 'Score'];
+
+    /**
+     * Nom affiché d'une offre payante : « VIP Gold », mais « Score exact » (jamais « VIP Score »).
+     */
+    public static function offerName(string $level): string
+    {
+        return $level === 'Score' ? 'Score exact' : 'VIP ' . $level;
+    }
 
     public static function value(string $key, ?string $default = null): ?string
     {

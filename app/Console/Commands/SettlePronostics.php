@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\Pronostic;
+use App\Services\ExactScoreGenerator;
 use App\Services\ExpoPushService;
 use App\Services\FixtureService;
 use App\Services\OddsService;
@@ -131,6 +132,22 @@ class SettlePronostics extends Command
 
     private function notifyWon(Pronostic $pronostic): int
     {
+        // Score exact trouvé : le score et le match, la meilleure publicité pour l'offre.
+        if ($pronostic->niveau === ExactScoreGenerator::LEVEL) {
+            $event = $pronostic->evenements[0] ?? [];
+
+            return $this->push->sendToActiveUsers(
+                '🎯 Score exact trouvé !',
+                '✅ ' . ($event['match'] ?? 'Le match') . ' : ' . ($event['score'] ?? '') . ' — BIG BOSS avait annoncé ce score exact. Boomm 💥',
+                [
+                    'type' => 'pronostic',
+                    'event' => 'won',
+                    'pronostic_id' => $pronostic->id,
+                    'niveau' => $pronostic->niveau,
+                ],
+            );
+        }
+
         $niveau = $pronostic->niveau ?: 'Combiné';
         $vip = $pronostic->is_vip ? 'VIP ' : '';
         $odd = number_format((float) ($pronostic->cote_totale ?? $pronostic->odds), 2, ',', ' ');

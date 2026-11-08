@@ -28,6 +28,7 @@ class VipController extends Controller
         'Silver' => '#9CA3AF',
         'Gold' => '#FFD700',
         'Platinum' => '#7C3AED',
+        'Score' => '#BE123C',
     ];
 
     public function __construct(private readonly VipService $vip)

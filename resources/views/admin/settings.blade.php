@@ -42,6 +42,8 @@
         'ai_schedule_silver' => 'VIP : 3 événements par coupon, 1 coupon par jour. Ex. 13:00.',
         'ai_schedule_gold' => 'VIP : 4 événements par coupon, 1 coupon par jour. Ex. 16:00.',
         'ai_schedule_platinum' => 'VIP, le niveau le plus complet : 5 événements par coupon, 1 coupon par jour. Ex. 20:00.',
+        'ai_schedule_score' => 'Offre Score exact : à chaque heure, l’IA cherche les matchs les plus prévisibles et publie 2 scores exacts au plus (au moins 4 par jour si les données le permettent, 6 au maximum). Chaque score est notifié dès sa publication. Ex. 08:00, 12:00, 16:00, 20:00.',
+        'ai_exact_score_instructions' => 'Votre méthode d’analyse des scores exacts. Le serveur fait les calculs (buts attendus, grille de Poisson, comparaison avec le marché, confiance) ; l’IA applique ces consignes pour les ajustements chiffrés et la rédaction, sans jamais inventer de données.',
         'ai_min_probability_free' => 'Probabilité estimée minimale de chaque sélection Starter et Bronze (consigne : 75). Plus bas = plus de coupons, mais moins fiables.',
         'ai_min_probability_vip' => 'Probabilité estimée minimale de chaque sélection VIP (consigne : 80). À 80, beaucoup de créneaux ne publieront rien : c’est voulu.',
         'ai_vip_teasers_per_day' => 'Les abonnés reçoivent chaque coupon VIP ; les non-abonnés ne reçoivent que ce nombre d’annonces « nouveau coupon VIP » par jour (évite de les saturer).',
@@ -63,6 +65,9 @@
         'vip_silver_details' => 'Ce qui est compris, la durée, etc. Affiché sous le prix dans l’application.',
         'vip_gold_details' => 'Ce qui est compris, la durée, etc. Affiché sous le prix dans l’application.',
         'vip_platinum_details' => 'Ce qui est compris, la durée, etc. Affiché sous le prix dans l’application.',
+        'vip_score_price' => 'Offre Score exact, abonnement à part (ex. 5000). Vide = prix non affiché.',
+        'vip_score_price_week' => 'Facultatif : essai à la semaine pour l’offre Score exact. Vide = seul le mois est proposé.',
+        'vip_score_details' => 'Affiché sous le prix. Gardez l’avertissement « peut perdre » : le score exact est un pari à haut risque.',
         'odds_api_key' => 'Gratuite sur the-odds-api.com (500 crédits par mois) : les crédits sont répartis sur les jours restants et les cotes gardées 8 h, en commençant par les championnats prioritaires. Avec un abonnement payant, plus de championnats et les marchés « les deux équipes marquent » s’ajoutent automatiquement.',
     ];
 @endphp

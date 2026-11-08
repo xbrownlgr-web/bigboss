@@ -476,7 +476,7 @@ class ValueAnalyzer
     /**
      * @return array<int, string>
      */
-    private function missingData(array $data): array
+    public function missingData(array $data): array
     {
         $missing = [
             'xG/xGA : donnée manquante (non fournie par l’API)',

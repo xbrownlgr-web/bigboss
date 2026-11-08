@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\PronosticRun;
+use App\Services\ExactScoreGenerator;
 use App\Support\PronosticRules;
 use Illuminate\Console\Command;
 use Illuminate\Support\Carbon;
@@ -26,7 +27,10 @@ class RunPronosticSlots extends Command
         $now = now()->setTimezone($timezone);
         $started = 0;
 
-        foreach (PronosticRules::schedule() as $level => $times) {
+        // Les combinés des 5 niveaux, puis l'offre Score exact (ses propres heures, sa propre commande).
+        $schedule = [...PronosticRules::schedule(), ExactScoreGenerator::LEVEL => GenerateExactScores::schedule()];
+
+        foreach ($schedule as $level => $times) {
             foreach ($times as $time) {
                 $slot = Carbon::parse($now->toDateString() . ' ' . $time, $timezone);
 
@@ -45,7 +49,9 @@ class RunPronosticSlots extends Command
                 }
 
                 $this->info("Créneau {$time} : {$level}");
-                $this->call('binho:generate-pronostics', ['--level' => [$level], '--slot' => $time]);
+                $level === ExactScoreGenerator::LEVEL
+                    ? $this->call('binho:generate-exact-scores', ['--slot' => $time])
+                    : $this->call('binho:generate-pronostics', ['--level' => [$level], '--slot' => $time]);
                 $started++;
             }
         }

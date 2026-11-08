@@ -313,7 +313,7 @@ PROMPT;
             ->map(function (array $offer, string $level) {
                 $price = $offer['price'] ? number_format($offer['price'], 0, ',', ' ') . ' FCFA pour 30 jours' : 'prix affiché dans l’application';
 
-                return "  - VIP {$level} : {$price}" . ($offer['details'] ? " ({$offer['details']})" : '');
+                return '  - ' . AppSetting::offerName($level) . " : {$price}" . ($offer['details'] ? " ({$offer['details']})" : '');
             })
             ->implode("\n");
         $lines[] = "- Offres VIP :\n{$vip}";
@@ -336,7 +336,7 @@ PROMPT;
         $vip = $user->vipSubscriptions()
             ->get()
             ->filter->isActive()
-            ->map(fn ($subscription) => "VIP {$subscription->level} actif jusqu’au " . $this->date($subscription->ends_at))
+            ->map(fn ($subscription) => AppSetting::offerName($subscription->level) . ' actif jusqu’au ' . $this->date($subscription->ends_at))
             ->implode(', ');
 
         $transactions = Transaction::query()

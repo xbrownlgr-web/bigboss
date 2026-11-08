@@ -106,14 +106,28 @@ class VipService
             return $subscription;
         });
 
+        [$name, $plan, $items] = $this->labels($subscription->level);
+
         $this->push->sendToUser(
             $subscription->user,
-            "💎 VIP {$subscription->level} activé",
-            "Votre VIP {$subscription->level} est actif jusqu’au {$this->date($subscription->ends_at)}. Les coupons sont maintenant visibles dans l’application.",
+            "💎 {$name} activé",
+            "Votre {$plan} est actif jusqu’au {$this->date($subscription->ends_at)}. Les {$items} sont maintenant visibles dans l’application.",
             ['type' => 'vip', 'event' => 'activated', 'niveau' => $subscription->level],
         );
 
         return $subscription;
+    }
+
+    /**
+     * Libellés des notifications : « VIP Gold » / « coupons », ou « Score exact » / « scores exacts ».
+     *
+     * @return array{0: string, 1: string, 2: string, 3: string} nom, abonnement, éléments, élément
+     */
+    private function labels(string $level): array
+    {
+        return $level === ExactScoreGenerator::LEVEL
+            ? [AppSetting::offerName($level), 'abonnement Score exact', 'scores exacts', 'score exact']
+            : [AppSetting::offerName($level), AppSetting::offerName($level), 'coupons', 'coupon'];
     }
 
     /**
@@ -124,11 +138,12 @@ class VipService
     {
         $subscription = $this->addDays($userId, $level, $days);
         $duration = $days <= 7 ? 'semaine' : 'mois';
+        [$name, $plan, $items] = $this->labels($subscription->level);
 
         $this->push->sendToUser(
             $subscription->user,
-            "💎 VIP {$subscription->level} activé",
-            "Votre paiement est confirmé. Votre VIP {$subscription->level} ({$duration}) est actif jusqu’au {$this->date($subscription->ends_at)} : les coupons sont maintenant visibles dans l’application.",
+            "💎 {$name} activé",
+            "Votre paiement est confirmé. Votre {$plan} ({$duration}) est actif jusqu’au {$this->date($subscription->ends_at)} : les {$items} sont maintenant visibles dans l’application.",
             ['type' => 'vip', 'event' => 'activated', 'niveau' => $subscription->level],
         );
 
@@ -241,10 +256,11 @@ class VipService
             ->where('ends_at', '>', now())
             ->where('ends_at', '<=', now()->addDays(3))
             ->each(function (VipSubscription $subscription) use (&$soon) {
+                [, $plan, , $item] = $this->labels($subscription->level);
                 $this->push->sendToUser(
                     $subscription->user,
-                    "⏳ Votre VIP {$subscription->level} se termine bientôt",
-                    "Il prend fin le {$this->date($subscription->ends_at)}. Renouvelez depuis l’application pour ne manquer aucun coupon.",
+                    "⏳ Votre {$plan} se termine bientôt",
+                    "Il prend fin le {$this->date($subscription->ends_at)}. Renouvelez depuis l’application pour ne manquer aucun {$item}.",
                     ['type' => 'vip', 'event' => 'expiring', 'niveau' => $subscription->level],
                 );
                 $subscription->update(['reminded_soon_at' => now()]);
@@ -257,10 +273,11 @@ class VipService
             ->where('ends_at', '<=', now())
             ->where('ends_at', '>', now()->subDays(2))
             ->each(function (VipSubscription $subscription) use (&$ended) {
+                [, $plan, $items] = $this->labels($subscription->level);
                 $this->push->sendToUser(
                     $subscription->user,
-                    "Votre VIP {$subscription->level} est terminé",
-                    "Renouvelez-le depuis l’application BIG BOSS pour recevoir les prochains coupons.",
+                    "Votre {$plan} est terminé",
+                    "Renouvelez-le depuis l’application BIG BOSS pour recevoir les prochains {$items}.",
                     ['type' => 'vip', 'event' => 'ended', 'niveau' => $subscription->level],
                 );
                 $subscription->update(['reminded_ended_at' => now()]);
@@ -291,7 +308,9 @@ class VipService
         return collect(AppSetting::VIP_LEVELS)
             ->mapWithKeys(fn ($level) => [$level => [
                 'won' => (int) ($rows[$level]->won ?? 0),
-                'settled' => (int) ($rows[$level]->settled ?? 0),
+                // Score exact : seuls les scores trouvés sont montrés (règle du fondateur : les
+                // pertes ne sont pas mélangées) — « settled » à 0, l'app n'affiche pas de taux.
+                'settled' => $level === ExactScoreGenerator::LEVEL ? 0 : (int) ($rows[$level]->settled ?? 0),
             ]])
             ->all();
     }

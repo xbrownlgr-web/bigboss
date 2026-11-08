@@ -59,6 +59,33 @@ cotes du jour pour ce niveau (plus grande, plus attractive qu'une petite cote is
 individuelles de chaque événement ne s'affichent **plus** sur les coupons VIP — seule la cote totale
 compte. Ne pas revenir en arrière sur ce point sans qu'on en reparle explicitement.
 
+## Offre « Score exact » (niveau VIP `Score`, depuis le 2026-11-08)
+
+Demandée par le fondateur : abonnement **à part** à **5 000 FCFA/mois** (`vip_score_price`), au moins
+**4 scores exacts par jour** (`GenerateExactScores::DAILY_MIN`, plafond 6), **notification push dès
+qu'un score est publié**, avec l'avertissement « ça peut perdre » partout.
+- `Score` est dans `AppSetting::VIP_LEVELS` (abonnement, paiement Maketou, clé WhatsApp, verrouillage,
+  admin VIP marchent tels quels) mais **PAS** dans `PronosticRules::LEVELS` (jamais un combiné, pas
+  d'échelle d'événements). Chaque score exact est un pronostic séparé avec 1 événement
+  (`selection_key = exact_score`, `score_home`/`score_away`) : 4 scores indépendants, jamais fusionnés.
+- Méthode du fondateur dans `ai_exact_score_instructions` (Admin > Paramètres). Le **serveur** fait les
+  calculs (`ExactScoreGenerator` : buts attendus modèle + marché, Poisson + Dixon-Coles 0-0 à 5-5,
+  écart au marché, confiance) ; l'**IA** fait seulement l'étape 2 (ajustements bornés à ±0,40 but,
+  justifiés par le dossier) et la rédaction. Le score publié = le plus probable du résultat 1N2 le
+  plus probable (règle de cohérence). Confiance ÉLEVÉE impossible (compositions jamais fournies).
+- Pas de cote de score exact dans l'API : `cote_totale` null, `odds` 0 — **jamais de cote inventée**.
+- Heures : `ai_schedule_score` (défaut 08:00, 12:00, 16:00, 20:00), lancées par `RunPronosticSlots`.
+- **Historique** : un score exact perdu n'apparaît jamais dans l'historique ; gagné, il y est ajouté.
+  Les scores exacts sont exclus du taux de réussite global (ni gagnés ni perdus) pour ne pas le
+  fausser, et `VipService::stats()` renvoie `settled = 0` pour `Score` (l'app n'affiche pas de taux).
+- Côté mobile, carte dédiée (`ScoreCard` dans `PronosticsScreen.tsx`, pas la fusion « offre du
+  jour » des combinés, qui multiplierait des cotes de scores indépendants).
+- Un score exact **gagné** est dévoilé à tous (match + score, jamais l'analyse) dans
+  `PronosticController::publicPayload` : le match est fini, c'est la preuve de l'offre pour les
+  non-abonnés. Un score en attente ou perdu reste verrouillé.
+- Nom affiché : `AppSetting::offerName()` → « Score exact », jamais « VIP Score » (notifications
+  d'activation/rappel, message WhatsApp, assistant LUC).
+
 ## Déploiement — infrastructure actuelle (2026-11)
 
 - **GitHub** : compte `gobifinancement-ui` **SUSPENDU définitivement** (ToS violation, repo public

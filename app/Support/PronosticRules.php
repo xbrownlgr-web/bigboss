@@ -82,19 +82,26 @@ class PronosticRules
         $schedule = [];
 
         foreach (self::LEVELS as $level) {
-            $raw = AppSetting::value('ai_schedule_' . strtolower($level)) ?? self::DEFAULT_SCHEDULE[$level];
-            preg_match_all('/\b([01]?\d|2[0-3])[:hH]([0-5]\d)\b/', (string) $raw, $matches, PREG_SET_ORDER);
-
-            $times = collect($matches)
-                ->map(fn ($match) => sprintf('%02d:%02d', (int) $match[1], (int) $match[2]))
-                ->unique()
-                ->sort()
-                ->values()
-                ->all();
-
-            $schedule[$level] = $times;
+            $schedule[$level] = self::times(AppSetting::value('ai_schedule_' . strtolower($level)) ?? self::DEFAULT_SCHEDULE[$level]);
         }
 
         return $schedule;
+    }
+
+    /**
+     * « 10:00, 15h30 » → ['10:00', '15:30'] (triées, sans doublon).
+     *
+     * @return array<int, string>
+     */
+    public static function times(?string $raw): array
+    {
+        preg_match_all('/\b([01]?\d|2[0-3])[:hH]([0-5]\d)\b/', (string) $raw, $matches, PREG_SET_ORDER);
+
+        return collect($matches)
+            ->map(fn ($match) => sprintf('%02d:%02d', (int) $match[1], (int) $match[2]))
+            ->unique()
+            ->sort()
+            ->values()
+            ->all();
     }
 }

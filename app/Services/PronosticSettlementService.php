@@ -77,6 +77,10 @@ class PronosticSettlementService
             'btts_no' => $home > 0 && $away > 0 ? 'lost' : 'won',
             'spread_home', 'spread_away' => $this->settleSpread($key, $home, $away, $line),
             'over', 'under' => $this->settleTotal($key, $home + $away, $line),
+            // Score exact (offre Score exact) : gagné seulement si le score final est exactement celui annoncé.
+            'exact_score' => isset($event['score_home'], $event['score_away'])
+                ? ($home === (int) $event['score_home'] && $away === (int) $event['score_away'] ? 'won' : 'lost')
+                : null,
             default => null,
         };
     }

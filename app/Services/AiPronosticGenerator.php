@@ -364,7 +364,11 @@ PROMPT;
         );
     }
 
-    private function dossier(array $fixture): string
+    /**
+     * Dossier texte d'un match (classement, forme, stade, arbitre, modèle, actualités, données
+     * manquantes) : partagé avec ExactScoreGenerator pour que les deux IA voient les mêmes faits.
+     */
+    public function dossier(array $fixture): string
     {
         $data = $fixture['data'] ?? [];
         $analysis = $this->analyzer->analyseFixture($fixture);
@@ -436,11 +440,9 @@ PROMPT;
 
     private function standingLine(array $row, string $venue): string
     {
-        $split = $row[$venue];
         $label = $venue === 'home' ? 'à domicile' : 'à l’extérieur';
-
-        return sprintf(
-            '%de, %d pts, %d matchs (%dV %dN %dD, %d-%d) ; %s : %d matchs (%dV %dN %dD, %d-%d)',
+        $line = sprintf(
+            '%de, %d pts, %d matchs (%dV %dN %dD, %d-%d)',
             $row['position'],
             $row['points'],
             $row['total']['games'],
@@ -449,6 +451,17 @@ PROMPT;
             $row['total']['loses'],
             $row['total']['scored'],
             $row['total']['received'],
+        );
+        // football-data.org (plan gratuit) ne donne que le total : pas de détail domicile/extérieur.
+        $split = $row[$venue] ?? null;
+
+        if (! $split) {
+            return "{$line} ; {$label} : donnée manquante";
+        }
+
+        return sprintf(
+            '%s ; %s : %d matchs (%dV %dN %dD, %d-%d)',
+            $line,
             $label,
             $split['games'],
             $split['wins'],

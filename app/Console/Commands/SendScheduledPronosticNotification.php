@@ -6,6 +6,7 @@ use App\Models\AppSetting;
 use App\Models\Pronostic;
 use App\Models\User;
 use App\Models\VipSubscription;
+use App\Services\ExactScoreGenerator;
 use App\Services\ExpoPushService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Carbon;
@@ -90,7 +91,32 @@ class SendScheduledPronosticNotification extends Command
             'niveau' => $level,
         ];
 
-        if (in_array($level, AppSetting::VIP_LEVELS, true)) {
+        if ($level === ExactScoreGenerator::LEVEL) {
+            // Score exact : notifié dès qu'il est trouvé. Les abonnés voient le match ; les autres
+            // reçoivent une invitation (sans le score), quelques-unes par jour seulement.
+            $subscriberIds = VipSubscription::query()->active()->where('level', $level)->select('user_id');
+            $match = $pronostic->evenements[0]['match'] ?? trim($pronostic->team_home . ' vs ' . $pronostic->team_away);
+
+            $push->sendToUsers(
+                User::query()->whereIn('id', $subscriberIds),
+                '🎯 Nouveau score exact',
+                "{$match} : votre score exact est disponible dans BIG BOSS.",
+                $data,
+            );
+
+            $teaserKey = 'pronostics:score_teasers:' . now()->setTimezone(config('app.timezone'))->toDateString();
+            $maxTeasers = (int) (AppSetting::value('ai_vip_teasers_per_day') ?? 2);
+
+            if ((int) Cache::get($teaserKey, 0) < $maxTeasers) {
+                Cache::put($teaserKey, (int) Cache::get($teaserKey, 0) + 1, now()->addDays(2));
+                $push->sendToUsers(
+                    User::query()->whereNotIn('id', $subscriberIds),
+                    '🎯 Un score exact vient d’être trouvé',
+                    "{$match} : le score exact est réservé aux membres Score exact. Jette un coup d’œil !",
+                    $data,
+                );
+            }
+        } elseif (in_array($level, AppSetting::VIP_LEVELS, true)) {
             // Coupon VIP de l'IA (Silver) : les abonnés le voient, les autres sont invités à s'abonner.
             $subscriberIds = VipSubscription::query()->active()->where('level', $level)->select('user_id');
 
