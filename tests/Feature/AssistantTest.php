@@ -17,6 +17,13 @@ class AssistantTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        // Ces tests vérifient l'assistant quand il est allumé (coupé par défaut depuis le 2026-11-11).
+        AppSetting::setValue('assistant_enabled', 'oui');
+    }
+
     private function customer(): User
     {
         return User::factory()->create(['name' => 'Kofi Mensah', 'country' => 'benin', 'is_active' => true]);

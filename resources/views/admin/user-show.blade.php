@@ -13,7 +13,18 @@
     $isMainAdmin = strcasecmp($user->email, (string) config('app.admin_email')) === 0;
     $recharges = $totals->get('recharge');
     $retraits = $totals->get('retrait');
+    // Vrais abonnements (ce sont eux qui débloquent les coupons ; l'ancien drapeau « VIP » ne servait à rien).
+    $subscriptions = $user->vipSubscriptions()->active()->orderBy('ends_at')->get();
 @endphp
+
+@push('head')
+    <style>
+        .bf-subs { padding: 12px; border: 1px solid var(--bf-border); border-radius: 12px; background: var(--bf-surface-2); }
+        .bf-subs-title { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; font-weight: 800; font-size: .85rem; }
+        .bf-subs-row { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--bf-border); font-size: .84rem; }
+        .bf-subs .bf-grant { padding: 10px 0 0; }
+    </style>
+@endpush
 
 @section('content')
     <div class="row g-3 mb-3">
@@ -30,11 +41,11 @@
                                 @else
                                     <span class="bf-badge danger"><span class="dot"></span>Bloqué</span>
                                 @endif
-                                @if ($user->is_vip)
-                                    <span class="bf-badge vip"><i class="bi bi-star-fill"></i>VIP</span>
-                                @else
-                                    <span class="bf-badge neutral">Standard</span>
-                                @endif
+                                @forelse ($subscriptions as $subscription)
+                                    <span class="bf-badge vip"><i class="bi bi-gem"></i>{{ \App\Models\AppSetting::offerName($subscription->level) }}</span>
+                                @empty
+                                    <span class="bf-badge neutral">Sans abonnement</span>
+                                @endforelse
                             </div>
                         </div>
                     </div>
@@ -55,13 +66,25 @@
                         <dd>{{ $user->fcm_token ? 'Activées' : 'Non activées' }}</dd>
                     </dl>
 
+                    {{-- Abonnements : en cours + activation à la main (offre et durée au choix) --}}
+                    <div class="bf-subs mb-3">
+                        <div class="bf-subs-title"><i class="bi bi-gem"></i> Abonnements</div>
+                        @forelse ($subscriptions as $subscription)
+                            <div class="bf-subs-row">
+                                <span class="fw-semibold">{{ \App\Models\AppSetting::offerName($subscription->level) }}</span>
+                                <span class="text-muted">jusqu’au {{ $subscription->ends_at->timezone(config('app.timezone'))->format('d/m/Y') }}</span>
+                                <form method="POST" action="/admin/vip/subscriptions/{{ $subscription->id }}/cancel" class="ms-auto" data-confirm="Arrêter maintenant cet abonnement ?">
+                                    @csrf
+                                    <button class="btn btn-sm bf-btn-danger-soft" type="submit" title="Arrêter"><i class="bi bi-x-lg"></i></button>
+                                </form>
+                            </div>
+                        @empty
+                            <div class="text-muted small">Aucun abonnement en cours.</div>
+                        @endforelse
+                        @include('admin.partials.vip-grant-form', ['client' => $user])
+                    </div>
+
                     <div class="d-flex flex-wrap gap-2">
-                        <form method="POST" action="/admin/users/{{ $user->id }}/vip">
-                            @csrf
-                            <button class="btn btn-sm bf-btn-gold" type="submit">
-                                <i class="bi bi-star-fill"></i> {{ $user->is_vip ? 'Retirer VIP' : 'Passer VIP' }}
-                            </button>
-                        </form>
                         <form method="POST" action="/admin/users/{{ $user->id }}/test-push">
                             @csrf
                             <button class="btn btn-sm bf-btn-light" type="submit" @disabled(! $user->fcm_token)><i class="bi bi-bell"></i> Test push</button>

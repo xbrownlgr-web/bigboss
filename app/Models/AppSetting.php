@@ -23,6 +23,15 @@ class AppSetting extends Model
     public const VIP_LEVELS = ['Bronze', 'Silver', 'Gold', 'Platinum', 'Score'];
 
     /**
+     * Assistant IA (LUC) dans le support. Coupé par défaut depuis le 2026-11-11 (décision du
+     * fondateur) : les clients écrivent directement à un conseiller humain.
+     */
+    public static function assistantEnabled(): bool
+    {
+        return strtolower(trim((string) self::value('assistant_enabled', 'non'))) === 'oui';
+    }
+
+    /**
      * Nom affiché d'une offre payante : « VIP Gold », mais « Score exact » (jamais « VIP Score »).
      */
     public static function offerName(string $level): string
@@ -129,6 +138,10 @@ class AppSetting extends Model
                 'stats' => app(\App\Services\VipService::class)->stats(),
             ],
             'community_links' => self::communityLinks(),
+            // Support : false = pas d'assistant IA, l'onglet Support ouvre directement le conseiller.
+            'assistant_enabled' => self::assistantEnabled(),
+            // Messages vocaux au support : durée maximale (secondes) et conservation (jours).
+            'voice_messages' => ['max_seconds' => MessageAudio::MAX_SECONDS, 'retention_days' => MessageAudio::RETENTION_DAYS],
             // Heures de publication du jour (heure du Bénin, « HH:MM ») par niveau, Score exact compris :
             // l'app affiche « Prochains coupons : Platinum à 20:00 » au lieu d'un vieux coupon de la veille.
             'pronostic_schedule' => [

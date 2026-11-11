@@ -53,3 +53,8 @@ Schedule::command('binho:vip-reminders')
     ->hourly()
     ->timezone('Africa/Porto-Novo')
     ->withoutOverlapping(10);
+
+// Messages vocaux du support : le son est supprimé de la base 3 jours après l'envoi.
+Schedule::command('bigboss:purge-voice-messages')
+    ->hourly()
+    ->withoutOverlapping(10);

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\AppSetting;
 use App\Models\Pronostic;
+use App\Models\User;
 use App\Models\VipFreeClaim;
 use App\Models\VipRequest;
 use App\Models\VipSubscription;
@@ -105,6 +106,77 @@ class VipController extends Controller
             $subscription->user->name,
             $subscription->ends_at->timezone(config('app.timezone'))->format('d/m/Y à H:i'),
         ));
+    }
+
+    /**
+     * Activation à la main : l'admin choisit le client (fiche client, ou e-mail / téléphone), l'offre
+     * (Bronze → Platinum, Score exact) et la durée. Demande du fondateur du 2026-11-11.
+     */
+    public function grant(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'user_id' => ['nullable', 'integer', 'exists:users,id'],
+            'client' => ['required_without:user_id', 'nullable', 'string', 'max:120'],
+            'level' => ['required', Rule::in(AppSetting::VIP_LEVELS)],
+            'days' => ['required', 'integer', 'min:1', 'max:366'],
+            'custom_days' => ['nullable', 'integer', 'min:1', 'max:366'],
+        ], [
+            'client.required_without' => 'Indiquez l’e-mail ou le téléphone du client.',
+        ]);
+
+        $user = ! empty($validated['user_id'])
+            ? User::query()->find($validated['user_id'])
+            : $this->findClient((string) $validated['client']);
+
+        if (! $user instanceof User) {
+            return back()->withInput()->with('error', is_string($user) ? $user : 'Client introuvable : vérifiez l’e-mail ou le numéro de téléphone.');
+        }
+
+        $days = (int) ($validated['custom_days'] ?? $validated['days']);
+        $subscription = $this->vip->grantManual($user->id, $validated['level'], $days);
+
+        return back()->with('success', sprintf(
+            '%s activé pour %s (%s), jusqu’au %s. Une notification lui a été envoyée.',
+            AppSetting::offerName($subscription->level),
+            $user->name,
+            VipService::durationLabel($days),
+            $subscription->ends_at->timezone(config('app.timezone'))->format('d/m/Y à H:i'),
+        ));
+    }
+
+    /**
+     * Client par e-mail (exact) ou par téléphone (les 8 derniers chiffres, quel que soit le format
+     * saisi : « +229 01 97… », « 0197… »). Renvoie un message si plusieurs comptes correspondent.
+     */
+    private function findClient(string $client): User|string|null
+    {
+        $client = trim($client);
+
+        if (str_contains($client, '@')) {
+            return User::query()->whereRaw('LOWER(email) = ?', [mb_strtolower($client)])->first();
+        }
+
+        $digits = preg_replace('/\D+/', '', $client);
+
+        if (strlen($digits) < 8) {
+            return 'Numéro trop court : indiquez au moins 8 chiffres, ou l’e-mail du client.';
+        }
+
+        // Comparaison chiffre à chiffre en PHP : les numéros sont saisis avec espaces, « + », tirets…
+        $tail = substr($digits, -8);
+        $matches = User::query()
+            ->whereNotNull('phone')
+            ->where('phone', '!=', '')
+            ->get(['id', 'phone'])
+            ->filter(fn (User $user) => str_ends_with(preg_replace('/\D+/', '', (string) $user->phone), $tail))
+            ->values();
+        $matches = $matches->count() === 1 ? User::query()->whereKey($matches->first()->id)->get() : $matches;
+
+        return match ($matches->count()) {
+            0 => null,
+            1 => $matches->first(),
+            default => $matches->count() . ' comptes ont ce numéro : utilisez l’e-mail du client (ou activez depuis sa fiche).',
+        };
     }
 
     public function extend(int $id): RedirectResponse

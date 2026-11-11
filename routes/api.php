@@ -25,6 +25,11 @@ Route::prefix('v1')->group(function () {
     Route::post('/vip/maketou/webhook', [VipController::class, 'webhook']);
     Route::get('/settings/public', [SettingController::class, 'public']);
     Route::get('/app/version', [SettingController::class, 'appVersion']);
+    // Écoute d'un message vocal : lien signé et temporaire (le lecteur audio n'envoie pas le jeton).
+    Route::get('/messages/{message}/audio', [MessageController::class, 'audio'])
+        ->name('messages.audio')
+        ->middleware(['signed', 'throttle:60,1'])
+        ->whereNumber('message');
 
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('/auth/logout', [AuthController::class, 'logout']);
@@ -54,6 +59,7 @@ Route::prefix('v1')->group(function () {
         Route::post('/messages', [MessageController::class, 'store'])->middleware('throttle:20,1');
 
         // Assistant 24h/24 (IA) : chaque message coûte un appel OpenRouter, d'où la limite par minute.
+        // Coupé (réglage assistant_enabled = non) : le message part directement à un conseiller.
         Route::get('/assistant/messages', [AssistantController::class, 'index']);
         Route::post('/assistant/messages', [AssistantController::class, 'store'])->middleware('throttle:12,1');
         Route::delete('/assistant/messages', [AssistantController::class, 'destroy']);

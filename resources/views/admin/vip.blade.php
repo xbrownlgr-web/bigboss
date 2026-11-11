@@ -68,6 +68,18 @@
 
     <div class="row g-3">
         <div class="col-12 col-xl-5 vstack gap-3">
+            {{-- Activation à la main : offre et durée au choix --}}
+            <section class="bf-card" id="activer">
+                <div class="bf-card-header justify-content-start">
+                    <span class="bf-kpi-icon"><i class="bi bi-person-check"></i></span>
+                    <div class="min-w-0">
+                        <h2 class="bf-card-title">Activer un abonnement</h2>
+                        <div class="bf-card-sub">N’importe quelle offre, pour la durée de votre choix</div>
+                    </div>
+                </div>
+                @include('admin.partials.vip-grant-form')
+            </section>
+
             {{-- Silver offert (parrainage 1xBet) --}}
             <details class="bf-card bf-fold" @if ($freeClaims->isNotEmpty()) open @endif data-desktop-open>
                 <summary class="bf-card-header justify-content-start">

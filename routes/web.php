@@ -112,6 +112,9 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::get('/messages', [AdminController::class, 'messages']);
     Route::post('/messages/{userId}/reply', [AdminController::class, 'reply'])->whereNumber('userId');
     Route::get('/messages/{userId}/feed', [AdminController::class, 'messagesFeed'])->whereNumber('userId');
+    Route::get('/messages/threads', [AdminController::class, 'messageThreads']);
+    Route::get('/messages/{userId}/conversation', [AdminController::class, 'messageConversation'])->whereNumber('userId');
+    Route::get('/messages/audio/{messageId}', [AdminController::class, 'messageAudio'])->whereNumber('messageId');
     Route::get('/users', [AdminController::class, 'users']);
     Route::get('/users/{userId}', [AdminController::class, 'showUser'])->whereNumber('userId');
     Route::post('/users/{userId}/vip', [AdminController::class, 'toggleVip']);
@@ -121,6 +124,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::get('/vip', [VipController::class, 'index']);
     Route::post('/vip/lookup', [VipController::class, 'lookup'])->middleware('throttle:30,1');
     Route::post('/vip/requests/{id}/activate', [VipController::class, 'activate'])->whereNumber('id');
+    Route::post('/vip/grant', [VipController::class, 'grant']);
     Route::post('/vip/subscriptions/{id}/extend', [VipController::class, 'extend'])->whereNumber('id');
     Route::post('/vip/subscriptions/{id}/cancel', [VipController::class, 'cancel'])->whereNumber('id');
     Route::post('/vip/coupons', [VipController::class, 'storeCoupon']);

@@ -25,6 +25,7 @@
     $hints = [
         'app_latest_version' => 'Suivi automatiquement : la dernière version publiée sur GitHub est utilisée si elle est plus récente.',
         'app_min_version' => 'En dessous de cette version, l’application est bloquée jusqu’à la mise à jour.',
+        'assistant_enabled' => 'non (recommandé pour l’instant) : l’onglet Support ouvre directement la conversation avec un conseiller humain. oui : l’assistant IA LUC répond 24h/24.',
         'app_download_url' => 'Lien direct vers le fichier .apk (ex. https://big-boss-gure.onrender.com/big-boss.apk).',
         'cloudinary_cloud_name' => 'Visible en haut du tableau de bord Cloudinary (Dashboard > Product environment).',
         'video_recharge_url' => 'Rempli automatiquement depuis Admin > Vidéos.',

@@ -35,8 +35,73 @@ class VipService
     // Sans caractères ambigus (0/O, 1/I/L) : la clé se recopie sans erreur depuis WhatsApp.
     private const KEY_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
 
+    // Durées proposées dans l'admin pour une activation manuelle (jours => libellé).
+    public const MANUAL_DURATIONS = [
+        1 => '1 jour',
+        3 => '3 jours',
+        7 => '1 semaine',
+        14 => '2 semaines',
+        30 => '1 mois',
+        60 => '2 mois',
+        90 => '3 mois',
+        180 => '6 mois',
+        365 => '1 an',
+    ];
+
     public function __construct(private readonly ExpoPushService $push)
     {
+    }
+
+    /**
+     * Activation à la main depuis l'admin : n'importe quelle offre (Score exact comprise), pour
+     * la durée choisie (ajoutée à la fin actuelle si l'abonnement est encore actif).
+     */
+    public function grantManual(int $userId, string $level, int $days): VipSubscription
+    {
+        if (! self::isVipLevel($level)) {
+            throw new InvalidArgumentException("Niveau VIP inconnu : {$level}");
+        }
+
+        $subscription = $this->addDays($userId, $level, max(1, $days));
+        [$name, $plan, $items] = $this->labels($subscription->level);
+
+        $this->push->sendToUser(
+            $subscription->user,
+            "💎 {$name} activé",
+            "Votre {$plan} est actif jusqu’au {$this->date($subscription->ends_at)}. Les {$items} sont maintenant visibles dans l’application.",
+            ['type' => 'vip', 'event' => 'activated', 'niveau' => $subscription->level],
+        );
+
+        return $subscription;
+    }
+
+    public static function durationLabel(int $days): string
+    {
+        return self::MANUAL_DURATIONS[$days] ?? $days . ' jours';
+    }
+
+    /**
+     * Alerte WhatsApp à l'admin : un client vient de payer en ligne (demande du fondateur, le
+     * 2026-11-11 : les activations automatiques arrivaient sans que personne ne soit prévenu).
+     * Envoyée APRÈS la réponse, pour ne jamais retarder l'app ni le webhook MAKETOU.
+     */
+    private function alertAdminOfPayment(VipSubscription $subscription, int $days): void
+    {
+        $user = $subscription->user;
+        $offer = AppSetting::vipOffers()[$subscription->level] ?? [];
+        $price = $days <= 7 ? ($offer['price_week'] ?? null) : ($offer['price'] ?? null);
+        $text = implode("\n", array_filter([
+            '💎 Abonnement payé en ligne',
+            AppSetting::offerName($subscription->level) . ' · ' . ($days <= 7 ? '1 semaine' : self::durationLabel($days))
+                . ($price ? ' · ' . number_format((int) $price, 0, ',', ' ') . ' FCFA' : ''),
+            'Client : ' . $user->name . ($user->phone ? ' (' . $user->phone . ')' : ''),
+            'Actif jusqu’au ' . $this->date($subscription->ends_at),
+            url('/admin/vip'),
+        ]));
+
+        dispatch(function () use ($text, $subscription) {
+            app(WhatsAppNotifier::class)->send($text, ['vip_subscription_id' => $subscription->id]);
+        })->afterResponse();
     }
 
     public static function isVipLevel(?string $level): bool
@@ -146,6 +211,8 @@ class VipService
             "Votre paiement est confirmé. Votre {$plan} ({$duration}) est actif jusqu’au {$this->date($subscription->ends_at)} : les {$items} sont maintenant visibles dans l’application.",
             ['type' => 'vip', 'event' => 'activated', 'niveau' => $subscription->level],
         );
+
+        $this->alertAdminOfPayment($subscription, $days);
 
         return $subscription;
     }

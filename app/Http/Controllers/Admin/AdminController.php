@@ -387,14 +387,114 @@ class AdminController extends Controller
     {
         $search = trim((string) $request->input('search', ''));
         $filter = $request->input('filter') === 'unread' ? 'unread' : 'all';
+        $selectedUser = $request->integer('user_id') ? User::find($request->integer('user_id')) : null;
 
+        // Plus d'ouverture automatique : sur téléphone la liste s'affiche d'abord, et une
+        // conversation n'est marquée lue que lorsque l'admin l'ouvre vraiment.
+        $messages = $selectedUser ? $this->openConversation($selectedUser) : collect();
+        [$conversations, $counts] = $this->conversationList($search, $filter, $selectedUser?->id);
+
+        return view('admin.messages', [
+            'conversations' => $conversations,
+            'selectedUser' => $selectedUser,
+            'subscriptions' => $selectedUser ? $selectedUser->vipSubscriptions()->active()->get() : collect(),
+            'messages' => $messages,
+            'search' => $search,
+            'filter' => $filter,
+            'counts' => $counts,
+        ]);
+    }
+
+    /**
+     * Liste des conversations rafraîchie toute seule (toutes les quelques secondes), sans recharger.
+     */
+    public function messageThreads(Request $request): JsonResponse
+    {
+        $search = trim((string) $request->input('search', ''));
+        $filter = $request->input('filter') === 'unread' ? 'unread' : 'all';
+        $active = $request->integer('active') ?: null;
+        [$conversations, $counts] = $this->conversationList($search, $filter, $active);
+
+        return response()->json([
+            'html' => view('admin.partials.message-threads', [
+                'conversations' => $conversations,
+                'activeUserId' => $active,
+                'filter' => $filter,
+                'search' => $search,
+            ])->render(),
+            'counts' => $counts,
+            'unread_total' => (int) Message::query()->where('sender', 'user')->where('is_read', false)->count(),
+        ]);
+    }
+
+    /**
+     * Ouvre une conversation sans recharger la page (clic dans la liste).
+     */
+    public function messageConversation(int $userId): JsonResponse
+    {
+        $user = User::findOrFail($userId);
+        $messages = $this->openConversation($user);
+
+        return response()->json([
+            'html' => view('admin.partials.message-conversation', [
+                'selectedUser' => $user,
+                'subscriptions' => $user->vipSubscriptions()->active()->get(),
+                'messages' => $messages,
+            ])->render(),
+            'user_id' => $user->id,
+            'title' => $user->name,
+        ]);
+    }
+
+    /**
+     * Écoute d'un message vocal dans l'admin.
+     */
+    public function messageAudio(int $messageId): \Illuminate\Http\Response
+    {
+        $audio = \App\Models\MessageAudio::query()->where('message_id', $messageId)->first();
+
+        abort_unless($audio, 404, 'Message vocal supprimé (les vocaux sont gardés 3 jours).');
+
+        return response(base64_decode($audio->data), 200, [
+            'Content-Type' => $audio->mime,
+            'Content-Length' => (string) $audio->size,
+            'Cache-Control' => 'private, max-age=3600',
+        ]);
+    }
+
+    /**
+     * Messages d'une conversation (sans le contenu des vocaux), marqués lus côté admin.
+     */
+    private function openConversation(User $user): \Illuminate\Support\Collection
+    {
+        $messages = Message::query()
+            ->with(['transaction', 'audio:id,message_id'])
+            ->where('user_id', $user->id)
+            ->orderBy('created_at')
+            ->get();
+
+        Message::query()
+            ->where('user_id', $user->id)
+            ->where('sender', 'user')
+            ->where('is_read', false)
+            ->update(['is_read' => true]);
+
+        return $messages;
+    }
+
+    /**
+     * @return array{0: \Illuminate\Support\Collection, 1: array{all: int, unread: int}}
+     */
+    private function conversationList(string $search, string $filter, ?int $openedUserId): array
+    {
         $threads = Message::query()
             ->selectRaw("user_id, MAX(id) as last_id, SUM(CASE WHEN sender = 'user' AND is_read = 0 THEN 1 ELSE 0 END) as unread")
             ->when($search !== '', function ($query) use ($search) {
                 $query->whereHas('user', function ($userQuery) use ($search) {
                     $userQuery
                         ->where('name', 'like', '%' . $search . '%')
-                        ->orWhere('email', 'like', '%' . $search . '%');
+                        ->orWhere('email', 'like', '%' . $search . '%')
+                        ->orWhere('phone', 'like', '%' . $search . '%');
                 });
             })
             ->groupBy('user_id')
@@ -432,27 +532,10 @@ class AdminController extends Controller
             $conversations = $conversations->where('unread', '>', 0)->values();
         }
 
-        // Plus d'ouverture automatique : sur téléphone la liste s'affiche d'abord, et une
-        // conversation n'est marquée lue que lorsque l'admin l'ouvre vraiment.
-        $selectedUserId = $request->integer('user_id');
-        $selectedUser = $selectedUserId ? User::find($selectedUserId) : null;
-        $messages = collect();
-
-        if ($selectedUser) {
-            $messages = Message::query()
-                ->with('transaction')
-                ->where('user_id', $selectedUser->id)
-                ->orderBy('created_at')
-                ->get();
-
-            Message::query()
-                ->where('user_id', $selectedUser->id)
-                ->where('sender', 'user')
-                ->where('is_read', false)
-                ->update(['is_read' => true]);
-
-            $conversations = $conversations->map(function ($conversation) use ($selectedUser) {
-                if ($conversation->user_id === $selectedUser->id) {
+        // La conversation ouverte est lue : pas de pastille « non lu » sur elle.
+        if ($openedUserId) {
+            $conversations = $conversations->map(function ($conversation) use ($openedUserId) {
+                if ($conversation->user_id === $openedUserId) {
                     $conversation->unread = 0;
                 }
 
@@ -460,24 +543,19 @@ class AdminController extends Controller
             });
         }
 
-        return view('admin.messages', [
-            'conversations' => $conversations,
-            'selectedUser' => $selectedUser,
-            'messages' => $messages,
-            'search' => $search,
-            'filter' => $filter,
-            'counts' => $counts,
-        ]);
+        return [$conversations, $counts];
     }
 
     /**
-     * Nouveaux messages d'une conversation ouverte (rafraîchissement automatique côté admin).
+     * Nouveaux messages d'une conversation ouverte (rafraîchissement automatique côté admin), et
+     * réponses de l'admin que le client a lues depuis (coches « Lu »).
      */
     public function messagesFeed(Request $request, int $userId): JsonResponse
     {
         $after = max(0, $request->integer('after'));
 
         $messages = Message::query()
+            ->with('audio:id,message_id')
             ->where('user_id', $userId)
             ->where('id', '>', $after)
             ->orderBy('id')
@@ -494,6 +572,13 @@ class AdminController extends Controller
 
         return response()->json([
             'messages' => $messages->map(fn (Message $message) => $this->messagePayload($message))->values(),
+            'read_ids' => Message::query()
+                ->where('user_id', $userId)
+                ->where('sender', 'admin')
+                ->where('is_read', true)
+                ->latest('id')
+                ->limit(50)
+                ->pluck('id'),
         ]);
     }
 
@@ -509,6 +594,11 @@ class AdminController extends Controller
                 ? 'Aujourd’hui'
                 : $message->created_at->locale('fr')->isoFormat('dddd D MMMM'),
             'transaction_id' => $message->transaction_id,
+            'read' => $message->sender === 'admin' && $message->is_read,
+            // Vocal : lien d'écoute dans l'admin, ou « supprimé » après 3 jours.
+            'audio_url' => $message->hasAudio() ? '/admin/messages/audio/' . $message->id : null,
+            'audio_duration' => $message->audio_duration,
+            'audio_expired' => $message->isVoice() && ! $message->hasAudio(),
         ];
     }
 

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\AppSetting;
 use App\Models\AssistantMessage;
 use App\Services\SupportAssistant;
+use App\Services\SupportInbox;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -31,13 +32,33 @@ class AssistantController extends Controller
         ]);
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(Request $request, SupportInbox $inbox): JsonResponse
     {
         $data = $request->validate([
             'content' => ['required', 'string', 'max:1000'],
         ]);
 
         $user = $request->user();
+
+        // Assistant coupé (décision du fondateur) : les anciennes versions de l'app affichent encore
+        // l'onglet assistant, mais le message part directement à un conseiller humain.
+        if (! AppSetting::assistantEnabled()) {
+            $inbox->receive($user, trim($data['content']));
+
+            $message = AssistantMessage::create([
+                'user_id' => $user->id,
+                'role' => AssistantMessage::ROLE_USER,
+                'content' => trim($data['content']),
+            ]);
+            $reply = AssistantMessage::create([
+                'user_id' => $user->id,
+                'role' => AssistantMessage::ROLE_ASSISTANT,
+                'content' => 'Votre message a été transmis à un conseiller BIG BOSS. Il vous répond dans l’onglet « Conseiller ».',
+                'handoff' => true,
+            ]);
+
+            return response()->json(['success' => true, 'message' => $message, 'reply' => $reply], 201);
+        }
         // Plafond quotidien : protège le crédit OpenRouter contre un abus ou une boucle.
         $limit = max(1, (int) (AppSetting::value('assistant_daily_limit') ?: 60));
         $sentToday = AssistantMessage::query()
