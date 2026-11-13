@@ -174,3 +174,23 @@ ne connaissent que lui). Avant de copier quoi que ce soit depuis `c:\Binho Flash
 URL, adresse, nom ou valeur de Binho n'est importé.
 - Les prix et avantages VIP (`vip_{niveau}_price`, `_price_week`, `_details`) sont éditables dans
   Admin > Paramètres > VIP, jamais codés en dur dans les vues.
+
+## Support, VIP et messagerie admin (demandes du fondateur, 2026-11-11)
+
+- **Alerte WhatsApp à chaque abonnement payé en ligne** (MAKETOU, `VipService::grantPaid` →
+  `alertAdminOfPayment`, envoyée après la réponse). Avant, seul le client était prévenu.
+- **Activation manuelle** : `POST /admin/vip/grant` (carte « Activer un abonnement » sur Admin > VIP
+  et sur la fiche client) : n'importe quelle offre (Score exact compris), durée au choix
+  (`VipService::MANUAL_DURATIONS` ou nombre de jours libre), client par e-mail ou téléphone (8
+  derniers chiffres, tous formats). L'ancien bouton « Passer VIP » (`users.is_vip`) ne débloquait
+  AUCUN coupon (seuls les `vip_subscriptions` comptent) : retiré de la fiche client.
+- **Assistant IA (LUC) coupé par défaut** : réglage `assistant_enabled` (oui/non, Admin > Paramètres).
+  Coupé, l'app ouvre directement le conseiller, et `POST /assistant/messages` (anciennes versions)
+  transmet le message à un humain (`SupportInbox`) au lieu d'appeler OpenRouter.
+- **Messages vocaux** : `POST /messages` avec `audio` + `duration` (≤ 120 s, ≤ 4 Mo). Son en base64
+  dans `message_audios` (disque Render éphémère), écoute app par lien signé (`messages.audio`),
+  admin par `/admin/messages/audio/{id}`. **Supprimé 3 jours après** (`bigboss:purge-voice-messages`,
+  toutes les heures) ; le message reste, marqué « vocal supprimé ». Côté app : APK 1.1.0 (expo-audio).
+- **Admin > Messages** : partiels `admin/partials/message-*.blade.php` ; changement de conversation
+  sans recharger (`/admin/messages/{id}/conversation`), liste rafraîchie toutes les 8 s
+  (`/admin/messages/threads`), coches « Lu » (`read_ids` du feed), réponses rapides.

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Support\AiProvider;
 use App\Exceptions\NoValueBetException;
 use App\Models\AppSetting;
 use App\Support\PronosticRules;
@@ -80,10 +81,10 @@ class AiPronosticGenerator
      */
     public function generate(array $fixtures, array $levels, array $options = []): array
     {
-        $key = AppSetting::value('openrouter_api_key');
+        $key = AiProvider::key();
 
         if (! $key) {
-            throw new RuntimeException('Clé OpenRouter manquante (Admin > Paramètres > Intelligence artificielle).');
+            throw new RuntimeException('Clé ' . AiProvider::name() . ' manquante (Admin > Paramètres > Intelligence artificielle).');
         }
 
         $levels = array_values(array_intersect(self::BUILD_ORDER, $levels)) ?: ['Bronze'];
@@ -260,8 +261,8 @@ class AiPronosticGenerator
                     'HTTP-Referer' => config('app.url'),
                     'X-Title' => 'BIG BOSS',
                 ])
-                ->post(self::ENDPOINT, [
-                    'model' => AppSetting::value('openrouter_model') ?: self::DEFAULT_MODEL,
+                ->post(AiProvider::endpoint(), [
+                    'model' => AiProvider::model(AppSetting::value('openrouter_model') ?: self::DEFAULT_MODEL),
                     'temperature' => 0.2,
                     'response_format' => ['type' => 'json_object'],
                     'messages' => [

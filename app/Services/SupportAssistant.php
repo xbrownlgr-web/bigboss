@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Support\AiProvider;
 use App\Models\AppSetting;
 use App\Models\AssistantMessage;
 use App\Models\DepositNumber;
@@ -115,10 +116,10 @@ class SupportAssistant
      */
     private function complete(User $user, array $messages): array
     {
-        $key = AppSetting::value('openrouter_api_key');
+        $key = AiProvider::key();
 
         if (! $key) {
-            return ['ok' => false, 'content' => null, 'error' => 'Clé OpenRouter absente (Admin > Paramètres > Intelligence artificielle).'];
+            return ['ok' => false, 'content' => null, 'error' => 'Clé ' . AiProvider::name() . ' absente (Admin > Paramètres > Intelligence artificielle).'];
         }
 
         $model = AppSetting::value('assistant_model')
@@ -132,8 +133,8 @@ class SupportAssistant
                     'HTTP-Referer' => config('app.url'),
                     'X-Title' => 'BIG BOSS Assistant',
                 ])
-                ->post(self::ENDPOINT, [
-                    'model' => $model,
+                ->post(AiProvider::endpoint(), [
+                    'model' => AiProvider::model($model),
                     'temperature' => 0.5,
                     'max_tokens' => 900,
                     'messages' => [
@@ -142,7 +143,7 @@ class SupportAssistant
                     ],
                 ]);
         } catch (Throwable $exception) {
-            return ['ok' => false, 'content' => null, 'error' => 'OpenRouter injoignable : ' . $exception->getMessage()];
+            return ['ok' => false, 'content' => null, 'error' => AiProvider::name() . ' injoignable : ' . $exception->getMessage()];
         }
 
         $content = trim((string) $response->json('choices.0.message.content'));
@@ -151,10 +152,10 @@ class SupportAssistant
             $reason = (string) ($response->json('error.message') ?? '');
 
             return ['ok' => false, 'content' => null, 'error' => match (true) {
-                $response->status() === 401 => 'Clé OpenRouter refusée : vérifiez-la dans Admin > Paramètres.',
-                $response->status() === 402 => 'Crédit OpenRouter épuisé : rechargez quelques dollars sur openrouter.ai.',
+                $response->status() === 401 => 'Clé ' . AiProvider::name() . ' refusée : vérifiez-la dans Admin > Paramètres.',
+                $response->status() === 402 => 'Crédit ' . AiProvider::name() . ' épuisé : rechargez le compte (' . (AiProvider::isDeepSeek() ? 'platform.deepseek.com' : 'openrouter.ai') . ').',
                 $response->status() === 404 || str_contains($reason, 'model') => "Modèle « {$model} » introuvable sur OpenRouter : corrigez « Modèle de l’assistant ».",
-                default => 'OpenRouter a répondu HTTP ' . $response->status() . ($reason !== '' ? ' : ' . $reason : ' sans texte.'),
+                default => AiProvider::name() . ' a répondu HTTP ' . $response->status() . ($reason !== '' ? ' : ' . $reason : ' sans texte.'),
             }];
         }
 

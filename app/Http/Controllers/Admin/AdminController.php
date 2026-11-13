@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Support\AiProvider;
 use App\Http\Controllers\Controller;
 use App\Mail\TransactionApproved;
 use App\Mail\TransactionRejected;
@@ -798,10 +799,10 @@ class AdminController extends Controller
         return view('admin.pronostics', [
             'aiDrafts' => session('ai_drafts', []),
             'aiReady' => [
-                'openrouter' => (bool) AppSetting::value('openrouter_api_key'),
+                'openrouter' => (bool) AiProvider::key(),
                 'football' => (bool) AppSetting::value('highlightly_api_key'),
                 'odds' => (bool) AppSetting::value('odds_api_key'),
-                'model' => AppSetting::value('openrouter_model') ?: AiPronosticGenerator::DEFAULT_MODEL,
+                'model' => AiProvider::name() . ' · ' . AiProvider::model(AppSetting::value('openrouter_model') ?: AiPronosticGenerator::DEFAULT_MODEL),
             ],
             // Créneaux du jour (publié, rien de fiable, erreur, à venir) et budget des cotes.
             'slots' => $this->todaySlots(),

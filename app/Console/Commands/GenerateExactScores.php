@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Support\AiProvider;
 use App\Models\AppSetting;
 use App\Models\Pronostic;
 use App\Models\PronosticRun;
@@ -122,7 +123,7 @@ class GenerateExactScores extends Command
             return $this->finish($slot, PronosticRun::STATUS_EMPTY, 'Aucun match assez documenté pour un score exact (' . count($fixtures) . ' match(s) examiné(s), ' . $analyses->count() . ' analysable(s)).');
         }
 
-        $key = AppSetting::value('openrouter_api_key');
+        $key = AiProvider::key();
         $created = [];
 
         foreach ($picked as $analysis) {

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Support\AiProvider;
 use App\Models\AppSetting;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Http;
@@ -179,8 +180,8 @@ class ExactScoreGenerator
             $response = Http::timeout(90)
                 ->withToken($key)
                 ->withHeaders(['HTTP-Referer' => config('app.url'), 'X-Title' => 'BIG BOSS'])
-                ->post(self::ENDPOINT, [
-                    'model' => AppSetting::value('openrouter_model') ?: AiPronosticGenerator::DEFAULT_MODEL,
+                ->post(AiProvider::endpoint(), [
+                    'model' => AiProvider::model(AppSetting::value('openrouter_model') ?: AiPronosticGenerator::DEFAULT_MODEL),
                     'temperature' => 0.2,
                     'response_format' => ['type' => 'json_object'],
                     'messages' => [
