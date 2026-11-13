@@ -716,9 +716,12 @@ class AdminController extends Controller
      */
     public function notifyAppUpdate(): RedirectResponse
     {
+        // Texte de la version annoncée (Admin > Paramètres > « Message de mise à jour »), sinon générique.
+        $latest = trim((string) AppSetting::value('app_latest_version'));
+        $message = trim((string) AppSetting::value('app_update_message'));
         $sent = $this->pushService->sendToActiveUsers(
-            '🔄 Mise à jour disponible',
-            'Une amélioration de BIG BOSS est prête. Touchez cette notification ou rouvrez l’application.',
+            $latest !== '' ? '🔄 BIG BOSS ' . $latest . ' disponible' : '🔄 Mise à jour disponible',
+            $message !== '' ? $message . ' Ouvrez l’application pour la télécharger.' : 'Une amélioration de BIG BOSS est prête. Touchez cette notification ou rouvrez l’application.',
             ['type' => 'app_update'],
         );
 
