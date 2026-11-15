@@ -7,6 +7,7 @@ use App\Mail\TransactionCreated;
 use App\Models\AppSetting;
 use App\Models\Transaction;
 use App\Services\AdminNotifier;
+use App\Services\AdminPush;
 use App\Services\WhatsAppCloudService;
 use App\Services\WhatsAppNotifier;
 use Illuminate\Http\JsonResponse;
@@ -49,6 +50,13 @@ class TransactionController extends Controller
 
         $this->sendTransactionCreatedEmail($transaction);
         $adminNotifier->transactionCreated($transaction);
+
+        // Téléphone de l'admin (mode admin de l'app) : ouvre directement l'onglet Opérations.
+        app(AdminPush::class)->send(
+            $transaction->type === 'recharge' ? '💰 Nouvelle recharge' : '💸 Nouvelle demande de retrait',
+            $userName . ' · ' . number_format((float) $transaction->amount, 0, ',', ' ') . ' FCFA · ' . strtoupper((string) $transaction->platform),
+            ['type' => 'admin_transaction', 'transaction_id' => $transaction->id],
+        );
 
         return response()->json([
             'success' => true,

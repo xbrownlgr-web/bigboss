@@ -36,6 +36,9 @@ class SupportInbox
 
         $message = $this->create($user, 'user', $content, $audio, $duration, $image, $transactionId);
 
+        // Téléphone de l'admin (mode admin de l'app) : à chaque message, il ouvre la conversation.
+        app(AdminPush::class)->send('💬 ' . $user->name, Str::limit($this->preview($message), 120), ['type' => 'admin_message', 'user_id' => $user->id]);
+
         if (! $alreadyWaiting) {
             $this->adminNotifier->supportMessage($message->load('user'));
             $this->whatsApp->send(
