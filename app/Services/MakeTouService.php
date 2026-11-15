@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\AppSetting;
 use App\Models\User;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use RuntimeException;
 
 /**
@@ -54,7 +55,9 @@ class MakeTouService
                 'email' => $user->email,
                 'firstName' => $first,
                 'lastName' => $last,
-                'phone' => $user->phone,
+                // Numéro au format international (« +229… ») : les espaces et tirets saisis par le
+                // client faisaient refuser la demande (HTTP 422). Omis s'il est vide ou trop court.
+                ...($this->phone($user->phone) ? ['phone' => $this->phone($user->phone)] : []),
                 'customerPrice' => $amount,
                 'redirectURL' => $base . '/vip/paiement/retour',
                 'webhookUrl' => $base . '/api/v1/vip/maketou/webhook',
@@ -62,7 +65,18 @@ class MakeTouService
             ]);
 
         if (! $response->successful()) {
-            throw new RuntimeException('MAKETOU a refusé la demande de paiement (HTTP ' . $response->status() . ').');
+            // La raison exacte (champ refusé…) est gardée dans les journaux pour pouvoir corriger.
+            Log::warning('MAKETOU a refusé un paiement.', [
+                'status' => $response->status(),
+                'body' => mb_strimwidth($response->body(), 0, 1500, '…'),
+                'user_id' => $user->id,
+                'level' => $level,
+            ]);
+            $reason = (string) ($response->json('message') ?? $response->json('error.message') ?? '');
+
+            throw new RuntimeException('Le paiement en ligne n’a pas pu démarrer'
+                . ($reason !== '' ? ' (' . mb_strimwidth($reason, 0, 160, '…') . ')' : ' (HTTP ' . $response->status() . ')')
+                . '. Réessayez, ou utilisez « Payer autrement (WhatsApp) ».');
         }
 
         $cartId = (string) ($response->json('cart.id') ?? '');
@@ -101,6 +115,29 @@ class MakeTouService
     /**
      * @return array{0: string, 1: string} prénom, nom
      */
+    /**
+     * « 01 97 45 12 33 », « +229 0197… » → « +2290197451233 » ; null si inutilisable.
+     */
+    private function phone(?string $phone): ?string
+    {
+        $digits = preg_replace('/\D+/', '', (string) $phone);
+
+        if (str_starts_with($digits, '00')) {
+            $digits = substr($digits, 2);
+        }
+
+        if (strlen($digits) < 8) {
+            return null;
+        }
+
+        // Numéro local béninois (10 chiffres commençant par 01) : indicatif ajouté.
+        if (strlen($digits) === 10 && str_starts_with($digits, '01')) {
+            $digits = '229' . $digits;
+        }
+
+        return '+' . $digits;
+    }
+
     private function splitName(?string $name): array
     {
         $parts = array_values(array_filter(preg_split('/\s+/', trim((string) $name)) ?: []));
