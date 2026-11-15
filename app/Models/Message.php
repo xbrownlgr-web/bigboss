@@ -16,12 +16,15 @@ class Message extends Model
     // Texte d'un message vocal : aperçus, alertes, et anciennes versions de l'app sans lecteur.
     public const VOICE_LABEL = '🎤 Message vocal';
 
+    public const IMAGE_LABEL = '📷 Photo';
+
     protected $fillable = [
         'user_id',
         'transaction_id',
         'sender',
         'content',
         'audio_duration',
+        'has_image',
         'is_read',
     ];
 
@@ -30,6 +33,7 @@ class Message extends Model
         return [
             'is_read' => 'boolean',
             'audio_duration' => 'integer',
+            'has_image' => 'boolean',
         ];
     }
 
@@ -46,6 +50,19 @@ class Message extends Model
     public function audio(): HasOne
     {
         return $this->hasOne(MessageAudio::class);
+    }
+
+    public function image(): HasOne
+    {
+        return $this->hasOne(MessageImage::class);
+    }
+
+    /**
+     * La photo est encore là (supprimée 3 jours après l'envoi, comme les vocaux).
+     */
+    public function hasImageFile(): bool
+    {
+        return $this->has_image && ($this->relationLoaded('image') ? $this->image !== null : $this->image()->exists());
     }
 
     public function isVoice(): bool
@@ -68,11 +85,14 @@ class Message extends Model
     public function toAppArray(): array
     {
         $hasAudio = $this->hasAudio();
+        $hasImage = $this->hasImageFile();
 
         return [
-            ...Arr::except($this->toArray(), ['audio']),
+            ...Arr::except($this->toArray(), ['audio', 'image']),
             'audio_url' => $hasAudio ? URL::temporarySignedRoute('messages.audio', now()->addHours(6), ['message' => $this->id]) : null,
             'audio_expired' => $this->isVoice() && ! $hasAudio,
+            'image_url' => $hasImage ? URL::temporarySignedRoute('messages.image', now()->addHours(6), ['message' => $this->id]) : null,
+            'image_expired' => $this->has_image && ! $hasImage,
         ];
     }
 }

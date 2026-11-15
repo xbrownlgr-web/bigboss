@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\API\AdminAppController;
 use App\Http\Controllers\API\AssistantController;
 use App\Http\Controllers\API\AuthController;
 use App\Http\Controllers\API\MessageController;
@@ -30,6 +31,10 @@ Route::prefix('v1')->group(function () {
         ->name('messages.audio')
         ->middleware(['signed', 'throttle:60,1'])
         ->whereNumber('message');
+    Route::get('/messages/{message}/image', [MessageController::class, 'image'])
+        ->name('messages.image')
+        ->middleware(['signed', 'throttle:120,1'])
+        ->whereNumber('message');
 
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('/auth/logout', [AuthController::class, 'logout']);
@@ -46,6 +51,20 @@ Route::prefix('v1')->group(function () {
         Route::middleware('admin')->group(function () {
             Route::post('/pronostics', [PronosticController::class, 'store']);
             Route::post('/pronostics/{id}/result', [PronosticController::class, 'result']);
+        });
+
+        // Mode administrateur de l'application (compte admin connecté dans l'app).
+        Route::middleware('admin')->prefix('admin')->group(function () {
+            Route::get('/summary', [AdminAppController::class, 'summary']);
+            Route::get('/conversations', [AdminAppController::class, 'conversations']);
+            Route::get('/conversations/{userId}', [AdminAppController::class, 'conversation'])->whereNumber('userId');
+            Route::post('/conversations/{userId}', [AdminAppController::class, 'reply'])->whereNumber('userId')->middleware('throttle:60,1');
+            Route::get('/transactions', [AdminAppController::class, 'transactions']);
+            Route::post('/transactions/{id}/approve', [AdminAppController::class, 'approve'])->whereNumber('id');
+            Route::post('/transactions/{id}/reject', [AdminAppController::class, 'reject'])->whereNumber('id');
+            Route::get('/users', [AdminAppController::class, 'users']);
+            Route::get('/vip/options', [AdminAppController::class, 'vipOptions']);
+            Route::post('/vip/grant', [AdminAppController::class, 'grant']);
         });
 
         Route::post('/vip/requests', [VipController::class, 'requestAccess'])->middleware('throttle:10,1');

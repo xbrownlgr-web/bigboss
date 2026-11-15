@@ -115,6 +115,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::get('/messages/threads', [AdminController::class, 'messageThreads']);
     Route::get('/messages/{userId}/conversation', [AdminController::class, 'messageConversation'])->whereNumber('userId');
     Route::get('/messages/audio/{messageId}', [AdminController::class, 'messageAudio'])->whereNumber('messageId');
+    Route::get('/messages/image/{messageId}', [AdminController::class, 'messageImage'])->whereNumber('messageId');
     Route::get('/users', [AdminController::class, 'users']);
     Route::get('/users/{userId}', [AdminController::class, 'showUser'])->whereNumber('userId');
     Route::post('/users/{userId}/vip', [AdminController::class, 'toggleVip']);

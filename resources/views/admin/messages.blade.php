@@ -70,6 +70,16 @@
         .bf-composer textarea { flex: 1; min-height: 44px; max-height: 140px; padding: 10px 16px; border-radius: 22px; line-height: 1.35; resize: none; }
         .bf-send { display: grid; flex: 0 0 auto; place-items: center; width: 44px; height: 44px; border: 0; border-radius: 50%; background: var(--bf-gold); color: var(--bf-navy-deep); font-size: 1.05rem; }
         .bf-send:disabled { opacity: .55; }
+        .bf-tool { display: grid; flex: 0 0 auto; place-items: center; width: 40px; height: 44px; border: 0; border-radius: 12px; background: transparent; color: var(--bf-text-2); font-size: 1.15rem; }
+        .bf-tool:hover { background: var(--bf-surface-2); color: var(--bf-text); }
+        .bf-photo { display: block; }
+        .bf-photo img { display: block; max-width: min(260px, 100%); max-height: 320px; border-radius: 12px; object-fit: cover; }
+        .bf-recording { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-top: 1px solid var(--bf-border); background: #FFF1F2; }
+        .bf-recording[hidden] { display: none; }
+        .bf-rec-dot { width: 10px; height: 10px; border-radius: 50%; background: #DC2626; animation: bfPulse 1s infinite; }
+        .bf-rec-time { font-weight: 800; font-variant-numeric: tabular-nums; }
+        .bf-rec-hint { flex: 1; color: var(--bf-muted); font-size: .78rem; }
+        @keyframes bfPulse { 50% { opacity: .25; } }
         .bf-placeholder { margin: auto; padding: 24px; color: var(--bf-muted); text-align: center; }
         .bf-placeholder i { display: block; margin-bottom: 8px; color: var(--bf-subtle); font-size: 2.2rem; }
 
@@ -301,7 +311,30 @@
                         bubble.appendChild(link);
                     }
 
-                    if (message.audio_url || message.audio_expired) {
+                    if (message.image_url || message.image_expired) {
+                        if (message.image_url) {
+                            const link = document.createElement('a');
+                            link.className = 'bf-photo';
+                            link.href = message.image_url;
+                            link.target = '_blank';
+                            const img = document.createElement('img');
+                            img.src = message.image_url;
+                            img.alt = 'Photo';
+                            link.appendChild(img);
+                            bubble.appendChild(link);
+                        } else {
+                            const gone = document.createElement('div');
+                            gone.className = 'bf-voice expired';
+                            gone.textContent = 'Photo supprimée (gardée 3 jours)';
+                            bubble.appendChild(gone);
+                        }
+                        if (message.content && message.content !== '📷 Photo') {
+                            const caption = document.createElement('div');
+                            caption.className = 'bf-bubble-text';
+                            caption.textContent = message.content;
+                            bubble.appendChild(caption);
+                        }
+                    } else if (message.audio_url || message.audio_expired) {
                         const voice = document.createElement('div');
                         voice.className = 'bf-voice' + (message.audio_url ? '' : ' expired');
                         if (message.audio_url) {
@@ -356,9 +389,9 @@
                     });
                 });
 
-                form.addEventListener('submit', async function (event) {
-                    event.preventDefault();
-                    if (sending || ! field.value.trim()) return;
+                // Envoi commun : texte, photo (avec légende facultative) ou vocal.
+                const send = async function (data) {
+                    if (sending) return false;
 
                     sending = true;
                     button.disabled = true;
@@ -370,36 +403,117 @@
                             method: 'POST',
                             credentials: 'same-origin',
                             headers: { ...ajax, 'X-CSRF-TOKEN': token },
-                            body: new FormData(form),
+                            body: data,
                         });
 
                         if (response.status === 419) throw new Error('Session expirée : rechargez la page puis renvoyez (votre texte est conservé).');
                         if (response.status === 401 || response.status === 403) throw new Error('Vous êtes déconnecté : reconnectez-vous, puis renvoyez.');
+                        if (response.status === 413) throw new Error('Fichier trop lourd : photo 6 Mo maximum, vocal 4 Mo maximum.');
 
-                        const data = await response.json().catch(function () { return null; });
+                        const result = await response.json().catch(function () { return null; });
 
-                        if (! response.ok || ! data || ! data.success) {
-                            throw new Error((data && (data.errors?.content?.[0] || data.message)) || 'Envoi impossible. Réessayez.');
+                        if (! response.ok || ! result || ! result.success) {
+                            const errors = result && result.errors ? Object.values(result.errors).flat() : [];
+                            throw new Error(errors[0] || (result && result.message) || 'Envoi impossible. Réessayez.');
                         }
 
-                        append(data.message);
+                        append(result.message);
                         field.value = '';
                         grow();
                         scrollBottom();
                         refreshThreads();
 
-                        if (data.push) {
-                            showStatus('Envoyé ✓ — mais pas de notification sur son téléphone (' + data.push + '). Il verra le message en ouvrant l’app.', 'info');
+                        if (result.push) {
+                            showStatus('Envoyé ✓ — mais pas de notification sur son téléphone (' + result.push + '). Il verra le message en ouvrant l’app.', 'info');
                         }
+
+                        return true;
                     } catch (error) {
                         showStatus(error instanceof TypeError ? 'Connexion impossible : vérifiez internet puis réessayez.' : error.message, 'error');
+                        return false;
                     } finally {
                         sending = false;
                         button.disabled = false;
                         button.innerHTML = sendIcon;
                         if (! touch) field.focus();
                     }
+                };
+
+                form.addEventListener('submit', function (event) {
+                    event.preventDefault();
+                    if (! field.value.trim()) return;
+                    const data = new FormData(form);
+                    data.delete('image');
+                    send(data);
                 });
+
+                // Photo : choisie puis envoyée tout de suite, avec le texte tapé comme légende.
+                const photoInput = document.getElementById('bfPhotoInput');
+                document.getElementById('bfPhotoBtn').addEventListener('click', function () { photoInput.click(); });
+                photoInput.addEventListener('change', async function () {
+                    if (! photoInput.files.length) return;
+                    await send(new FormData(form));
+                    photoInput.value = '';
+                });
+
+                // Vocal : enregistré avec le micro de l'ordinateur ou du téléphone (navigateur).
+                const micBtn = document.getElementById('bfMicBtn');
+                const recBar = document.getElementById('bfRecording');
+                const recTime = document.getElementById('bfRecTime');
+                let recorder = null;
+                let chunks = [];
+                let recStart = 0;
+                let recTimer = null;
+                let keep = false;
+
+                const stopRecording = function (sendIt) {
+                    if (! recorder || recorder.state === 'inactive') return;
+                    keep = sendIt;
+                    recorder.stop();
+                };
+
+                micBtn.addEventListener('click', async function () {
+                    if (! navigator.mediaDevices || ! window.MediaRecorder) {
+                        showStatus('Ce navigateur ne permet pas d’enregistrer : utilisez Chrome.', 'error');
+                        return;
+                    }
+
+                    try {
+                        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                        const type = ['audio/webm;codecs=opus', 'audio/ogg;codecs=opus', 'audio/webm'].find(function (t) { return MediaRecorder.isTypeSupported(t); }) || '';
+                        recorder = new MediaRecorder(stream, type ? { mimeType: type } : undefined);
+                        chunks = [];
+                        recorder.ondataavailable = function (event) { if (event.data.size) chunks.push(event.data); };
+                        recorder.onstop = async function () {
+                            stream.getTracks().forEach(function (track) { track.stop(); });
+                            clearInterval(recTimer);
+                            recBar.hidden = true;
+                            form.hidden = false;
+                            const seconds = Math.max(1, Math.round((Date.now() - recStart) / 1000));
+                            if (! keep || ! chunks.length) return;
+                            const blob = new Blob(chunks, { type: recorder.mimeType || 'audio/webm' });
+                            const data = new FormData();
+                            data.append('_token', token);
+                            data.append('audio', blob, blob.type.includes('ogg') ? 'vocal.ogg' : 'vocal.webm');
+                            data.append('duration', String(Math.min(seconds, 120)));
+                            await send(data);
+                        };
+                        recorder.start();
+                        recStart = Date.now();
+                        recTime.textContent = '0:00';
+                        recTimer = setInterval(function () {
+                            const elapsed = Math.round((Date.now() - recStart) / 1000);
+                            recTime.textContent = Math.floor(elapsed / 60) + ':' + String(elapsed % 60).padStart(2, '0');
+                            if (elapsed >= 120) stopRecording(true);
+                        }, 250);
+                        recBar.hidden = false;
+                        form.hidden = true;
+                    } catch (error) {
+                        showStatus('Micro refusé : autorisez le micro pour ce site, puis réessayez.', 'error');
+                    }
+                });
+                document.getElementById('bfRecCancel').addEventListener('click', function () { stopRecording(false); });
+                document.getElementById('bfRecSend').addEventListener('click', function () { stopRecording(true); });
 
                 // Nouveaux messages du client et coches « Lu » : mis à jour sans recharger.
                 const poll = async function () {

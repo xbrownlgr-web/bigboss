@@ -36,6 +36,14 @@ class User extends Authenticatable
      *
      * @var list<string>
      */
+    // L'application affiche l'interface d'administration quand ce compte est celui de l'admin.
+    protected $appends = ['is_admin'];
+
+    public function getIsAdminAttribute(): bool
+    {
+        return strcasecmp((string) $this->email, (string) config('app.admin_email')) === 0;
+    }
+
     protected $hidden = [
         'password',
         'remember_token',

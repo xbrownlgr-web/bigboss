@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use App\Models\Message;
 use App\Models\MessageAudio;
+use App\Models\MessageImage;
 use App\Models\Transaction;
 use App\Services\SupportInbox;
 use Illuminate\Http\JsonResponse;
@@ -17,7 +18,7 @@ class MessageController extends Controller
     {
         $messages = Message::query()
             // Sans le contenu du son : seulement savoir s'il existe encore (lien d'écoute).
-            ->with('audio:id,message_id')
+            ->with(['audio:id,message_id', 'image:id,message_id'])
             ->where('user_id', $request->user()->id)
             ->orderBy('created_at')
             ->get();
@@ -40,9 +41,7 @@ class MessageController extends Controller
     public function store(Request $request, SupportInbox $inbox): JsonResponse
     {
         $data = $request->validate([
-            'content' => ['required_without:audio', 'nullable', 'string', 'max:2000'],
-            'audio' => ['nullable', 'file', 'max:' . MessageAudio::MAX_KILOBYTES, 'mimetypes:audio/mp4,audio/x-m4a,audio/m4a,audio/aac,audio/mpeg,audio/3gpp,audio/ogg,audio/webm,audio/wav,audio/x-wav,video/mp4,video/3gpp,application/octet-stream'],
-            'duration' => ['required_with:audio', 'nullable', 'integer', 'min:1', 'max:' . MessageAudio::MAX_SECONDS],
+            ...self::mediaRules(),
             'transaction_id' => ['nullable', 'integer', 'exists:transactions,id'],
         ]);
 
@@ -58,12 +57,45 @@ class MessageController extends Controller
             $data['transaction_id'] ?? null,
             $request->file('audio'),
             isset($data['duration']) ? (int) $data['duration'] : null,
+            $request->file('image'),
         );
 
         return response()->json([
             'success' => true,
-            'message' => $message->load('audio:id,message_id')->toAppArray(),
+            'message' => $message->load(['audio:id,message_id', 'image:id,message_id'])->toAppArray(),
         ], 201);
+    }
+
+    /**
+     * Règles d'un message du support : texte, vocal (« audio » + « duration ») ou photo (« image »,
+     * avec une légende facultative). Partagées par le client et l'admin (site et application).
+     *
+     * @return array<string, array<int, string>>
+     */
+    public static function mediaRules(): array
+    {
+        return [
+            'content' => ['required_without_all:audio,image', 'nullable', 'string', 'max:2000'],
+            'audio' => ['nullable', 'file', 'max:' . MessageAudio::MAX_KILOBYTES, 'mimetypes:audio/mp4,audio/x-m4a,audio/m4a,audio/aac,audio/mpeg,audio/3gpp,audio/ogg,audio/webm,audio/wav,audio/x-wav,video/mp4,video/webm,video/3gpp,application/octet-stream'],
+            'duration' => ['required_with:audio', 'nullable', 'integer', 'min:1', 'max:' . MessageAudio::MAX_SECONDS],
+            'image' => ['nullable', 'file', 'max:' . MessageImage::MAX_KILOBYTES, 'mimetypes:image/jpeg,image/png,image/webp,image/heic,image/heif'],
+        ];
+    }
+
+    /**
+     * Photo d'un message, pour l'application (lien signé et temporaire, voir Message::toAppArray).
+     */
+    public function image(Message $message): Response
+    {
+        $image = $message->image()->first();
+
+        abort_unless($image, 404, 'Photo supprimée (les photos sont gardées 3 jours).');
+
+        return response(base64_decode($image->data), 200, [
+            'Content-Type' => $image->mime,
+            'Content-Length' => (string) $image->size,
+            'Cache-Control' => 'private, max-age=21600',
+        ]);
     }
 
     /**

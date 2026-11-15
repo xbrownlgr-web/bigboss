@@ -54,8 +54,19 @@
     @endforeach
 </div>
 
-<form method="POST" action="/admin/messages/{{ $selectedUser->id }}/reply" class="bf-composer" id="bfComposer">
+<div class="bf-recording" id="bfRecording" hidden>
+    <span class="bf-rec-dot"></span>
+    <span class="bf-rec-time" id="bfRecTime">0:00</span>
+    <span class="bf-rec-hint">Enregistrement… (2 min max)</span>
+    <button type="button" class="btn btn-sm bf-btn-light" id="bfRecCancel"><i class="bi bi-trash"></i> Annuler</button>
+    <button type="button" class="btn btn-sm bf-btn-gold" id="bfRecSend"><i class="bi bi-send-fill"></i> Envoyer</button>
+</div>
+
+<form method="POST" action="/admin/messages/{{ $selectedUser->id }}/reply" class="bf-composer" id="bfComposer" enctype="multipart/form-data">
     @csrf
-    <textarea class="form-control" name="content" rows="1" maxlength="2000" placeholder="Votre réponse…" required aria-label="Votre réponse"></textarea>
+    <input type="file" name="image" accept="image/*" id="bfPhotoInput" hidden>
+    <button type="button" class="bf-tool" id="bfPhotoBtn" title="Envoyer une photo" aria-label="Envoyer une photo"><i class="bi bi-image"></i></button>
+    <button type="button" class="bf-tool" id="bfMicBtn" title="Enregistrer un message vocal" aria-label="Enregistrer un message vocal"><i class="bi bi-mic"></i></button>
+    <textarea class="form-control" name="content" rows="1" maxlength="2000" placeholder="Votre réponse…" aria-label="Votre réponse"></textarea>
     <button class="bf-send" type="submit" aria-label="Envoyer"><i class="bi bi-send-fill"></i></button>
 </form>

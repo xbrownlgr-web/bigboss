@@ -13,6 +13,17 @@
         @else
             <div class="bf-voice expired"><i class="bi bi-mic-mute"></i> Message vocal supprimé (gardé 3 jours)</div>
         @endif
+    @elseif ($message->has_image)
+        @if ($message->hasImageFile())
+            <a href="/admin/messages/image/{{ $message->id }}" target="_blank" rel="noopener" class="bf-photo">
+                <img src="/admin/messages/image/{{ $message->id }}" alt="Photo" loading="lazy">
+            </a>
+        @else
+            <div class="bf-voice expired"><i class="bi bi-image"></i> Photo supprimée (gardée 3 jours)</div>
+        @endif
+        @if ($message->content !== \App\Models\Message::IMAGE_LABEL)
+            <div class="bf-bubble-text">{{ $message->content }}</div>
+        @endif
     @else
         <div class="bf-bubble-text">{{ $message->content }}</div>
     @endif

@@ -318,68 +318,28 @@ class AdminController extends Controller
             : back()->with('error', 'LUC ne peut pas répondre : ' . $result['error']);
     }
 
-    public function approve(int $id): RedirectResponse
+    public function approve(int $id, \App\Services\TransactionDecision $decision): RedirectResponse
     {
-        $transaction = Transaction::with('user')->findOrFail($id);
-
-        if (! in_array($transaction->status, ['pending', 'processing'], true)) {
-            return back()->with('error', 'Cette transaction a déjà été traitée.');
+        try {
+            $decision->approve(Transaction::with('user')->findOrFail($id));
+        } catch (\RuntimeException $exception) {
+            return back()->with('error', $exception->getMessage());
         }
-
-        $transaction->update([
-            'status' => 'completed',
-            'processed_at' => now(),
-            'rejection_reason' => null,
-        ]);
-
-        $this->sendTransactionEmail($transaction->fresh('user'), TransactionApproved::class);
-        $typeLabel = $transaction->type === 'recharge' ? 'recharge' : 'retrait';
-        $approvalAgreement = $transaction->type === 'recharge' ? 'approuvée' : 'approuvé';
-        $this->pushService->sendToUser(
-            $transaction->user,
-            '✅ Transaction approuvée',
-            'Votre ' . $typeLabel . ' de ' . number_format((float) $transaction->amount, 0, ',', ' ') . ' FCFA a été ' . $approvalAgreement . '.',
-            [
-                'type' => 'transaction',
-                'transaction_id' => $transaction->id,
-                'status' => 'completed',
-            ],
-        );
 
         return back()->with('success', 'Transaction approuvée avec succès.');
     }
 
-    public function reject(Request $request, int $id): RedirectResponse
+    public function reject(Request $request, int $id, \App\Services\TransactionDecision $decision): RedirectResponse
     {
         $validated = $request->validate([
             'rejection_reason' => ['nullable', 'string', 'max:1000'],
         ]);
 
-        $transaction = Transaction::with('user')->findOrFail($id);
-
-        if (! in_array($transaction->status, ['pending', 'processing'], true)) {
-            return back()->with('error', 'Cette transaction a déjà été traitée.');
+        try {
+            $decision->reject(Transaction::with('user')->findOrFail($id), $validated['rejection_reason'] ?? null);
+        } catch (\RuntimeException $exception) {
+            return back()->with('error', $exception->getMessage());
         }
-
-        $transaction->update([
-            'status' => 'rejected',
-            'rejection_reason' => $validated['rejection_reason'] ?? null,
-            'processed_at' => now(),
-        ]);
-
-        $this->sendTransactionEmail($transaction->fresh('user'), TransactionRejected::class);
-        $typeLabel = $transaction->type === 'recharge' ? 'recharge' : 'retrait';
-        $rejectionAgreement = $transaction->type === 'recharge' ? 'refusée' : 'refusé';
-        $this->pushService->sendToUser(
-            $transaction->user,
-            '❌ Transaction refusée',
-            'Votre ' . $typeLabel . ' de ' . number_format((float) $transaction->amount, 0, ',', ' ') . ' FCFA a été ' . $rejectionAgreement . '. Consultez les détails dans l’application.',
-            [
-                'type' => 'transaction',
-                'transaction_id' => $transaction->id,
-                'status' => 'rejected',
-            ],
-        );
 
         return back()->with('success', 'Transaction refusée avec succès.');
     }
@@ -469,7 +429,7 @@ class AdminController extends Controller
     private function openConversation(User $user): \Illuminate\Support\Collection
     {
         $messages = Message::query()
-            ->with(['transaction', 'audio:id,message_id'])
+            ->with(['transaction', 'audio:id,message_id', 'image:id,message_id'])
             ->where('user_id', $user->id)
             ->orderBy('created_at')
             ->get();
@@ -556,7 +516,7 @@ class AdminController extends Controller
         $after = max(0, $request->integer('after'));
 
         $messages = Message::query()
-            ->with('audio:id,message_id')
+            ->with(['audio:id,message_id', 'image:id,message_id'])
             ->where('user_id', $userId)
             ->where('id', '>', $after)
             ->orderBy('id')
@@ -600,6 +560,8 @@ class AdminController extends Controller
             'audio_url' => $message->hasAudio() ? '/admin/messages/audio/' . $message->id : null,
             'audio_duration' => $message->audio_duration,
             'audio_expired' => $message->isVoice() && ! $message->hasAudio(),
+            'image_url' => $message->hasImageFile() ? '/admin/messages/image/' . $message->id : null,
+            'image_expired' => $message->has_image && ! $message->hasImageFile(),
         ];
     }
 
@@ -728,34 +690,19 @@ class AdminController extends Controller
         return back()->with('success', "Notification de mise à jour envoyée à {$sent} appareil(s).");
     }
 
-    public function reply(Request $request, int $userId): RedirectResponse|JsonResponse
+    public function reply(Request $request, int $userId, \App\Services\SupportInbox $inbox): RedirectResponse|JsonResponse
     {
-        $validated = $request->validate([
-            'content' => ['required', 'string', 'max:2000'],
-        ]);
-
+        // Texte, vocal (enregistré dans le navigateur) ou photo : mêmes règles que l'application.
+        $validated = $request->validate(\App\Http\Controllers\API\MessageController::mediaRules());
         $user = User::findOrFail($userId);
 
-        $message = Message::create([
-            'user_id' => $user->id,
-            'sender' => 'admin',
-            'content' => $validated['content'],
-            'is_read' => false,
-        ]);
-
-        // La notification ne doit jamais faire échouer l'envoi : le message est déjà enregistré
-        // et visible dans l'application, même si le téléphone n'est pas joignable.
-        try {
-            $pushError = $this->pushService->sendToUser(
-                $user,
-                '💬 Nouveau message du support',
-                \Illuminate\Support\Str::limit($validated['content'], 120),
-                ['type' => 'support'],
-            );
-        } catch (Throwable $exception) {
-            report($exception);
-            $pushError = 'service de notification indisponible';
-        }
+        [$message, $pushError] = $inbox->reply(
+            $user,
+            (string) ($validated['content'] ?? ''),
+            $request->file('audio'),
+            isset($validated['duration']) ? (int) $validated['duration'] : null,
+            $request->file('image'),
+        );
 
         if ($request->expectsJson()) {
             return response()->json([
@@ -767,6 +714,22 @@ class AdminController extends Controller
 
         return redirect('/admin/messages?user_id=' . $user->id)
             ->with('success', 'Message envoyé avec succès.');
+    }
+
+    /**
+     * Photo d'un message dans l'admin.
+     */
+    public function messageImage(int $messageId): \Illuminate\Http\Response
+    {
+        $image = \App\Models\MessageImage::query()->where('message_id', $messageId)->first();
+
+        abort_unless($image, 404, 'Photo supprimée (les photos sont gardées 3 jours).');
+
+        return response(base64_decode($image->data), 200, [
+            'Content-Type' => $image->mime,
+            'Content-Length' => (string) $image->size,
+            'Cache-Control' => 'private, max-age=3600',
+        ]);
     }
 
     public function pronostics(Request $request): View
