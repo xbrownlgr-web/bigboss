@@ -48,4 +48,14 @@ php artisan db:seed --class=AdminSeeder --force
     sleep $((60 - $(date +%s) % 60))
   done ) &
 
+# Garde le service éveillé sans outil externe : toutes les 10 minutes, il s'appelle lui-même par
+# son adresse publique (RENDER_EXTERNAL_URL, fournie par Render), ce qui empêche la mise en veille
+# du plan gratuit (15 min sans visite). Un seul service par compte : 24 h × 31 j = 744 h < 750 h.
+if [ -n "${RENDER_EXTERNAL_URL:-}" ]; then
+  ( sleep 120; while true; do
+      php -r '@file_get_contents(getenv("RENDER_EXTERNAL_URL") . "/up");' > /dev/null 2>&1
+      sleep 600
+    done ) &
+fi
+
 exec apache2-foreground
