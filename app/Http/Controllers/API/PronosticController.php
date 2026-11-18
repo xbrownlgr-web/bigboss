@@ -112,11 +112,11 @@ class PronosticController extends Controller
         $won = (clone $settled)->where('result_status', 'won')->count();
         $total = $settled->count();
 
+        // Liste de l'historique : coupons gagnés seulement (décision du fondateur du 2026-11-18,
+        // les perdus ne s'affichent plus). Le bilan ci-dessus reste calculé sur tous les coupons.
         $items = Pronostic::query()
-            ->whereNotNull('result_status')
+            ->where('result_status', 'won')
             ->where('published_at', '>=', $since)
-            // Score exact : ajouté à l'historique quand il gagne, jamais mélangé quand il perd.
-            ->where(fn ($query) => $query->where($notScore)->orWhere('result_status', 'won'))
             ->orderByDesc('published_at')
             ->limit(60)
             ->get()

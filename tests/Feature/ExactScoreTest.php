@@ -178,7 +178,8 @@ class ExactScoreTest extends TestCase
         $this->assertSame(2, $history->json('stats.settled'));
         $this->assertSame(50, $history->json('stats.win_rate'));
         $listed = collect($history->json('pronostics'))->map(fn ($item) => $item['niveau'] . ' ' . $item['result_status'])->sort()->values()->all();
-        $this->assertSame(['Score won', 'Starter lost', 'Starter won'], $listed);
+        // Liste : gagnés seulement (les perdus ne s'affichent plus depuis le 2026-11-18).
+        $this->assertSame(['Score won', 'Starter won'], $listed);
     }
 
     public function test_the_score_offer_is_a_vip_offer_at_5000_and_locked_for_non_subscribers(): void

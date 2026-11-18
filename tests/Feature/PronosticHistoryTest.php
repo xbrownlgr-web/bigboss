@@ -46,7 +46,9 @@ class PronosticHistoryTest extends TestCase
         $response->assertJsonPath('stats.won', 2);
         $response->assertJsonPath('stats.lost', 1);
         $response->assertJsonPath('stats.win_rate', 67);
-        $this->assertCount(3, $response->json('pronostics'));
+        // Liste : gagnés seulement (les perdus ne s'affichent plus) ; le bilan compte tout.
+        $this->assertCount(2, $response->json('pronostics'));
+        $this->assertSame(['won', 'won'], array_column($response->json('pronostics'), 'result_status'));
     }
 
     public function test_history_hides_vip_matches_for_non_subscribers_but_keeps_result_and_odds(): void
