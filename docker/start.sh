@@ -40,7 +40,7 @@ php artisan migrate --force
 php artisan db:seed --class=AdminSeeder --force
 
 # Planificateur Laravel : exécute les tâches planifiées (génération des pronostics à 08:00).
-# Le service reste éveillé grâce au ping UptimeRobot sur /up.
+# Le service reste éveillé grâce à son auto-ping (plus bas).
 # On se cale sur le début de chaque minute (sleep jusqu'à la prochaine minute pile) :
 # un simple « sleep 60 » dérive avec le temps d'exécution et peut sauter la minute 08:00/18:00.
 ( while true; do

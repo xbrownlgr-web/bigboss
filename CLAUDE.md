@@ -118,7 +118,7 @@ qu'un score est publié**, avec l'avertissement « ça peut perdre » partout.
   suspendre le premier compte. L'APK est servi **directement par ce backend**
   (`public/big-boss.apk`, voir `LatestRelease::downloadUrl()`), plus un mirroir gofile.io en secours.
 - **Render** : service `big-boss` (id `srv-dbjv1oe7bikc738l4520`), domaine
-  `https://big-boss-gure.onrender.com`, auto-déploie depuis `xbrownlgr-web/bigboss` branche `main`.
+  `https://big-boss-d87f.onrender.com`, auto-déploie depuis `xbrownlgr-web/bigboss` branche `main`.
 - **Base de données : TiDB Cloud Serverless** (pas Aiven — Aiven free a déjà causé 2 pannes complètes
   en éteignant la base ET en faisant disparaître son adresse DNS, sans préavis). Hôte
   `gateway01.eu-central-1.prod.aws.tidbcloud.com:4000`, base `bigboss`. ⚠️ **TiDB exige que tout nom
