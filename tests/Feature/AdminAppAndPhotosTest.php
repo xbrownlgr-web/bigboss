@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Message;
 use App\Models\MessageImage;
+use App\Models\Pronostic;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Models\VipSubscription;
@@ -111,4 +112,25 @@ class AdminAppAndPhotosTest extends TestCase
         $this->assertTrue(VipSubscription::query()->where('user_id', $member->id)->where('level', 'Gold')->exists());
         $this->getJson('/api/v1/admin/users?search=6990')->assertJsonPath('users.0.id', $member->id);
     }
+    public function test_the_admin_sees_every_vip_coupon_unlocked_in_the_app(): void
+    {
+        $coupon = Pronostic::create([
+            'niveau' => 'Gold', 'couleur' => '#000000', 'cote_totale' => 3.2, 'probabilite' => 70,
+            'evenements' => [['match' => 'Lions vs Aigles', 'pronostic' => '1', 'cote' => 1.6]],
+            'match_date' => now()->toDateString(), 'match_time' => '18:00', 'team_home' => 'A', 'team_away' => 'B',
+            'competition' => 'Test', 'prediction' => 'Test', 'odds' => 3.2, 'confidence' => 70, 'analysis' => 'Test',
+            'is_vip' => true, 'published_at' => now()->subHour(),
+        ]);
+
+        Sanctum::actingAs($this->member());
+        $this->getJson('/api/v1/pronostics')->assertOk()->assertJsonPath('pronostics.0.locked', true);
+
+        Sanctum::actingAs($this->admin());
+        $this->getJson('/api/v1/pronostics')
+            ->assertOk()
+            ->assertJsonPath('pronostics.0.id', $coupon->id)
+            ->assertJsonPath('pronostics.0.locked', false)
+            ->assertJsonPath('pronostics.0.evenements.0.match', 'Lions vs Aigles');
+    }
+
 }

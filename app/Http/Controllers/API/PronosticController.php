@@ -80,9 +80,7 @@ class PronosticController extends Controller
     {
         // Route publique : le jeton, s'il est envoyé, sert à débloquer les VIP de l'abonné.
         $user = $request->user('sanctum');
-        $subscriptions = $user
-            ? $user->vipSubscriptions()->active()->pluck('ends_at', 'level')->all()
-            : [];
+        $subscriptions = $this->subscriptionsOf($user);
 
         // L'app n'affiche que le dernier combiné de chaque niveau : inutile d'envoyer tout l'historique.
         $pronostics = Pronostic::query()
@@ -102,9 +100,7 @@ class PronosticController extends Controller
     public function history(Request $request): JsonResponse
     {
         $user = $request->user('sanctum');
-        $subscriptions = $user
-            ? $user->vipSubscriptions()->active()->pluck('ends_at', 'level')->all()
-            : [];
+        $subscriptions = $this->subscriptionsOf($user);
 
         $since = now()->subDays(90);
         $notScore = fn ($query) => $query->whereNull('niveau')->orWhere('niveau', '!=', ExactScoreGenerator::LEVEL);
@@ -138,6 +134,25 @@ class PronosticController extends Controller
             ],
             'pronostics' => $items,
         ]);
+    }
+
+    /**
+     * Niveaux VIP débloqués : abonnements actifs du client ; le compte admin (mode admin de
+     * l'application) voit tous les coupons VIP en clair, sans abonnement.
+     *
+     * @return array<string, mixed> niveau => fin de l'abonnement
+     */
+    private function subscriptionsOf(?User $user): array
+    {
+        if (! $user) {
+            return [];
+        }
+
+        if ($user->is_admin) {
+            return array_fill_keys(AppSetting::VIP_LEVELS, now()->addYear());
+        }
+
+        return $user->vipSubscriptions()->active()->pluck('ends_at', 'level')->all();
     }
 
     /**

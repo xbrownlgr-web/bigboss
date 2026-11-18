@@ -57,6 +57,9 @@ class VipSubscriptionTest extends TestCase
             ])
             ->assertSessionHas('success');
 
+        // L'admin (qui voit tout en clair) se déconnecte : la suite teste les clients.
+        $this->app['auth']->forgetGuards();
+
         return Pronostic::query()->where('niveau', 'Gold')->latest('id')->firstOrFail();
     }
 
