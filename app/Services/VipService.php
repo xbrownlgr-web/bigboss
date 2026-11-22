@@ -72,6 +72,8 @@ class VipService
             ['type' => 'vip', 'event' => 'activated', 'niveau' => $subscription->level],
         );
 
+        $this->notifyVipByBrevo($subscription);
+
         return $subscription;
     }
 
@@ -180,6 +182,8 @@ class VipService
             ['type' => 'vip', 'event' => 'activated', 'niveau' => $subscription->level],
         );
 
+        $this->notifyVipByBrevo($subscription);
+
         return $subscription;
     }
 
@@ -219,6 +223,7 @@ class VipService
         );
 
         $this->alertAdminOfPayment($subscription, $days);
+        $this->notifyVipByBrevo($subscription);
 
         return $subscription;
     }
@@ -237,7 +242,23 @@ class VipService
             ['type' => 'vip', 'event' => 'granted_free', 'niveau' => $subscription->level],
         );
 
+        $this->notifyVipByBrevo($subscription);
+
         return $subscription;
+    }
+
+    private function notifyVipByBrevo(VipSubscription $subscription): void
+    {
+        $user = $subscription->user;
+        if (! $user) {
+            return;
+        }
+
+        dispatch(function () use ($user, $subscription) {
+            $brevo = app(BrevoAutomationService::class);
+            $brevo->sendVipActivated($user, $subscription);
+            $brevo->syncContact($user, $subscription->level);
+        })->afterResponse();
     }
 
     /**
@@ -346,6 +367,9 @@ class VipService
                     "Il prend fin le {$this->date($subscription->ends_at)}. Renouvelez depuis l’application pour ne manquer aucun {$item}.",
                     ['type' => 'vip', 'event' => 'expiring', 'niveau' => $subscription->level],
                 );
+                if ($subscription->user) {
+                    app(BrevoAutomationService::class)->sendVipReminder($subscription->user, $subscription, 'soon');
+                }
                 $subscription->update(['reminded_soon_at' => now()]);
                 $soon++;
             });
@@ -363,6 +387,9 @@ class VipService
                     "Renouvelez-le depuis l’application BIG BOSS pour recevoir les prochains {$items}.",
                     ['type' => 'vip', 'event' => 'ended', 'niveau' => $subscription->level],
                 );
+                if ($subscription->user) {
+                    app(BrevoAutomationService::class)->sendVipReminder($subscription->user, $subscription, 'ended');
+                }
                 $subscription->update(['reminded_ended_at' => now()]);
                 $ended++;
             });

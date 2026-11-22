@@ -8,6 +8,7 @@ use App\Models\Message;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Models\VipSubscription;
+use App\Services\BrevoAutomationService;
 use App\Services\ExpoPushService;
 use App\Services\SupportInbox;
 use App\Services\TransactionDecision;
@@ -367,6 +368,33 @@ class AdminAppController extends Controller
             'message' => $sent > 0
                 ? "Notification envoyée à {$sent} appareil" . ($sent > 1 ? 's' : '') . '.'
                 : 'Aucun appareil avec notifications activées trouvé pour cette cible.',
+        ]);
+    }
+
+    /**
+     * Envoie une campagne e-mail via Brevo à tous les utilisateurs, aux VIP ou aux non-VIP.
+     */
+    public function broadcastEmail(Request $request, BrevoAutomationService $brevo): JsonResponse
+    {
+        $validated = $request->validate([
+            'subject' => ['required', 'string', 'min:2', 'max:140'],
+            'body' => ['required', 'string', 'min:4', 'max:3000'],
+            'target' => ['nullable', 'in:all,vip,non_vip'],
+        ]);
+
+        $result = $brevo->broadcastEmail(
+            trim($validated['subject']),
+            trim($validated['body']),
+            $validated['target'] ?? 'all',
+        );
+
+        return response()->json([
+            'success' => true,
+            'sent' => $result['sent'],
+            'skipped' => $result['skipped'],
+            'message' => $result['sent'] > 0
+                ? "E-mail Brevo envoyé à {$result['sent']} utilisateur" . ($result['sent'] > 1 ? 's' : '') . '.'
+                : 'Aucun utilisateur joignable trouvé pour cette cible.',
         ]);
     }
 

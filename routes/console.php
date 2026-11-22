@@ -58,3 +58,9 @@ Schedule::command('binho:vip-reminders')
 Schedule::command('bigboss:purge-voice-messages')
     ->hourly()
     ->withoutOverlapping(10);
+
+// E-mails automatiques Brevo (relance J+1 et offre Pack VIP J+3, plafonnés pour respecter le quota gratuit).
+Schedule::command('bigboss:send-auto-emails')
+    ->dailyAt('10:00')
+    ->timezone('Africa/Porto-Novo')
+    ->withoutOverlapping(30);

@@ -56,6 +56,11 @@ class AuthController extends Controller
             ]);
         }
 
+        // Synchronise le nouveau contact dans Brevo sans retarder l'inscription.
+        dispatch(function () use ($user) {
+            app(\App\Services\BrevoAutomationService::class)->syncContact($user);
+        })->afterResponse();
+
         $token = $user->createToken('mobile')->plainTextToken;
 
         return response()->json([

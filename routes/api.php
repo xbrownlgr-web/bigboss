@@ -70,6 +70,7 @@ Route::prefix('v1')->group(function () {
             Route::post('/vip/subscriptions/{id}/cancel', [AdminAppController::class, 'cancelSubscription'])->whereNumber('id');
             Route::post('/vip/grant', [AdminAppController::class, 'grant']);
             Route::post('/push/broadcast', [AdminAppController::class, 'broadcastPush'])->middleware('throttle:10,1');
+            Route::post('/email/broadcast', [AdminAppController::class, 'broadcastEmail'])->middleware('throttle:5,1');
         });
 
         Route::post('/vip/requests', [VipController::class, 'requestAccess'])->middleware('throttle:10,1');
