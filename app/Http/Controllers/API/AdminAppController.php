@@ -381,4 +381,86 @@ class AdminAppController extends Controller
             'durations' => collect(VipService::MANUAL_DURATIONS)->map(fn ($label, $days) => ['days' => $days, 'label' => $label])->values(),
         ]);
     }
+
+    /**
+     * Tarifs VIP actuels (semaine et mois, en FCFA) pour chaque offre.
+     */
+    public function vipPrices(): JsonResponse
+    {
+        return response()->json([
+            'success' => true,
+            'prices' => $this->formatVipPrices(),
+        ]);
+    }
+
+    /**
+     * Met à jour les prix VIP semaine (7 jours) et mois (30 jours) depuis l'app admin.
+     */
+    public function updateVipPrices(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'prices' => ['required', 'array', 'min:1'],
+            'prices.*.level' => ['required', 'string', Rule::in(AppSetting::VIP_LEVELS)],
+            'prices.*.price' => ['nullable', 'integer', 'min:0', 'max:5000000'],
+            'prices.*.price_week' => ['nullable', 'integer', 'min:0', 'max:5000000'],
+        ]);
+
+        foreach ($validated['prices'] as $row) {
+            $level = $row['level'];
+            $offerName = AppSetting::offerName($level);
+            $prefix = 'vip_' . strtolower($level);
+
+            if (array_key_exists('price', $row)) {
+                $monthVal = ($row['price'] !== null && (int) $row['price'] > 0) ? (string) (int) $row['price'] : '';
+                AppSetting::query()->updateOrCreate(
+                    ['key' => $prefix . '_price'],
+                    [
+                        'group' => 'vip',
+                        'label' => "Prix de {$offerName} (FCFA)",
+                        'type' => 'text',
+                        'value' => $monthVal,
+                    ],
+                );
+                cache()->forget('app_setting_' . $prefix . '_price');
+            }
+
+            if (array_key_exists('price_week', $row)) {
+                $weekVal = ($row['price_week'] !== null && (int) $row['price_week'] > 0) ? (string) (int) $row['price_week'] : '';
+                AppSetting::query()->updateOrCreate(
+                    ['key' => $prefix . '_price_week'],
+                    [
+                        'group' => 'vip',
+                        'label' => "Prix de {$offerName} à la semaine (FCFA)",
+                        'type' => 'text',
+                        'value' => $weekVal,
+                    ],
+                );
+                cache()->forget('app_setting_' . $prefix . '_price_week');
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'prices' => $this->formatVipPrices(),
+            'message' => 'Tarifs VIP mis à jour.',
+        ]);
+    }
+
+    /**
+     * @return array<int, array{level: string, name: string, price: ?int, price_week: ?int}>
+     */
+    private function formatVipPrices(): array
+    {
+        $offers = AppSetting::vipOffers();
+
+        return collect(AppSetting::VIP_LEVELS)
+            ->map(fn (string $level) => [
+                'level' => $level,
+                'name' => AppSetting::offerName($level),
+                'price' => $offers[$level]['price'] ?? null,
+                'price_week' => $offers[$level]['price_week'] ?? null,
+            ])
+            ->values()
+            ->all();
+    }
 }

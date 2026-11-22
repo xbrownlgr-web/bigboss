@@ -64,6 +64,8 @@ Route::prefix('v1')->group(function () {
             Route::post('/transactions/{id}/reject', [AdminAppController::class, 'reject'])->whereNumber('id');
             Route::get('/users', [AdminAppController::class, 'users']);
             Route::get('/vip/options', [AdminAppController::class, 'vipOptions']);
+            Route::get('/vip/prices', [AdminAppController::class, 'vipPrices']);
+            Route::put('/vip/prices', [AdminAppController::class, 'updateVipPrices']);
             Route::get('/vip/subscriptions', [AdminAppController::class, 'vipSubscriptions']);
             Route::post('/vip/subscriptions/{id}/cancel', [AdminAppController::class, 'cancelSubscription'])->whereNumber('id');
             Route::post('/vip/grant', [AdminAppController::class, 'grant']);

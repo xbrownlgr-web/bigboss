@@ -193,4 +193,41 @@ class AdminAppAndPhotosTest extends TestCase
         ])->assertOk()->assertJsonPath('sent', 1);
     }
 
+    public function test_the_admin_reads_and_updates_vip_weekly_and_monthly_prices(): void
+    {
+        $admin = $this->admin();
+        $member = $this->member();
+
+        // Refusé pour un utilisateur ordinaire
+        Sanctum::actingAs($member);
+        $this->getJson('/api/v1/admin/vip/prices')->assertForbidden();
+        $this->putJson('/api/v1/admin/vip/prices', [
+            'prices' => [['level' => 'Gold', 'price' => 10000, 'price_week' => 3500]],
+        ])->assertForbidden();
+
+        // L'admin lit les 9 offres VIP et modifie les tarifs semaine & mois
+        Sanctum::actingAs($admin);
+        $this->getJson('/api/v1/admin/vip/prices')
+            ->assertOk()
+            ->assertJsonCount(9, 'prices');
+
+        $this->putJson('/api/v1/admin/vip/prices', [
+            'prices' => [
+                ['level' => 'Gold', 'price' => 12000, 'price_week' => 4000],
+                ['level' => 'Complet', 'price' => 25000, 'price_week' => 8000],
+                ['level' => 'Bronze', 'price' => 3000, 'price_week' => null],
+            ],
+        ])->assertOk()->assertJsonPath('success', true);
+
+        // Les nouveaux prix sont immédiatement visibles sur l'API publique de l'application
+        $this->getJson('/api/v1/settings/public')
+            ->assertOk()
+            ->assertJsonPath('vip.offers.Gold.price', 12000)
+            ->assertJsonPath('vip.offers.Gold.price_week', 4000)
+            ->assertJsonPath('vip.offers.Complet.price', 25000)
+            ->assertJsonPath('vip.offers.Complet.price_week', 8000)
+            ->assertJsonPath('vip.offers.Bronze.price', 3000)
+            ->assertJsonPath('vip.offers.Bronze.price_week', null);
+    }
+
 }
