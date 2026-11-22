@@ -46,6 +46,9 @@ class AdminController extends Controller
         'Gold' => '#FFD700',
         'Platinum' => '#7C3AED',
         'Score' => '#BE123C',
+        'GrossesCotes' => '#D97706',
+        'Cartons' => '#CA8A04',
+        'Buteurs' => '#0D9488',
     ];
 
     public function __construct(private readonly ExpoPushService $pushService)
@@ -224,7 +227,7 @@ class AdminController extends Controller
                     $setting->key === 'maketou_fee_percent' => ['nullable', 'integer', 'min:0', 'max:50'],
                     $setting->type === 'email' => ['nullable', 'email', 'max:255'],
                     $setting->type === 'url' => ['nullable', 'url', 'max:500'],
-                    $setting->type === 'textarea' => ['nullable', 'string', 'max:10000'],
+                    $setting->type === 'textarea' => ['nullable', 'string', 'max:20000'],
                     default => ['nullable', 'string', 'max:500'],
                 };
 
@@ -909,7 +912,13 @@ class AdminController extends Controller
             ->keyBy(fn (PronosticRun $run) => $run->level . '|' . $run->slot);
         $rows = [];
 
-        foreach (PronosticRules::schedule() as $level => $times) {
+        $schedule = [
+            ...PronosticRules::schedule(),
+            \App\Services\ExactScoreGenerator::LEVEL => \App\Console\Commands\GenerateExactScores::schedule(),
+            \App\Console\Commands\GenerateSpecialMarkets::RUN_LEVEL => \App\Console\Commands\GenerateSpecialMarkets::schedule(),
+        ];
+
+        foreach ($schedule as $level => $times) {
             foreach ($times as $time) {
                 $run = $runs->pull($level . '|' . $time);
                 $due = Carbon::parse($now->toDateString() . ' ' . $time, $timezone);
@@ -943,24 +952,39 @@ class AdminController extends Controller
      */
     public function generateAndPublishNow(Request $request): RedirectResponse
     {
+        $allowedLevels = [
+            ...PronosticRules::LEVELS,
+            \App\Services\ExactScoreGenerator::LEVEL,
+            \App\Console\Commands\GenerateSpecialMarkets::RUN_LEVEL,
+        ];
+
         $validated = $request->validate([
             'date' => ['nullable', 'date'],
-            'level' => ['nullable', 'string', 'in:' . implode(',', PronosticRules::LEVELS)],
+            'level' => ['nullable', 'string', 'in:' . implode(',', $allowedLevels)],
         ]);
 
-        // La chaîne complète (Highlightly + OpenRouter + Expo) peut dépasser les 60 s par défaut.
+        // La chaîne complète (Highlightly + OpenRouter/DeepSeek + Expo) peut dépasser les 60 s par défaut.
         @set_time_limit(180);
 
-        $options = [];
-        if (! empty($validated['date'])) {
-            $options['--date'] = Carbon::parse($validated['date'])->toDateString();
+        $level = $validated['level'] ?? null;
+
+        if ($level === \App\Services\ExactScoreGenerator::LEVEL) {
+            $exitCode = Artisan::call('binho:generate-exact-scores');
+        } elseif ($level === \App\Console\Commands\GenerateSpecialMarkets::RUN_LEVEL) {
+            $exitCode = Artisan::call('binho:generate-special-markets');
+        } else {
+            $options = [];
+            if (! empty($validated['date'])) {
+                $options['--date'] = Carbon::parse($validated['date'])->toDateString();
+            }
+
+            if (! empty($level)) {
+                $options['--level'] = [$level];
+            }
+
+            $exitCode = Artisan::call('binho:generate-pronostics', $options);
         }
 
-        if (! empty($validated['level'])) {
-            $options['--level'] = [$validated['level']];
-        }
-
-        $exitCode = Artisan::call('binho:generate-pronostics', $options);
         $output = trim(Artisan::output());
 
         if ($exitCode === 0) {

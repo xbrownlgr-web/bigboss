@@ -17,10 +17,26 @@ class AppSetting extends Model
     ];
 
     // Coupons VIP payants : leur contenu n'est jamais envoyé à l'application (voir PronosticController).
-    // Un seul niveau gratuit (Starter) : Bronze, Silver, Gold et Platinum sont VIP. « Score » est
-    // l'offre Score exact (abonnement à part, voir ExactScoreGenerator) : elle profite du même
-    // abonnement / paiement / verrouillage, mais n'est PAS dans PronosticRules::LEVELS (pas de combiné).
-    public const VIP_LEVELS = ['Bronze', 'Silver', 'Gold', 'Platinum', 'Score'];
+    // Un seul niveau gratuit (Starter).
+    // - Parieurs VIP : Bronze, Silver, Gold, Platinum (combinés 2→5 événements)
+    // - Score : Score exact (abonnement à part, voir ExactScoreGenerator)
+    // - Marchés spécialisés : GrossesCotes (~30/50/60), Cartons (cartons jaunes ~2.00), Buteurs
+    // - Complet : Pack « Accès VIP complet » (un seul paiement qui débloque TOUTES les catégories VIP)
+    public const ALL_VIP_LEVEL = 'Complet';
+
+    public const SPECIAL_LEVELS = ['GrossesCotes', 'Cartons', 'Buteurs'];
+
+    public const VIP_LEVELS = [
+        'Bronze',
+        'Silver',
+        'Gold',
+        'Platinum',
+        'Score',
+        'GrossesCotes',
+        'Cartons',
+        'Buteurs',
+        self::ALL_VIP_LEVEL,
+    ];
 
     /**
      * Assistant IA (LUC) dans le support. Coupé par défaut depuis le 2026-11-11 (décision du
@@ -32,11 +48,19 @@ class AppSetting extends Model
     }
 
     /**
-     * Nom affiché d'une offre payante : « VIP Gold », mais « Score exact » (jamais « VIP Score »).
+     * Nom affiché d'une offre payante : « VIP Gold », « Score exact », « VIP Grosses cotes »,
+     * « VIP Cartons », « VIP Buteurs », ou « Accès VIP complet ».
      */
     public static function offerName(string $level): string
     {
-        return $level === 'Score' ? 'Score exact' : 'VIP ' . $level;
+        return match ($level) {
+            'Score' => 'Score exact',
+            'GrossesCotes' => 'VIP Grosses cotes',
+            'Cartons' => 'VIP Cartons',
+            'Buteurs' => 'VIP Buteurs',
+            self::ALL_VIP_LEVEL => 'Accès VIP complet',
+            default => 'VIP ' . $level,
+        };
     }
 
     public static function value(string $key, ?string $default = null): ?string
@@ -142,11 +166,14 @@ class AppSetting extends Model
             'assistant_enabled' => self::assistantEnabled(),
             // Messages vocaux au support : durée maximale (secondes) et conservation (jours).
             'voice_messages' => ['max_seconds' => MessageAudio::MAX_SECONDS, 'retention_days' => MessageAudio::RETENTION_DAYS],
-            // Heures de publication du jour (heure du Bénin, « HH:MM ») par niveau, Score exact compris :
-            // l'app affiche « Prochains coupons : Platinum à 20:00 » au lieu d'un vieux coupon de la veille.
+            // Heures de publication du jour (heure du Bénin, « HH:MM ») par niveau, Score exact et marchés spécialisés compris :
+            // l'app affiche « Prochains coupons : Platinum à 14:00 » au lieu d'un vieux coupon de la veille.
             'pronostic_schedule' => [
                 ...\App\Support\PronosticRules::schedule(),
                 \App\Services\ExactScoreGenerator::LEVEL => \App\Console\Commands\GenerateExactScores::schedule(),
+                \App\Services\SpecialMarketsGenerator::LEVEL_GROSSES_COTES => \App\Console\Commands\GenerateSpecialMarkets::schedule(),
+                \App\Services\SpecialMarketsGenerator::LEVEL_CARTONS => \App\Console\Commands\GenerateSpecialMarkets::schedule(),
+                \App\Services\SpecialMarketsGenerator::LEVEL_BUTEURS => \App\Console\Commands\GenerateSpecialMarkets::schedule(),
             ],
         ];
     }

@@ -38,7 +38,7 @@ class MakeTouService
 
         if (! $price || $price <= 0) {
             $label = $duration === 'week' ? 'à la semaine' : 'au mois';
-            throw new RuntimeException('Le prix du VIP ' . $level . ' ' . $label . ' n’est pas défini.');
+            throw new RuntimeException('Le prix de ' . AppSetting::offerName($level) . ' ' . $label . ' n’est pas défini.');
         }
 
         $fee = (float) (AppSetting::value('maketou_fee_percent') ?? 7);

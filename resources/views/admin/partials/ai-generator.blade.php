@@ -100,8 +100,8 @@
                         @php [$badge, $icon, $label] = $slotStyles[$slot['status']] ?? $slotStyles['upcoming']; @endphp
                         <div class="row g-1 align-items-center py-2 {{ $loop->last ? '' : 'border-bottom' }}">
                             <div class="col-auto tabular fw-semibold" style="width:52px;">{{ $slot['time'] }}</div>
-                            <div class="col-auto" style="width:118px;">
-                                <span class="d-inline-block rounded-circle me-1" style="width:8px;height:8px;background:{{ $levelColors[$slot['level']] ?? '#6B7280' }};"></span>{{ \App\Support\PronosticRules::isFree($slot['level']) ? '' : 'VIP ' }}{{ $slot['level'] }}
+                            <div class="col-auto" style="width:145px;">
+                                <span class="d-inline-block rounded-circle me-1" style="width:8px;height:8px;background:{{ $levelColors[$slot['level']] ?? '#D97706' }};"></span>{{ $slot['level'] === \App\Console\Commands\GenerateSpecialMarkets::RUN_LEVEL ? 'Grosses cotes / Cartons / Buteurs' : ($slot['level'] === 'Score' ? 'Score exact' : (\App\Support\PronosticRules::isFree($slot['level']) ? '' : 'VIP ') . $slot['level']) }}
                             </div>
                             <div class="col-auto" style="min-width:140px;"><span class="bf-badge {{ $badge }}"><i class="bi {{ $icon }}"></i> {{ $label }}{{ $slot['manual'] ? ' (manuel)' : '' }}</span></div>
                             @if ($slot['status'] === 'missed' || $slot['message'])
@@ -137,6 +137,8 @@
                             @foreach ($levelNames as $level)
                                 <option value="{{ $level }}">{{ \App\Support\PronosticRules::isFree($level) ? '' : 'VIP ' }}{{ $level }}</option>
                             @endforeach
+                            <option value="Score">Score exact</option>
+                            <option value="{{ \App\Console\Commands\GenerateSpecialMarkets::RUN_LEVEL }}">Grosses cotes / Cartons / Buteurs</option>
                         </select>
                         <button class="btn bf-btn-gold" type="submit">
                             <i class="bi bi-lightning-charge-fill"></i> Générer et publier maintenant

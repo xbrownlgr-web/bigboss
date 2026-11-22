@@ -184,15 +184,21 @@ class VipService
     }
 
     /**
-     * Libellés des notifications : « VIP Gold » / « coupons », ou « Score exact » / « scores exacts ».
+     * Libellés des notifications : « VIP Gold » / « coupons », « Score exact » / « scores exacts »,
+     * « Accès VIP complet » / « pronostics VIP », etc.
      *
      * @return array{0: string, 1: string, 2: string, 3: string} nom, abonnement, éléments, élément
      */
     private function labels(string $level): array
     {
-        return $level === ExactScoreGenerator::LEVEL
-            ? [AppSetting::offerName($level), 'abonnement Score exact', 'scores exacts', 'score exact']
-            : [AppSetting::offerName($level), AppSetting::offerName($level), 'coupons', 'coupon'];
+        return match ($level) {
+            ExactScoreGenerator::LEVEL => [AppSetting::offerName($level), 'abonnement Score exact', 'scores exacts', 'score exact'],
+            SpecialMarketsGenerator::LEVEL_GROSSES_COTES => [AppSetting::offerName($level), 'abonnement VIP Grosses cotes', 'combinés grosses cotes', 'combiné grosse cote'],
+            SpecialMarketsGenerator::LEVEL_CARTONS => [AppSetting::offerName($level), 'abonnement VIP Cartons', 'pronostics cartons jaunes', 'pronostic cartons'],
+            SpecialMarketsGenerator::LEVEL_BUTEURS => [AppSetting::offerName($level), 'abonnement VIP Buteurs', 'pronostics buteurs', 'pronostic buteur'],
+            AppSetting::ALL_VIP_LEVEL => [AppSetting::offerName($level), 'pack Accès VIP complet', 'pronostics et coupons de toutes les catégories VIP', 'coupon VIP'],
+            default => [AppSetting::offerName($level), AppSetting::offerName($level), 'coupons', 'coupon'],
+        };
     }
 
     /**
@@ -285,21 +291,31 @@ class VipService
     public function notifyNewCoupon(Pronostic $pronostic): array
     {
         $level = (string) $pronostic->niveau;
+        $offerName = AppSetting::offerName($level);
         $odd = number_format((float) ($pronostic->cote_totale ?? $pronostic->odds), 2, ',', '');
         $data = ['type' => 'pronostic', 'event' => 'published', 'pronostic_id' => $pronostic->id, 'niveau' => $level];
-        $subscriberIds = VipSubscription::query()->active()->where('level', $level)->select('user_id');
+        $subscriberIds = VipSubscription::query()
+            ->active()
+            ->whereIn('level', [$level, AppSetting::ALL_VIP_LEVEL])
+            ->select('user_id');
+
+        $isSpecial = in_array($level, [...AppSetting::SPECIAL_LEVELS, ExactScoreGenerator::LEVEL], true);
 
         $subscribers = $this->push->sendToUsers(
             User::query()->whereIn('id', $subscriberIds),
-            "💎 Nouveau coupon VIP {$level}",
-            "Cote {$odd} : votre code 1xBet est disponible dans l’application BIG BOSS.",
+            "💎 Nouveau coupon {$offerName}",
+            $isSpecial
+                ? "Cote {$odd} : votre pronostic {$offerName} est disponible dans l’application BIG BOSS."
+                : "Cote {$odd} : votre code 1xBet est disponible dans l’application BIG BOSS.",
             $data,
         );
 
         $others = $this->push->sendToUsers(
             User::query()->whereNotIn('id', $subscriberIds),
-            "💎 Nouveau coupon VIP {$level} disponible",
-            "Cote {$odd}. Rejoignez le VIP {$level} pour recevoir le code.",
+            "💎 Nouveau coupon {$offerName} disponible",
+            $isSpecial
+                ? "Cote {$odd}. Rejoignez {$offerName} pour découvrir l’analyse."
+                : "Cote {$odd}. Rejoignez le {$offerName} pour recevoir le code.",
             $data,
         );
 
@@ -372,13 +388,25 @@ class VipService
             ->get()
             ->keyBy('niveau');
 
+        $parieursLevels = ['Bronze', 'Silver', 'Gold', 'Platinum'];
+        $parieursWon = (int) collect($parieursLevels)->sum(fn ($l) => (int) ($rows[$l]->won ?? 0));
+        $parieursSettled = (int) collect($parieursLevels)->sum(fn ($l) => (int) ($rows[$l]->settled ?? 0));
+
         return collect(AppSetting::VIP_LEVELS)
-            ->mapWithKeys(fn ($level) => [$level => [
-                'won' => (int) ($rows[$level]->won ?? 0),
-                // Score exact : seuls les scores trouvés sont montrés (règle du fondateur : les
-                // pertes ne sont pas mélangées) — « settled » à 0, l'app n'affiche pas de taux.
-                'settled' => $level === ExactScoreGenerator::LEVEL ? 0 : (int) ($rows[$level]->settled ?? 0),
-            ]])
+            ->mapWithKeys(function ($level) use ($rows, $parieursWon, $parieursSettled) {
+                if ($level === AppSetting::ALL_VIP_LEVEL) {
+                    return [$level => ['won' => $parieursWon, 'settled' => $parieursSettled]];
+                }
+
+                // Score exact & Grosses cotes (~30/50/60) : paris à haut risque, seuls les coups
+                // trouvés sont montrés (« settled » à 0) pour ne pas afficher un taux trompeur.
+                $hideRate = in_array($level, [ExactScoreGenerator::LEVEL, SpecialMarketsGenerator::LEVEL_GROSSES_COTES], true);
+
+                return [$level => [
+                    'won' => (int) ($rows[$level]->won ?? 0),
+                    'settled' => $hideRate ? 0 : (int) ($rows[$level]->settled ?? 0),
+                ]];
+            })
             ->all();
     }
 

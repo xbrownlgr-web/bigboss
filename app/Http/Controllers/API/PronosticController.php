@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Models\VipSubscription;
 use App\Services\ExactScoreGenerator;
 use App\Services\ExpoPushService;
+use App\Services\SpecialMarketsGenerator;
 use Illuminate\Support\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -103,11 +104,12 @@ class PronosticController extends Controller
         $subscriptions = $this->subscriptionsOf($user);
 
         $since = now()->subDays(90);
-        $notScore = fn ($query) => $query->whereNull('niveau')->orWhere('niveau', '!=', ExactScoreGenerator::LEVEL);
+        // Taux de réussite des combinés Parieurs seulement : les scores exacts et grosses cotes (~30/50/60)
+        // sont des paris à haut risque qui fausseraient le taux de réussite des combinés classiques.
+        $excludedFromRate = [ExactScoreGenerator::LEVEL, SpecialMarketsGenerator::LEVEL_GROSSES_COTES];
+        $forRate = fn ($query) => $query->whereNull('niveau')->orWhereNotIn('niveau', $excludedFromRate);
 
-        // Taux de réussite des combinés seulement : les scores exacts (pari à haut risque, règle du
-        // fondateur) n'y entrent pas, ni en gagné ni en perdu, pour ne pas fausser le taux.
-        $settled = Pronostic::query()->whereNotNull('result_status')->where('published_at', '>=', $since)->where($notScore);
+        $settled = Pronostic::query()->whereNotNull('result_status')->where('published_at', '>=', $since)->where($forRate);
 
         $won = (clone $settled)->where('result_status', 'won')->count();
         $total = $settled->count();
@@ -137,8 +139,9 @@ class PronosticController extends Controller
     }
 
     /**
-     * Niveaux VIP débloqués : abonnements actifs du client ; le compte admin (mode admin de
-     * l'application) voit tous les coupons VIP en clair, sans abonnement.
+     * Niveaux VIP débloqués : abonnements actifs du client ; le pack « Accès VIP complet »
+     * (AppSetting::ALL_VIP_LEVEL) débloque automatiquement toutes les catégories VIP.
+     * Le compte admin (mode admin de l'application) voit tous les coupons VIP en clair.
      *
      * @return array<string, mixed> niveau => fin de l'abonnement
      */
@@ -152,28 +155,42 @@ class PronosticController extends Controller
             return array_fill_keys(AppSetting::VIP_LEVELS, now()->addYear());
         }
 
-        return $user->vipSubscriptions()->active()->pluck('ends_at', 'level')->all();
+        $active = $user->vipSubscriptions()->active()->pluck('ends_at', 'level')->all();
+        $allEndsAt = $active[AppSetting::ALL_VIP_LEVEL] ?? null;
+
+        if ($allEndsAt !== null) {
+            $allCarbon = Carbon::parse($allEndsAt);
+            foreach (AppSetting::VIP_LEVELS as $level) {
+                $existing = isset($active[$level]) ? Carbon::parse($active[$level]) : null;
+                $active[$level] = $existing && $existing->gt($allCarbon) ? $existing : $allCarbon;
+            }
+        }
+
+        return $active;
     }
 
     /**
-     * Coupons VIP payants (Silver, Gold, Platinum) : complets pour les abonnés actifs du niveau.
-     * Pour les autres, seuls le niveau, la cote, la confiance, le nombre de matchs et le résultat
-     * sont envoyés : les codes ne quittent jamais le serveur.
+     * Coupons VIP payants : complets pour les abonnés actifs du niveau (ou du pack Complet).
+     * Pour les autres, seuls le niveau, la cote, la confiance, le nombre de matchs, le résultat
+     * et des métadonnées non confidentielles (palier grosse cote, niveau de risque) sont envoyés :
+     * les matchs, joueurs, analyses et codes ne quittent jamais le serveur.
      *
      * @param array<string, mixed> $subscriptions niveau => fin de l'abonnement actif
      */
     private function publicPayload(Pronostic $pronostic, array $subscriptions): array
     {
         $data = $pronostic->toArray();
+        $meta = $this->safeMeta($pronostic);
 
         if (! in_array($pronostic->niveau, AppSetting::VIP_LEVELS, true)) {
-            return [...$data, 'locked' => false];
+            return [...$data, 'meta' => $meta, 'locked' => false];
         }
 
         $endsAt = $subscriptions[$pronostic->niveau] ?? null;
         $vip = [
             'subscribed' => $endsAt !== null,
             'subscription_ends_at' => $endsAt ? Carbon::parse($endsAt)->toIso8601String() : null,
+            'meta' => $meta,
         ];
 
         if ($endsAt !== null) {
@@ -194,6 +211,8 @@ class PronosticController extends Controller
             ];
         }
 
+        $offerName = AppSetting::offerName((string) $pronostic->niveau);
+
         return [
             ...$data,
             ...$vip,
@@ -205,11 +224,49 @@ class PronosticController extends Controller
             'code_melbet' => null,
             // Anciennes versions de l'application : elles affichent ces champs à la place des matchs.
             'team_home' => $pronostic->niveau === ExactScoreGenerator::LEVEL ? 'Score' : 'Coupon',
-            'team_away' => $pronostic->niveau === ExactScoreGenerator::LEVEL ? 'exact' : 'VIP ' . $pronostic->niveau,
-            'competition' => $pronostic->niveau === ExactScoreGenerator::LEVEL ? 'Score exact' : 'Combiné ' . $pronostic->niveau,
-            'prediction' => $pronostic->niveau === ExactScoreGenerator::LEVEL ? 'Réservé aux membres Score exact' : 'Réservé aux membres VIP',
+            'team_away' => $pronostic->niveau === ExactScoreGenerator::LEVEL ? 'exact' : $offerName,
+            'competition' => $pronostic->niveau === ExactScoreGenerator::LEVEL ? 'Score exact' : $offerName,
+            'prediction' => 'Réservé aux membres ' . $offerName,
             'result_note' => null,
         ];
+    }
+
+    /**
+     * Métadonnées publiques (jamais de noms d'équipes, joueurs ni pronostics) permettant d'afficher
+     * proprement une ligne verrouillée (palier Grosses cotes, niveau de risque, confiance, marché).
+     *
+     * @return array<string, mixed>|null
+     */
+    private function safeMeta(Pronostic $pronostic): ?array
+    {
+        $first = is_array($pronostic->evenements) && isset($pronostic->evenements[0]) && is_array($pronostic->evenements[0])
+            ? $pronostic->evenements[0]
+            : null;
+
+        if (! $first) {
+            return null;
+        }
+
+        return match ($pronostic->niveau) {
+            SpecialMarketsGenerator::LEVEL_GROSSES_COTES => array_filter([
+                'tier' => $first['tier'] ?? null,
+                'tier_label' => $first['tier_label'] ?? null,
+                'risque' => $first['risque'] ?? 'eleve',
+                'probabilite_globale' => $first['probabilite_globale'] ?? null,
+            ], fn ($v) => $v !== null),
+            SpecialMarketsGenerator::LEVEL_CARTONS => array_filter([
+                'marche' => 'Cartons jaunes',
+                'confiance' => $first['confiance'] ?? null,
+                'valeur' => $first['valeur'] ?? null,
+            ], fn ($v) => $v !== null),
+            SpecialMarketsGenerator::LEVEL_BUTEURS => array_filter([
+                'marche' => $first['marche'] ?? 'Buteur à tout moment',
+                'confiance' => $first['confiance'] ?? null,
+                'valeur' => $first['valeur'] ?? null,
+                'composition_confirmee' => $first['composition_confirmee'] ?? null,
+            ], fn ($v) => $v !== null),
+            default => null,
+        };
     }
 
     public function result(Request $request, int $id): JsonResponse

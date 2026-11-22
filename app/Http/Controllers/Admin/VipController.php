@@ -30,6 +30,10 @@ class VipController extends Controller
         'Gold' => '#FFD700',
         'Platinum' => '#7C3AED',
         'Score' => '#BE123C',
+        'GrossesCotes' => '#D97706',
+        'Cartons' => '#CA8A04',
+        'Buteurs' => '#0D9488',
+        'Complet' => '#16A34A',
     ];
 
     public function __construct(private readonly VipService $vip)

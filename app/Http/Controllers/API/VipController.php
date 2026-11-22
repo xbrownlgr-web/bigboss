@@ -32,7 +32,13 @@ class VipController extends Controller
         $vipRequest = $this->vip->requestKey($request->user(), $validated['level']);
         $price = $vipRequest->price;
 
-        $message = 'Bonjour, je suis sur votre application BIG BOSS et je veux intégrer ' . ($vipRequest->level === 'Score' ? 'l’offre ' : 'le ') . AppSetting::offerName($vipRequest->level)
+        $prefix = match ($vipRequest->level) {
+            'Score' => 'l’offre ',
+            AppSetting::ALL_VIP_LEVEL => 'le pack ',
+            default => 'le ',
+        };
+
+        $message = 'Bonjour, je suis sur votre application BIG BOSS et je veux intégrer ' . $prefix . AppSetting::offerName($vipRequest->level)
             . ($price ? ' qui coûte ' . number_format($price, 0, ',', ' ') . ' FCFA' : '')
             . ". Ma clé : {$vipRequest->key}";
 

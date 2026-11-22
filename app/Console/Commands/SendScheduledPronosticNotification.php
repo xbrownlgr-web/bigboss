@@ -92,9 +92,12 @@ class SendScheduledPronosticNotification extends Command
         ];
 
         if ($level === ExactScoreGenerator::LEVEL) {
-            // Score exact : notifié dès qu'il est trouvé. Les abonnés voient le match ; les autres
-            // reçoivent une invitation (sans le score), quelques-unes par jour seulement.
-            $subscriberIds = VipSubscription::query()->active()->where('level', $level)->select('user_id');
+            // Score exact : notifié dès qu'il est trouvé. Les abonnés (Score ou Pack Complet) voient
+            // le match ; les autres reçoivent une invitation (sans le score).
+            $subscriberIds = VipSubscription::query()
+                ->active()
+                ->whereIn('level', [$level, AppSetting::ALL_VIP_LEVEL])
+                ->select('user_id');
             $match = $pronostic->evenements[0]['match'] ?? trim($pronostic->team_home . ' vs ' . $pronostic->team_away);
 
             $push->sendToUsers(
@@ -117,18 +120,20 @@ class SendScheduledPronosticNotification extends Command
                 );
             }
         } elseif (in_array($level, AppSetting::VIP_LEVELS, true)) {
-            // Coupon VIP de l'IA (Silver) : les abonnés le voient, les autres sont invités à s'abonner.
-            $subscriberIds = VipSubscription::query()->active()->where('level', $level)->select('user_id');
+            $offerName = AppSetting::offerName($level);
+            $subscriberIds = VipSubscription::query()
+                ->active()
+                ->whereIn('level', [$level, AppSetting::ALL_VIP_LEVEL])
+                ->select('user_id');
 
-            // Abonné actif du niveau : il reçoit le pronostic VIP suivi de sa cote.
+            // Abonné actif du niveau (ou Pack Complet) : il reçoit le pronostic suivi de sa cote.
             $push->sendToUsers(
                 User::query()->whereIn('id', $subscriberIds),
-                "💎 Coupon VIP {$level} · cote {$odd}",
-                "Vos matchs sont disponibles dans l’application BIG BOSS.",
+                "💎 Coupon {$offerName} · cote {$odd}",
+                "Votre analyse est disponible dans l’application BIG BOSS.",
                 $data,
             );
-            // Jusqu'à 11 coupons VIP par jour : les non-abonnés n'en reçoivent que quelques annonces,
-            // et sans la cote — juste une invitation à jeter un coup d'œil.
+            // Les non-abonnés ne reçoivent que quelques annonces par jour, sans la cote ni les matchs.
             $teaserKey = 'pronostics:vip_teasers:' . now()->setTimezone(config('app.timezone'))->toDateString();
             $maxTeasers = (int) (AppSetting::value('ai_vip_teasers_per_day') ?? 2);
 
@@ -136,8 +141,8 @@ class SendScheduledPronosticNotification extends Command
                 Cache::put($teaserKey, (int) Cache::get($teaserKey, 0) + 1, now()->addDays(2));
                 $push->sendToUsers(
                     User::query()->whereNotIn('id', $subscriberIds),
-                    "👀 Nouveau pronostic VIP {$level}",
-                    "Un nouveau pronostic est disponible dans le VIP {$level}. Jette un coup d’œil dans l’application !",
+                    "👀 Nouveau pronostic {$offerName}",
+                    "Un nouveau pronostic est disponible dans {$offerName}. Jette un coup d’œil dans l’application !",
                     $data,
                 );
             }

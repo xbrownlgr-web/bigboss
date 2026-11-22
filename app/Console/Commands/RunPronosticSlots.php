@@ -27,8 +27,12 @@ class RunPronosticSlots extends Command
         $now = now()->setTimezone($timezone);
         $started = 0;
 
-        // Les combinés des 5 niveaux, puis l'offre Score exact (ses propres heures, sa propre commande).
-        $schedule = [...PronosticRules::schedule(), ExactScoreGenerator::LEVEL => GenerateExactScores::schedule()];
+        // Les combinés des 5 niveaux, l'offre Score exact, puis les marchés spécialisés (Grosses cotes, Cartons, Buteurs).
+        $schedule = [
+            ...PronosticRules::schedule(),
+            ExactScoreGenerator::LEVEL => GenerateExactScores::schedule(),
+            GenerateSpecialMarkets::RUN_LEVEL => GenerateSpecialMarkets::schedule(),
+        ];
 
         foreach ($schedule as $level => $times) {
             foreach ($times as $time) {
@@ -49,9 +53,11 @@ class RunPronosticSlots extends Command
                 }
 
                 $this->info("Créneau {$time} : {$level}");
-                $level === ExactScoreGenerator::LEVEL
-                    ? $this->call('binho:generate-exact-scores', ['--slot' => $time])
-                    : $this->call('binho:generate-pronostics', ['--level' => [$level], '--slot' => $time]);
+                match ($level) {
+                    ExactScoreGenerator::LEVEL => $this->call('binho:generate-exact-scores', ['--slot' => $time]),
+                    GenerateSpecialMarkets::RUN_LEVEL => $this->call('binho:generate-special-markets', ['--slot' => $time]),
+                    default => $this->call('binho:generate-pronostics', ['--level' => [$level], '--slot' => $time]),
+                };
                 $started++;
             }
         }
