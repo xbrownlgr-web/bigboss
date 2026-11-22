@@ -176,9 +176,17 @@ class AdminAppController extends Controller
     public function users(Request $request): JsonResponse
     {
         $search = trim((string) $request->input('search', ''));
+        $page = max(1, (int) $request->input('page', 1));
+        $perPage = 80;
         $totalUsers = User::query()->whereNull('account_deleted_at')->count();
-        $pushReadyUsers = User::query()->whereNull('account_deleted_at')->where('is_active', true)->whereNotNull('fcm_token')->count();
+        $pushReadyUsers = User::query()
+            ->whereNull('account_deleted_at')
+            ->where('is_active', true)
+            ->whereNotNull('fcm_token')
+            ->where('fcm_token', 'like', 'ExponentPushToken[%')
+            ->count();
         $activeVipUsers = VipSubscription::query()->active()->distinct('user_id')->count('user_id');
+        $hasMore = false;
 
         if (mb_strlen($search) >= 2) {
             $users = User::query()
@@ -203,11 +211,14 @@ class AdminAppController extends Controller
                 $users = $users->merge($byPhone)->unique('id')->take(40)->values();
             }
         } else {
-            $users = User::query()
+            $batch = User::query()
                 ->whereNull('account_deleted_at')
                 ->latest('id')
-                ->limit(80)
+                ->skip(($page - 1) * $perPage)
+                ->take($perPage + 1)
                 ->get(['id', 'name', 'email', 'phone', 'fcm_token', 'created_at']);
+            $hasMore = $batch->count() > $perPage;
+            $users = $batch->take($perPage)->values();
         }
 
         $vipsByUser = VipSubscription::query()
@@ -222,12 +233,14 @@ class AdminAppController extends Controller
             'total_users' => $totalUsers,
             'push_ready_users' => $pushReadyUsers,
             'active_vip_users' => $activeVipUsers,
+            'page' => $page,
+            'has_more' => $hasMore,
             'users' => $users->map(fn (User $user) => [
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
                 'phone' => $user->phone,
-                'has_push' => ! empty($user->fcm_token),
+                'has_push' => str_starts_with((string) $user->fcm_token, 'ExponentPushToken['),
                 'created_at' => $user->created_at?->toIso8601String(),
                 'active_vips' => $vipsByUser->get($user->id, []),
             ])->values(),
@@ -334,13 +347,18 @@ class AdminAppController extends Controller
         if ($target === 'vip') {
             $vipUserIds = VipSubscription::query()->active()->select('user_id');
             $sent = $push->sendToUsers(
-                User::query()->where('is_active', true)->whereIn('id', $vipUserIds),
+                User::query()->whereNull('account_deleted_at')->where('is_active', true)->whereIn('id', $vipUserIds),
                 $title,
                 $body,
                 $data,
             );
         } else {
-            $sent = $push->sendToActiveUsers($title, $body, $data);
+            $sent = $push->sendToUsers(
+                User::query()->whereNull('account_deleted_at'),
+                $title,
+                $body,
+                $data,
+            );
         }
 
         return response()->json([

@@ -168,11 +168,14 @@ class AdminAppAndPhotosTest extends TestCase
             ->assertJsonPath('subscriptions.0.user_email', 'marc@example.com')
             ->assertJsonPath('subscriptions.0.level', 'Complet');
 
-        // Nombre total d'utilisateurs + liste sans recherche obligatoire
+        // Nombre total d'utilisateurs + liste sans recherche obligatoire + compteur push Expo exact
         $this->getJson('/api/v1/admin/users')
             ->assertOk()
             ->assertJsonPath('total_users', 3)
+            ->assertJsonPath('push_ready_users', 2)
             ->assertJsonPath('active_vip_users', 1)
+            ->assertJsonPath('page', 1)
+            ->assertJsonPath('has_more', false)
             ->assertJsonCount(3, 'users');
 
         // Push broadcast à tous les utilisateurs actifs avec token (2 appareils)
