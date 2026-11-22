@@ -114,9 +114,11 @@ qu'un score est publié**, avec l'avertissement « ça peut perdre » partout.
   distribuant un APK de paris). Ne plus jamais l'utiliser. Nouveau compte : **`xbrownlgr-web`**, repo
   backend = `xbrownlgr-web/bigboss` (à garder **privé**). Pousser avec un jeton d'accès personnel
   (le `gh` CLI local reste cassé, lié à l'ancien compte).
-- **Ne plus jamais distribuer l'APK via une release GitHub** — c'est exactement ce qui a fait
-  suspendre le premier compte. L'APK est servi **directement par ce backend**
-  (`public/big-boss.apk`, voir `LatestRelease::downloadUrl()`), plus un mirroir gofile.io en secours.
+- **Ne plus jamais distribuer l'APK via une release GitHub ni depuis `public/big-boss.apk` sur Render** —
+  GitHub a suspendu le premier compte, et servir l'APK (43 Mo) depuis Render a épuisé le quota
+  gratuit de 5 Go/mois (workspace suspendu le 2026-11-22). L'APK est désormais hébergé sur
+  **Cloudflare R2** (bucket `bigboss-apk`, 10 Go + bande passante illimitée gratuite) à l'adresse
+  `https://pub-5c9795edabbf4458b10e516b981f3c5a.r2.dev/big-boss.apk` (réglage `app_download_url`).
 - **Render** : service `big-boss` (id `srv-dbjv1oe7bikc738l4520`), domaine
   `https://big-boss-d87f.onrender.com`, auto-déploie depuis `xbrownlgr-web/bigboss` branche `main`.
 - **Base de données : TiDB Cloud Serverless** (pas Aiven — Aiven free a déjà causé 2 pannes complètes
