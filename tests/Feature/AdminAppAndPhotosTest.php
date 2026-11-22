@@ -133,4 +133,61 @@ class AdminAppAndPhotosTest extends TestCase
             ->assertJsonPath('pronostics.0.evenements.0.match', 'Lions vs Aigles');
     }
 
+    public function test_the_admin_lists_active_vips_grants_by_email_lists_users_and_broadcasts_push(): void
+    {
+        Http::fake(['https://exp.host/*' => Http::response(['data' => [['status' => 'ok']]])]);
+        $admin = $this->admin();
+        $vipMember = User::factory()->create(['is_active' => true, 'name' => 'Marc Kouassi', 'email' => 'marc@example.com', 'fcm_token' => 'ExponentPushToken[marc]']);
+        $freeMember = User::factory()->create(['is_active' => true, 'name' => 'Lucie Mensah', 'email' => 'lucie@example.com', 'fcm_token' => 'ExponentPushToken[lucie]']);
+
+        // Un client normal ne peut pas envoyer de push broadcast ni voir la liste VIP
+        Sanctum::actingAs($freeMember);
+        $this->getJson('/api/v1/admin/vip/subscriptions')->assertForbidden();
+        $this->postJson('/api/v1/admin/push/broadcast', ['title' => 'Test', 'body' => 'Message'])->assertForbidden();
+
+        Sanctum::actingAs($admin);
+
+        // Activation directement par e-mail (insensible à la casse)
+        $this->postJson('/api/v1/admin/vip/grant', [
+            'email' => 'MARC@example.com',
+            'level' => 'Complet',
+            'days' => 30,
+        ])->assertOk()->assertJsonPath('user_name', 'Marc Kouassi');
+
+        // E-mail inexistant -> 422 propre
+        $this->postJson('/api/v1/admin/vip/grant', [
+            'email' => 'inconnu@example.com',
+            'level' => 'Gold',
+            'days' => 30,
+        ])->assertStatus(422);
+
+        // Liste de tous les abonnés VIP actifs
+        $this->getJson('/api/v1/admin/vip/subscriptions')
+            ->assertOk()
+            ->assertJsonPath('total', 1)
+            ->assertJsonPath('subscriptions.0.user_email', 'marc@example.com')
+            ->assertJsonPath('subscriptions.0.level', 'Complet');
+
+        // Nombre total d'utilisateurs + liste sans recherche obligatoire
+        $this->getJson('/api/v1/admin/users')
+            ->assertOk()
+            ->assertJsonPath('total_users', 3)
+            ->assertJsonPath('active_vip_users', 1)
+            ->assertJsonCount(3, 'users');
+
+        // Push broadcast à tous les utilisateurs actifs avec token (2 appareils)
+        $this->postJson('/api/v1/admin/push/broadcast', [
+            'title' => 'Nouveaux pronostics prêts',
+            'body' => 'Les 5 catégories du jour sont disponibles sur BIG BOSS.',
+            'target' => 'all',
+        ])->assertOk()->assertJsonPath('sent', 2);
+
+        // Push broadcast aux abonnés VIP uniquement (1 appareil)
+        $this->postJson('/api/v1/admin/push/broadcast', [
+            'title' => 'Alerte VIP',
+            'body' => 'Nouveau coupon spécial disponible.',
+            'target' => 'vip',
+        ])->assertOk()->assertJsonPath('sent', 1);
+    }
+
 }

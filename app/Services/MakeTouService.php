@@ -76,7 +76,7 @@ class MakeTouService
 
             throw new RuntimeException('Le paiement en ligne n’a pas pu démarrer'
                 . ($reason !== '' ? ' (' . mb_strimwidth($reason, 0, 160, '…') . ')' : ' (HTTP ' . $response->status() . ')')
-                . '. Réessayez, ou utilisez « Payer autrement (WhatsApp) ».');
+                . '. Réessayez dans un instant.');
         }
 
         $cartId = (string) ($response->json('cart.id') ?? '');

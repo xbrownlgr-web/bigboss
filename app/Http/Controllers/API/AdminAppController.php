@@ -8,6 +8,7 @@ use App\Models\Message;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Models\VipSubscription;
+use App\Services\ExpoPushService;
 use App\Services\SupportInbox;
 use App\Services\TransactionDecision;
 use App\Services\VipService;
@@ -175,47 +176,179 @@ class AdminAppController extends Controller
     public function users(Request $request): JsonResponse
     {
         $search = trim((string) $request->input('search', ''));
+        $totalUsers = User::query()->whereNull('account_deleted_at')->count();
+        $pushReadyUsers = User::query()->whereNull('account_deleted_at')->where('is_active', true)->whereNotNull('fcm_token')->count();
+        $activeVipUsers = VipSubscription::query()->active()->distinct('user_id')->count('user_id');
 
-        if (mb_strlen($search) < 2) {
-            return response()->json(['success' => true, 'users' => []]);
+        if (mb_strlen($search) >= 2) {
+            $users = User::query()
+                ->whereNull('account_deleted_at')
+                ->where(fn ($query) => $query
+                    ->where('name', 'like', '%' . $search . '%')
+                    ->orWhere('email', 'like', '%' . $search . '%')
+                    ->orWhere('phone', 'like', '%' . $search . '%'))
+                ->latest('id')
+                ->limit(40)
+                ->get(['id', 'name', 'email', 'phone', 'fcm_token', 'created_at']);
+
+            // Numéro : comparaison chiffre à chiffre (saisis avec espaces, « + », tirets…).
+            $digits = preg_replace('/\D+/', '', $search);
+
+            if (strlen($digits) >= 4) {
+                $byPhone = User::query()
+                    ->whereNull('account_deleted_at')
+                    ->whereNotNull('phone')
+                    ->get(['id', 'name', 'email', 'phone', 'fcm_token', 'created_at'])
+                    ->filter(fn (User $user) => str_contains(preg_replace('/\D+/', '', (string) $user->phone), $digits));
+                $users = $users->merge($byPhone)->unique('id')->take(40)->values();
+            }
+        } else {
+            $users = User::query()
+                ->whereNull('account_deleted_at')
+                ->latest('id')
+                ->limit(80)
+                ->get(['id', 'name', 'email', 'phone', 'fcm_token', 'created_at']);
         }
 
-        $users = User::query()
-            ->where(fn ($query) => $query
-                ->where('name', 'like', '%' . $search . '%')
-                ->orWhere('email', 'like', '%' . $search . '%')
-                ->orWhere('phone', 'like', '%' . $search . '%'))
-            ->limit(20)
-            ->get(['id', 'name', 'email', 'phone']);
-
-        // Numéro : comparaison chiffre à chiffre (saisis avec espaces, « + », tirets…).
-        $digits = preg_replace('/\D+/', '', $search);
-
-        if (strlen($digits) >= 4) {
-            $byPhone = User::query()
-                ->whereNotNull('phone')
-                ->get(['id', 'name', 'email', 'phone'])
-                ->filter(fn (User $user) => str_contains(preg_replace('/\D+/', '', (string) $user->phone), $digits));
-            $users = $users->merge($byPhone)->unique('id')->take(20)->values();
-        }
-
-        return response()->json(['success' => true, 'users' => $users]);
-    }
-
-    public function grant(Request $request, VipService $vip): JsonResponse
-    {
-        $validated = $request->validate([
-            'user_id' => ['required', 'integer', 'exists:users,id'],
-            'level' => ['required', Rule::in(AppSetting::VIP_LEVELS)],
-            'days' => ['required', 'integer', 'min:1', 'max:366'],
-        ]);
-
-        $subscription = $vip->grantManual((int) $validated['user_id'], $validated['level'], (int) $validated['days']);
+        $vipsByUser = VipSubscription::query()
+            ->active()
+            ->whereIn('user_id', $users->pluck('id'))
+            ->get(['user_id', 'level'])
+            ->groupBy('user_id')
+            ->map(fn ($group) => $group->pluck('level')->map(fn ($lvl) => AppSetting::offerName($lvl))->values()->all());
 
         return response()->json([
             'success' => true,
-            'message' => AppSetting::offerName($subscription->level) . ' activé jusqu’au '
+            'total_users' => $totalUsers,
+            'push_ready_users' => $pushReadyUsers,
+            'active_vip_users' => $activeVipUsers,
+            'users' => $users->map(fn (User $user) => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'phone' => $user->phone,
+                'has_push' => ! empty($user->fcm_token),
+                'created_at' => $user->created_at?->toIso8601String(),
+                'active_vips' => $vipsByUser->get($user->id, []),
+            ])->values(),
+        ]);
+    }
+
+    /**
+     * Liste de tous les abonnements VIP actifs (qui a activé quel VIP, fin, jours restants).
+     */
+    public function vipSubscriptions(): JsonResponse
+    {
+        $items = VipSubscription::query()
+            ->active()
+            ->with('user:id,name,email,phone')
+            ->orderBy('ends_at')
+            ->get()
+            ->map(fn (VipSubscription $sub) => [
+                'id' => $sub->id,
+                'user_id' => $sub->user_id,
+                'user_name' => $sub->user?->name ?? 'Utilisateur supprimé',
+                'user_email' => $sub->user?->email ?? '',
+                'user_phone' => $sub->user?->phone,
+                'level' => $sub->level,
+                'level_name' => AppSetting::offerName($sub->level),
+                'starts_at' => $sub->starts_at?->toIso8601String(),
+                'ends_at' => $sub->ends_at->toIso8601String(),
+                'days_left' => max(0, (int) now()->diffInDays($sub->ends_at, false)),
+            ])
+            ->values();
+
+        return response()->json([
+            'success' => true,
+            'total' => $items->count(),
+            'subscriptions' => $items,
+        ]);
+    }
+
+    public function cancelSubscription(int $id, VipService $vip): JsonResponse
+    {
+        $subscription = VipSubscription::query()->findOrFail($id);
+        $vip->cancel($subscription);
+
+        return response()->json(['success' => true, 'message' => 'Abonnement arrêté.']);
+    }
+
+    /**
+     * Active un abonnement VIP par user_id OU directement par adresse e-mail du client.
+     */
+    public function grant(Request $request, VipService $vip): JsonResponse
+    {
+        $validated = $request->validate([
+            'user_id' => ['nullable', 'integer', 'exists:users,id'],
+            'email' => ['required_without:user_id', 'nullable', 'email', 'max:255'],
+            'level' => ['required', Rule::in(AppSetting::VIP_LEVELS)],
+            'days' => ['required', 'integer', 'min:1', 'max:366'],
+        ], [
+            'email.required_without' => 'Indiquez l’e-mail du client ou sélectionnez un compte.',
+            'email.email' => 'Adresse e-mail invalide.',
+        ]);
+
+        if (! empty($validated['user_id'])) {
+            $user = User::query()->findOrFail((int) $validated['user_id']);
+        } else {
+            $needle = mb_strtolower(trim((string) $validated['email']));
+            $user = User::query()
+                ->whereNull('account_deleted_at')
+                ->whereRaw('LOWER(email) = ?', [$needle])
+                ->first();
+
+            if (! $user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Aucun compte trouvé avec l’adresse e-mail : ' . $validated['email'],
+                ], 422);
+            }
+        }
+
+        $subscription = $vip->grantManual($user->id, $validated['level'], (int) $validated['days']);
+
+        return response()->json([
+            'success' => true,
+            'user_name' => $user->name,
+            'message' => AppSetting::offerName($subscription->level) . ' activé pour ' . $user->name . ' jusqu’au '
                 . $subscription->ends_at->timezone(config('app.timezone'))->format('d/m/Y') . '.',
+        ]);
+    }
+
+    /**
+     * Envoie une notification push (titre + message) à tous les utilisateurs actifs ou aux VIP.
+     */
+    public function broadcastPush(Request $request, ExpoPushService $push): JsonResponse
+    {
+        $validated = $request->validate([
+            'title' => ['required', 'string', 'min:2', 'max:120'],
+            'body' => ['required', 'string', 'min:2', 'max:500'],
+            'target' => ['nullable', 'in:all,vip'],
+        ]);
+
+        $title = trim($validated['title']);
+        $body = trim($validated['body']);
+        $target = $validated['target'] ?? 'all';
+        $data = ['type' => 'announcement'];
+
+        if ($target === 'vip') {
+            $vipUserIds = VipSubscription::query()->active()->select('user_id');
+            $sent = $push->sendToUsers(
+                User::query()->where('is_active', true)->whereIn('id', $vipUserIds),
+                $title,
+                $body,
+                $data,
+            );
+        } else {
+            $sent = $push->sendToActiveUsers($title, $body, $data);
+        }
+
+        return response()->json([
+            'success' => true,
+            'sent' => $sent,
+            'message' => $sent > 0
+                ? "Notification envoyée à {$sent} appareil" . ($sent > 1 ? 's' : '') . '.'
+                : 'Aucun appareil avec notifications activées trouvé pour cette cible.',
         ]);
     }
 
