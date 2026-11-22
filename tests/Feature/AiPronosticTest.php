@@ -663,6 +663,7 @@ class AiPronosticTest extends TestCase
 
     public function test_a_match_given_today_is_not_reused_by_the_other_category_or_the_same_group(): void
     {
+        $this->travelTo(now()->setTime(14, 0));
         $this->configureKeys();
         $this->fakeServices(['coupon' => ['selections' => []], 'analyses' => [], 'ecartees' => []]);
         $this->fakeCandidates($this->candidatePool());
