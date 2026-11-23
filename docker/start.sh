@@ -48,12 +48,17 @@ php artisan view:cache
 php artisan migrate --force
 php artisan db:seed --class=AdminSeeder --force
 
-# Planificateur Laravel : exécute les tâches planifiées (génération des pronostics à 08:00).
-# Le service reste éveillé grâce à son auto-ping (plus bas).
+# S'assure que storage/ (cache/data pour throttle/CACHE_STORE=file, sessions, vues, logs) appartient
+# à www-data avant de lancer le planificateur et Apache (sinon mkdir/écriture échoue en HTTP 500).
+mkdir -p storage/framework/cache/data storage/framework/sessions storage/framework/views storage/logs
+chown -R www-data:www-data storage bootstrap/cache
+
+# Planificateur Laravel exécuté sous www-data (même utilisateur qu'Apache) pour ne jamais créer
+# de dossiers de cache/verrous appartenant à root dans storage/framework/cache/data.
 # On se cale sur le début de chaque minute (sleep jusqu'à la prochaine minute pile) :
 # un simple « sleep 60 » dérive avec le temps d'exécution et peut sauter la minute 08:00/18:00.
 ( while true; do
-    php artisan schedule:run --no-interaction >> storage/logs/scheduler.log 2>&1
+    su -p -s /bin/sh www-data -c 'php artisan schedule:run --no-interaction >> storage/logs/scheduler.log 2>&1'
     sleep $((60 - $(date +%s) % 60))
   done ) &
 
