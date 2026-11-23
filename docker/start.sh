@@ -32,6 +32,15 @@ elif [ -n "$MYSQL_ATTR_SSL_CA" ]; then
     fi
 fi
 
+# Render est un conteneur unique : cache et sessions sur disque local économisent ~90 % des
+# Request Units TiDB Cloud (sinon cache_locks / sessions / throttle saturent les 50 M RU gratuits).
+if [ "${CACHE_STORE:-}" = "database" ]; then
+    export CACHE_STORE=file
+fi
+if [ "${SESSION_DRIVER:-}" = "database" ]; then
+    export SESSION_DRIVER=file
+fi
+
 php artisan config:cache
 php artisan route:cache
 php artisan view:cache

@@ -10,18 +10,15 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
-// Garde la base éveillée : les plans MySQL gratuits (Aiven) s'éteignent automatiquement après
-// un moment d'inactivité — et une fois éteints, leur adresse disparaît d'Internet (plus aucune
-// page ne fonctionne) jusqu'à ce qu'on les rallume à la main dans leur console. Le ping UptimeRobot
-// sur /up ne suffit pas : cette route ne touche jamais la base. Une requête minuscule toutes les
-// 3 minutes suffit à compter comme de l'activité pour Aiven.
+// Garde-fou léger de maintien de la base (1 fois par heure : TiDB Serverless ne coupe pas
+// comme Aiven, inutile de solliciter le quota RU toutes les 3 minutes).
 Schedule::call(function () {
     try {
         DB::select('SELECT 1');
     } catch (Throwable $exception) {
         Log::warning('Ping de maintien de la base en échec.', ['error' => $exception->getMessage()]);
     }
-})->everyThreeMinutes()->name('db-keep-alive')->withoutOverlapping(2);
+})->hourly()->name('db-keep-alive')->withoutOverlapping(2);
 
 // Chaque minute : génère les coupons des groupes dont l'heure de publication est arrivée
 // (Starter, Bronze, Silver, Gold, Platinum ; heures dans Admin > Paramètres, heure du Bénin).
@@ -42,11 +39,11 @@ Schedule::command('binho:settle-pronostics')
     ->timezone('Africa/Porto-Novo')
     ->withoutOverlapping(10);
 
-// Diffuse progressivement les notifications associées aux pronostics publiés.
+// Diffuse progressivement les notifications associées aux pronostics publiés (toutes les 5 min pour économiser les RU TiDB).
 Schedule::command('binho:send-pronostic-notification')
-    ->everyMinute()
+    ->everyFiveMinutes()
     ->timezone('Africa/Porto-Novo')
-    ->withoutOverlapping(1);
+    ->withoutOverlapping(4);
 
 // Rappels d'expiration des abonnements VIP (3 jours avant, puis le jour de la fin).
 Schedule::command('binho:vip-reminders')
