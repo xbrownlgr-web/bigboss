@@ -279,7 +279,7 @@ class AuthController extends Controller
     {
         $request->validate([
             'fcm_token' => ['required', 'string'],
-            'app_variant' => ['sometimes', 'in:apk,play'],
+            'app_variant' => ['sometimes', 'in:apk,play,ios'],
         ]);
 
         $request->user()->update([
