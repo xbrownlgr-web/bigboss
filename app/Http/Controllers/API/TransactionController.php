@@ -41,22 +41,27 @@ class TransactionController extends Controller
 
         $transaction->load('user');
 
-        // Jamais bloquant pour la réponse à l'app : l'appel WhatsApp (Cloud, puis repli CallMeBot)
-        // ne part qu'une fois la réponse envoyée au client (voir WhatsAppCloudService).
+        // Jamais bloquant pour la réponse à l'app : les alertes WhatsApp, e-mails et push admin
+        // ne partent qu'une fois la réponse envoyée au client (évite tout timeout ou double demande).
         $userName = $request->user()->name;
-        dispatch(function () use ($transaction, $userName): void {
+        $ran = false;
+        app()->terminating(function () use (&$ran, $transaction, $userName, $adminNotifier): void {
+            if ($ran) {
+                return;
+            }
+            $ran = true;
+
             $this->sendWhatsAppAlert($transaction, $userName);
-        })->afterResponse();
+            $this->sendTransactionCreatedEmail($transaction);
+            $adminNotifier->transactionCreated($transaction);
 
-        $this->sendTransactionCreatedEmail($transaction);
-        $adminNotifier->transactionCreated($transaction);
-
-        // Téléphone de l'admin (mode admin de l'app) : ouvre directement l'onglet Opérations.
-        app(AdminPush::class)->send(
-            $transaction->type === 'recharge' ? '💰 Nouvelle recharge' : '💸 Nouvelle demande de retrait',
-            $userName . ' · ' . number_format((float) $transaction->amount, 0, ',', ' ') . ' FCFA · ' . strtoupper((string) $transaction->platform),
-            ['type' => 'admin_transaction', 'transaction_id' => $transaction->id],
-        );
+            // Téléphone de l'admin (mode admin de l'app) : ouvre directement l'onglet Opérations.
+            app(AdminPush::class)->send(
+                $transaction->type === 'recharge' ? '💰 Nouvelle recharge' : '💸 Nouvelle demande de retrait',
+                $userName . ' · ' . number_format((float) $transaction->amount, 0, ',', ' ') . ' FCFA · ' . strtoupper((string) $transaction->platform),
+                ['type' => 'admin_transaction', 'transaction_id' => $transaction->id],
+            );
+        });
 
         return response()->json([
             'success' => true,

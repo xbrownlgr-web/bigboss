@@ -35,18 +35,41 @@ class SupportInbox
             ->exists();
 
         $message = $this->create($user, 'user', $content, $audio, $duration, $image, $transactionId);
+        $preview = Str::limit($this->preview($message), 120);
+        $fullPreview = $this->preview($message);
 
-        // Téléphone de l'admin (mode admin de l'app) : à chaque message, il ouvre la conversation.
-        app(AdminPush::class)->send('💬 ' . $user->name, Str::limit($this->preview($message), 120), ['type' => 'admin_message', 'user_id' => $user->id]);
+        // Alertes admin envoyées après la réponse HTTP : un délai CallMeBot/Brevo/Expo ne bloque jamais le chat.
+        $ran = false;
+        app()->terminating(function () use (&$ran, $user, $message, $alreadyWaiting, $preview, $fullPreview): void {
+            if ($ran) {
+                return;
+            }
+            $ran = true;
 
-        if (! $alreadyWaiting) {
-            $this->adminNotifier->supportMessage($message->load('user'));
-            $this->whatsApp->send(
-                '💬 Message au support de ' . $user->name . " :\n" . $this->preview($message)
-                . "\n" . url('/admin/messages?user_id=' . $message->user_id),
-                ['message_id' => $message->id],
-            );
-        }
+            try {
+                app(AdminPush::class)->send('💬 ' . $user->name, $preview, ['type' => 'admin_message', 'user_id' => $user->id]);
+            } catch (Throwable $exception) {
+                report($exception);
+            }
+
+            if (! $alreadyWaiting) {
+                try {
+                    $this->adminNotifier->supportMessage($message->load('user'));
+                } catch (Throwable $exception) {
+                    report($exception);
+                }
+
+                try {
+                    $this->whatsApp->send(
+                        '💬 Message au support de ' . $user->name . " :\n" . $fullPreview
+                        . "\n" . url('/admin/messages?user_id=' . $message->user_id),
+                        ['message_id' => $message->id],
+                    );
+                } catch (Throwable $exception) {
+                    report($exception);
+                }
+            }
+        });
 
         return $message;
     }

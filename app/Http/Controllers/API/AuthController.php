@@ -16,29 +16,45 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 use Throwable;
 
 class AuthController extends Controller
 {
     public function register(Request $request): JsonResponse
     {
+        if ($request->has('email')) {
+            $request->merge(['email' => Str::lower(trim((string) $request->input('email')))]);
+        }
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'unique:users,email'],
-            'phone' => ['required', 'string', 'max:20'],
+            'phone' => ['required', 'string', 'max:30'],
             'country' => ['required', Rule::in(array_keys(User::COUNTRIES))],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
             // Case « J'ai 18 ans ou plus » de l'application. Facultative côté serveur tant que
             // d'anciennes versions de l'application (sans la case) sont encore utilisées.
             'adult_confirmed' => ['sometimes', 'accepted'],
         ], [
+            'name.required' => 'Entrez votre nom complet.',
+            'email.required' => 'Entrez votre adresse e-mail.',
+            'email.email' => 'Entrez une adresse e-mail valide.',
+            'email.unique' => 'Cette adresse e-mail est déjà utilisée. Connectez-vous ou utilisez un autre e-mail.',
+            'phone.required' => 'Entrez votre numéro de téléphone.',
+            'phone.max' => 'Numéro de téléphone trop long.',
+            'country.required' => 'Choisissez votre pays.',
+            'country.in' => 'Choisissez un pays valide dans la liste.',
+            'password.required' => 'Entrez un mot de passe.',
+            'password.min' => 'Le mot de passe doit contenir au moins 8 caractères.',
+            'password.confirmed' => 'La confirmation du mot de passe ne correspond pas.',
             'adult_confirmed.accepted' => 'Vous devez avoir 18 ans ou plus pour utiliser BIG BOSS.',
         ]);
 
         $user = User::create([
-            'name' => $validated['name'],
+            'name' => trim($validated['name']),
             'email' => $validated['email'],
-            'phone' => $validated['phone'],
+            'phone' => trim($validated['phone']),
             'country' => $validated['country'],
             'password' => Hash::make($validated['password']),
         ]);
@@ -47,19 +63,26 @@ class AuthController extends Controller
             $user->forceFill(['adult_confirmed_at' => now()])->save();
         }
 
-        try {
-            Mail::to($user)->send(new WelcomeUser($user));
-        } catch (Throwable $exception) {
-            Log::warning('E-mail WelcomeUser non envoyé.', [
-                'user_id' => $user->id,
-                'error' => $exception->getMessage(),
-            ]);
-        }
+        // L'e-mail de bienvenue et la synchro Brevo partent après la réponse HTTP pour éviter
+        // tout délai ou timeout mobile pendant l'inscription.
+        $ran = false;
+        app()->terminating(function () use (&$ran, $user): void {
+            if ($ran) {
+                return;
+            }
+            $ran = true;
 
-        // Synchronise le nouveau contact dans Brevo sans retarder l'inscription.
-        dispatch(function () use ($user) {
+            try {
+                Mail::to($user)->send(new WelcomeUser($user));
+            } catch (Throwable $exception) {
+                Log::warning('E-mail WelcomeUser non envoyé.', [
+                    'user_id' => $user->id,
+                    'error' => $exception->getMessage(),
+                ]);
+            }
+
             app(\App\Services\BrevoAutomationService::class)->syncContact($user);
-        })->afterResponse();
+        });
 
         $token = $user->createToken('mobile')->plainTextToken;
 
@@ -93,9 +116,17 @@ class AuthController extends Controller
 
     public function login(Request $request): JsonResponse
     {
+        if ($request->has('email')) {
+            $request->merge(['email' => Str::lower(trim((string) $request->input('email')))]);
+        }
+
         $credentials = $request->validate([
             'email' => ['required', 'email'],
             'password' => ['required', 'string'],
+        ], [
+            'email.required' => 'Entrez votre adresse e-mail.',
+            'email.email' => 'Entrez une adresse e-mail valide.',
+            'password.required' => 'Entrez votre mot de passe.',
         ]);
 
         if (! Auth::attempt($credentials)) {
@@ -127,11 +158,18 @@ class AuthController extends Controller
 
     public function forgotPassword(Request $request): JsonResponse
     {
+        if ($request->has('email')) {
+            $request->merge(['email' => Str::lower(trim((string) $request->input('email')))]);
+        }
+
         $validated = $request->validate([
             'email' => ['required', 'email'],
+        ], [
+            'email.required' => 'Entrez votre adresse e-mail.',
+            'email.email' => 'Entrez une adresse e-mail valide.',
         ]);
 
-        $user = User::where('email', $validated['email'])->first();
+        $user = User::whereRaw('LOWER(email) = ?', [$validated['email']])->first();
 
         if ($user) {
             $code = (string) random_int(100000, 999999);
@@ -167,15 +205,27 @@ class AuthController extends Controller
 
     public function resetPassword(Request $request): JsonResponse
     {
+        if ($request->has('email')) {
+            $request->merge(['email' => Str::lower(trim((string) $request->input('email')))]);
+        }
+
         $validated = $request->validate([
             'email' => ['required', 'email'],
             'code' => ['required', 'digits:6'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
+        ], [
+            'email.required' => 'Entrez votre adresse e-mail.',
+            'email.email' => 'Entrez une adresse e-mail valide.',
+            'code.required' => 'Entrez le code reçu par e-mail.',
+            'code.digits' => 'Le code doit contenir exactement 6 chiffres.',
+            'password.required' => 'Entrez un nouveau mot de passe.',
+            'password.min' => 'Le mot de passe doit contenir au moins 8 caractères.',
+            'password.confirmed' => 'La confirmation du mot de passe ne correspond pas.',
         ]);
 
-        $user = User::where('email', $validated['email'])->first();
+        $user = User::whereRaw('LOWER(email) = ?', [$validated['email']])->first();
         $record = DB::table('password_reset_tokens')
-            ->where('email', $validated['email'])
+            ->whereRaw('LOWER(email) = ?', [$validated['email']])
             ->first();
 
         if (! $user || ! $record || ! Hash::check($validated['code'], $record->token)) {
