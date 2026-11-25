@@ -52,9 +52,9 @@ class AiPronosticGenerator
     private const CLEAR_FAVOURITE_MARKET = 0.75;
 
     // Taille du réservoir exploré par le serveur quand il compose lui-même un coupon, et nombre
-    // maximal de sélections d'un même match dans ce réservoir : sans cette limite, les 16 premières
-    // sélections pouvaient venir de 3 ou 4 matchs seulement, impossible d'en aligner 5 différents.
-    private const BUILDER_POOL = 20;
+    // maximal de sélections d'un même match dans ce réservoir : élargi pour offrir d'autres
+    // matchs ET d'autres marchés différents d'un niveau VIP à l'autre.
+    private const BUILDER_POOL = 24;
 
     private const BUILDER_PER_MATCH = 2;
 
@@ -72,11 +72,31 @@ class AiPronosticGenerator
     }
 
     /**
+     * Signature unique d'un pari (match + marché + ligne) pour ne jamais répéter le même pari
+     * dans deux niveaux différents le même jour (ex. Victoire Club X dans Bronze et dans Gold).
+     */
+    public static function selectionSignature(string $match, string $selectionKey = '', ?string $line = null, string $pronostic = ''): string
+    {
+        $m = preg_replace('/\s+/', ' ', mb_strtolower(trim($match))) ?: '';
+        if ($m === '') {
+            return '';
+        }
+
+        $k = mb_strtolower(trim($selectionKey));
+        $l = $line !== null && trim($line) !== '' ? str_replace(',', '.', trim($line)) : '';
+        $p = $k !== '' ? ($k . ($l !== '' ? ':' . $l : '')) : (preg_replace('/\s+/', ' ', mb_strtolower(trim($pronostic))) ?: '');
+
+        return $p !== '' ? "{$m}|{$p}" : '';
+    }
+
+    /**
      * @param array<int, array<string, mixed>> $fixtures matchs enrichis (cotes + données collectées)
      * @param array<int, string> $levels
-     * @param array{exclude?: array<int, string>, avoid?: array<int, string>, slot?: string} $options
+     * @param array{exclude?: array<int, string>, avoid?: array<int, string>, exclude_selections?: array<int, string>, slot?: string} $options
      *        exclude : matchs interdits (déjà dans un coupon de l'autre catégorie aujourd'hui) ;
-     *        avoid : matchs à éviter si possible (déjà dans un autre coupon VIP) ; slot : « 15:00 ».
+     *        avoid : matchs à éviter fortement (déjà dans un autre coupon VIP) ;
+     *        exclude_selections : paris exacts (match + marché) strictement interdits entre niveaux ;
+     *        slot : « 15:00 ».
      * @return array<int, array{niveau: string, evenements: array<int, array<string, mixed>>, cote_totale: float, probabilite: int, analysis: string}>
      */
     public function generate(array $fixtures, array $levels, array $options = []): array
@@ -99,6 +119,7 @@ class AiPronosticGenerator
         $reasons = [];
         $usedByVip = [];
         $usedByFree = [];
+        $usedSelections = $options['exclude_selections'] ?? [];
 
         foreach ($levels as $level) {
             $rules = PronosticRules::for($level);
@@ -113,7 +134,9 @@ class AiPronosticGenerator
             foreach ($this->tiers($rules) as $tier => $tierRules) {
                 $source = $tier >= self::FALLBACK_TIER ? $fallback : $candidates;
                 // Un match écarté par l'IA (derby, cote en baisse…) ne revient jamais par le secours.
-                $pool = $this->eligible($source, $tierRules, [...$forbidden, ...$vetoedMatches]);
+                // Et un pari exact (match + marché) déjà donné dans un autre niveau aujourd'hui est
+                // strictement interdit (un même match ne peut revenir que sur un AUTRE type de pari).
+                $pool = $this->eligible($source, $tierRules, [...$forbidden, ...$vetoedMatches], $usedSelections);
 
                 if ($pool === []) {
                     continue;
@@ -141,6 +164,18 @@ class AiPronosticGenerator
             $drafts[$level] = $draft;
             $matches = array_column($draft['evenements'], 'match');
             $rules['free'] ? array_push($usedByFree, ...$matches) : array_push($usedByVip, ...$matches);
+
+            foreach ($draft['evenements'] as $ev) {
+                $sig = self::selectionSignature(
+                    (string) ($ev['match'] ?? ''),
+                    (string) ($ev['selection_key'] ?? ''),
+                    isset($ev['line']) ? (string) $ev['line'] : null,
+                    (string) ($ev['pronostic'] ?? ''),
+                );
+                if ($sig !== '') {
+                    $usedSelections[] = $sig;
+                }
+            }
         }
 
         if ($drafts === []) {
@@ -217,21 +252,34 @@ class AiPronosticGenerator
 
     /**
      * Sélections qui respectent les règles du groupe : probabilité minimale, cote ≥ 1,15, pas de
-     * nul sec, victoire simple seulement pour un favori très net, match pas déjà pris ailleurs.
+     * nul sec, victoire simple seulement pour un favori très net, match ou pari exact pas déjà pris ailleurs.
      *
      * @param array<int, array<string, mixed>> $candidates
      * @param array<int, string> $forbidden
+     * @param array<int, string> $forbiddenSelections
      * @return array<int, array<string, mixed>>
      */
-    private function eligible(array $candidates, array $rules, array $forbidden): array
+    private function eligible(array $candidates, array $rules, array $forbidden, array $forbiddenSelections = []): array
     {
-        return array_values(array_filter($candidates, function ($candidate) use ($rules, $forbidden) {
+        return array_values(array_filter($candidates, function ($candidate) use ($rules, $forbidden, $forbiddenSelections) {
             $football = ($candidate['sport'] ?? 'football') === 'football';
 
             if (in_array($candidate['match'], $forbidden, true)
                 || (float) $candidate['probabilite'] < $rules['min_probability']
                 || (float) $candidate['cote'] < PronosticRules::MIN_SELECTION_ODDS) {
                 return false;
+            }
+
+            if ($forbiddenSelections !== []) {
+                $sig = self::selectionSignature(
+                    (string) ($candidate['match'] ?? ''),
+                    (string) ($candidate['selection_key'] ?? ''),
+                    isset($candidate['line']) ? (string) $candidate['line'] : null,
+                    (string) ($candidate['pronostic'] ?? ''),
+                );
+                if ($sig !== '' && in_array($sig, $forbiddenSelections, true)) {
+                    return false;
+                }
             }
 
             if ($football && $candidate['selection_key'] === 'draw') {
@@ -599,7 +647,7 @@ PROMPT;
      */
     private function buildCombo(array $rules, array $pool, array $avoid, array $preferred = []): ?array
     {
-        $pool = $this->builderPool($pool, $preferred);
+        $pool = $this->builderPool($pool, $preferred, $avoid);
         $minSelections = $this->minSelections($rules);
         $fillAsMuchAsPossible = $minSelections < $rules['max_selections'];
         $best = null;
@@ -610,7 +658,9 @@ PROMPT;
                 $reused = count(array_filter($combo, fn ($candidate) => in_array($candidate['match'], $avoid, true)));
                 $valueBets = count(array_filter($combo, fn ($candidate) => $candidate['categorie'] === 'valeur'));
                 $fromAi = count(array_filter($combo, fn ($candidate) => in_array($candidate['id'], $preferred, true)));
-                $score = $probability + 0.02 * $valueBets + 0.03 * $fromAi - 0.05 * $reused
+                // Pénalité forte (-0.40) sur les matchs déjà utilisés dans un autre niveau VIP aujourd'hui :
+                // on privilégie toujours un AUTRE match, et si contraint on ne reprend jamais le même pari.
+                $score = $probability + 0.02 * $valueBets + 0.03 * $fromAi - 0.40 * $reused
                     + ($fillAsMuchAsPossible ? 10 * count($combo) : 0);
 
                 if ($score > $bestScore) {
@@ -640,16 +690,25 @@ PROMPT;
     }
 
     /**
-     * Réservoir exploré par buildCombo : choix de l'IA d'abord, puis l'ordre du pool, au plus
-     * BUILDER_PER_MATCH sélections par match pour garder assez de matchs différents.
+     * Réservoir exploré par buildCombo : matchs encore inédits aujourd'hui d'abord, choix de l'IA
+     * ensuite, puis le reste du pool, au plus BUILDER_PER_MATCH sélections par match.
      *
      * @param array<int, array<string, mixed>> $pool
      * @param array<int, string> $preferred
+     * @param array<int, string> $avoid
      * @return array<int, array<string, mixed>>
      */
-    private function builderPool(array $pool, array $preferred): array
+    private function builderPool(array $pool, array $preferred, array $avoid = []): array
     {
-        usort($pool, fn ($a, $b) => (int) in_array($b['id'], $preferred, true) <=> (int) in_array($a['id'], $preferred, true));
+        usort($pool, function ($a, $b) use ($preferred, $avoid) {
+            $aFresh = in_array($a['match'], $avoid, true) ? 0 : 1;
+            $bFresh = in_array($b['match'], $avoid, true) ? 0 : 1;
+            if ($aFresh !== $bFresh) {
+                return $bFresh <=> $aFresh;
+            }
+
+            return (int) in_array($b['id'], $preferred, true) <=> (int) in_array($a['id'], $preferred, true);
+        });
 
         $perMatch = [];
         $selected = [];

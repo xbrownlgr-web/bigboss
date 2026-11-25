@@ -31,8 +31,8 @@ class MatchDataService
 
     private const CACHE_TTL_HOURS = 24;
 
-    // Au plus 8 matchs analysés par génération : 1 classement par compétition + 3 requêtes par match.
-    public const MAX_MATCHES = 8;
+    // Jusqu'à 12 matchs analysés pour diversifier Starter, Bronze, Silver, Gold, Platinum et marchés spéciaux.
+    public const MAX_MATCHES = 12;
 
     // Compétitions à part : rotation, aller-retour, sélections nationales peu stables.
     private const CUP_LEAGUES = [2486, 3337, 722432, 10996, 17804];

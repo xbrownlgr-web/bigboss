@@ -192,25 +192,41 @@ class GenerateDailyPronostics extends Command
     }
 
     /**
-     * Matchs déjà proposés aujourd'hui : un coupon gratuit ne reprend jamais un match d'un coupon
-     * VIP (et inversement), ni un match déjà donné dans le même groupe ; entre deux groupes VIP,
-     * on évite si possible.
+     * Matchs et sélections déjà proposés aujourd'hui :
+     * - un coupon gratuit ne reprend jamais un match d'un coupon VIP (et inversement), ni du même groupe ;
+     * - entre deux groupes VIP (Bronze, Silver, Gold, Platinum), on évite fortement de reprendre un match
+     *   déjà donné, et on INTERDIT strictement de répéter le même pari (match + marché) dans deux niveaux.
      *
-     * @return array{exclude: array<int, string>, avoid: array<int, string>}
+     * @return array{exclude: array<int, string>, avoid: array<int, string>, exclude_selections: array<int, string>}
      */
     private function exclusions(string $level): array
     {
         $free = PronosticRules::isFree($level);
         $exclude = [];
         $avoid = [];
+        $excludeSelections = [];
 
         $today = Pronostic::query()
             ->where('published_at', '>=', now()->setTimezone($this->timezone())->startOfDay())
+            ->whereIn('niveau', PronosticRules::LEVELS)
             ->get(['niveau', 'evenements']);
 
         foreach ($today as $pronostic) {
-            $matches = array_column($pronostic->evenements ?? [], 'match');
+            $events = is_array($pronostic->evenements) ? $pronostic->evenements : [];
+            $matches = array_column($events, 'match');
             $sameKind = PronosticRules::isFree((string) $pronostic->niveau) === $free;
+
+            foreach ($events as $event) {
+                $sig = AiPronosticGenerator::selectionSignature(
+                    (string) ($event['match'] ?? ''),
+                    (string) ($event['selection_key'] ?? ''),
+                    isset($event['line']) ? (string) $event['line'] : null,
+                    (string) ($event['pronostic'] ?? ''),
+                );
+                if ($sig !== '') {
+                    $excludeSelections[] = $sig;
+                }
+            }
 
             if (! $sameKind || $pronostic->niveau === $level) {
                 array_push($exclude, ...$matches);
@@ -219,7 +235,11 @@ class GenerateDailyPronostics extends Command
             }
         }
 
-        return ['exclude' => array_values(array_unique($exclude)), 'avoid' => array_values(array_unique($avoid))];
+        return [
+            'exclude' => array_values(array_unique($exclude)),
+            'avoid' => array_values(array_unique($avoid)),
+            'exclude_selections' => array_values(array_unique($excludeSelections)),
+        ];
     }
 
     /**

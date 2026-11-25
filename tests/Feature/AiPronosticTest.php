@@ -533,11 +533,15 @@ class AiPronosticTest extends TestCase
         // L'échelle BIG BOSS consomme 5+4+3+2 = 14 sélections pour les 4 niveaux VIP (voir CLAUDE.md) :
         // le pool doit donc fournir une 15e sélection, la plus faible, pour que Starter (1 événement)
         // ait encore un candidat disponible une fois les VIP servis en premier.
-        $this->fakeCandidates([...$this->candidatePool(), $this->candidate(15, 'under', 1.20, 0.76)]);
+        // Règle anti-doublon : un même pari (match + marché) n'apparaît jamais dans deux niveaux ;
+        // le pool fournit donc assez de paris distincts (16 à 23) pour servir tous les niveaux.
+        $this->fakeCandidates([...$this->candidatePool(), $this->candidate(15, 'under', 1.20, 0.76), $this->candidate(16, 'home_draw', 1.38, 0.86), $this->candidate(17, 'over', 1.40, 0.85), $this->candidate(18, 'under', 1.22, 0.77), $this->candidate(19, 'draw_away', 1.42, 0.84), $this->candidate(20, 'home_draw', 1.44, 0.83), $this->candidate(21, 'over', 1.46, 0.82), $this->candidate(22, 'under', 1.43, 0.82), $this->candidate(23, 'home_away', 1.41, 0.81)]);
 
         $drafts = collect(app(AiPronosticGenerator::class)->generate([], PronosticRules::LEVELS))->keyBy('niveau');
 
         $this->assertSame(PronosticRules::LEVELS, $drafts->keys()->all());
+        $signatures = $drafts->flatMap(fn ($d) => array_map(fn ($e) => $e['match'] . '|' . $e['selection_key'], $d['evenements']))->all();
+        $this->assertSame(count($signatures), count(array_unique($signatures)), 'Un même pari ne doit jamais apparaître dans deux niveaux.');
         $freeMatches = [];
         $vipMatches = [];
 

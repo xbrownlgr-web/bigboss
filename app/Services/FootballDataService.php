@@ -100,6 +100,52 @@ class FootballDataService
     }
 
     /**
+     * Meilleurs buteurs actuels d'une compétition (endpoint gratuit /competitions/{code}/scorers,
+     * mis en cache 24 h). Sert au module Buteurs pour proposer uniquement des joueurs réels.
+     *
+     * @return array<int, array{player: string, team: string, team_id: int, goals: int, penalties: int, played_matches: int}>
+     */
+    public function topScorers(string $oddsKey): array
+    {
+        $code = FootballDataLeagues::competitionCode($oddsKey);
+        $key = $this->key();
+
+        if ($code === null || $key === null) {
+            return [];
+        }
+
+        $json = $this->get($key, "scorers:{$code}", "/competitions/{$code}/scorers", ['limit' => 30]);
+        $rows = $json['scorers'] ?? null;
+
+        if (! is_array($rows)) {
+            return [];
+        }
+
+        return collect($rows)
+            ->map(function (array $row): ?array {
+                $player = trim((string) ($row['player']['name'] ?? ''));
+                $team = trim((string) ($row['team']['name'] ?? $row['team']['shortName'] ?? ''));
+                $goals = (int) ($row['goals'] ?? 0);
+
+                if ($player === '' || $team === '' || $goals <= 0) {
+                    return null;
+                }
+
+                return [
+                    'player' => $player,
+                    'team' => $team,
+                    'team_id' => (int) ($row['team']['id'] ?? 0),
+                    'goals' => $goals,
+                    'penalties' => (int) ($row['penalties'] ?? 0),
+                    'played_matches' => max(1, (int) ($row['playedMatches'] ?? 1)),
+                ];
+            })
+            ->filter()
+            ->values()
+            ->all();
+    }
+
+    /**
      * 5 derniers matchs terminés d'une équipe (toutes compétitions confondues, comme Highlightly).
      *
      * @return array<int, array{date: string, opponent: string, venue: string, gf: int, ga: int, result: string}>|null

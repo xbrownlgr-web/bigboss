@@ -6,6 +6,7 @@ use App\Models\AppSetting;
 use App\Models\Pronostic;
 use App\Models\PronosticRun;
 use App\Services\FixtureService;
+use App\Services\FootballDataService;
 use App\Services\MatchDataService;
 use App\Services\OddsService;
 use App\Services\SpecialMarketsGenerator;
@@ -52,6 +53,7 @@ class GenerateSpecialMarkets extends Command
         private readonly OddsService $odds,
         private readonly MatchDataService $matchData,
         private readonly SpecialMarketsGenerator $generator,
+        private readonly FootballDataService $footballData,
     ) {
         parent::__construct();
     }
@@ -91,6 +93,8 @@ class GenerateSpecialMarkets extends Command
         if ($enriched === []) {
             return $this->finish($slot, PronosticRun::STATUS_EMPTY, 'Aucun match documenté avec cotes réelles sur la fenêtre.');
         }
+
+        $enriched = $this->attachScorers($enriched);
 
         $dossier = $this->generator->buildDossier($enriched, $now);
         $key = AiProvider::key();
@@ -136,10 +140,24 @@ class GenerateSpecialMarkets extends Command
             fn ($c) => ! in_array(mb_strtolower($c['match']), $existingCartons, true),
         ));
 
+        $cartonsTarget = 3;
+        $cartonsNeeded = max(0, $cartonsTarget - count($existingCartons) - count($cartons));
+        if ($cartonsNeeded > 0) {
+            $skipCartonMatches = [...$existingCartons, ...array_map(fn ($c) => mb_strtolower($c['match']), $cartons)];
+            $cartons = [...$cartons, ...$this->generator->buildServerCartons($enriched, $skipCartonMatches, $cartonsNeeded)];
+        }
+
         $buteurs = array_values(array_filter(
             $result['buteurs'],
             fn ($b) => ! in_array(mb_strtolower($b['match'] . '|' . $b['joueur']), $existingButeurs, true),
         ));
+
+        $buteursTarget = 3;
+        $buteursNeeded = max(0, $buteursTarget - count($existingButeurs) - count($buteurs));
+        if ($buteursNeeded > 0) {
+            $skipButeurKeys = [...$existingButeurs, ...array_map(fn ($b) => mb_strtolower($b['match'] . '|' . $b['joueur']), $buteurs)];
+            $buteurs = [...$buteurs, ...$this->generator->buildServerButeurs($enriched, $skipButeurKeys, $buteursNeeded)];
+        }
 
         $wantCombines = in_array($module, ['all', 'grosses_cotes'], true);
         $wantCartons = in_array($module, ['all', 'cartons'], true);
@@ -382,5 +400,89 @@ class GenerateSpecialMarkets extends Command
         }
 
         return self::SUCCESS;
+    }
+
+    /**
+     * Associe les meilleurs buteurs réels (football-data.org, mis en cache 24 h) aux matchs
+     * dont la compétition est couverte. Aucun joueur n'est jamais inventé.
+     *
+     * @param array<int, array<string, mixed>> $fixtures
+     * @return array<int, array<string, mixed>>
+     */
+    private function attachScorers(array $fixtures): array
+    {
+        $byLeague = [];
+
+        return array_map(function (array $fixture) use (&$byLeague): array {
+            if (! empty($fixture['scorers'])) {
+                return $fixture;
+            }
+
+            $oddsKey = (string) ($fixture['odds_key'] ?? '');
+            if ($oddsKey === '' || ! $this->footballData->covers($oddsKey)) {
+                return $fixture;
+            }
+
+            if (! array_key_exists($oddsKey, $byLeague)) {
+                $byLeague[$oddsKey] = $this->footballData->topScorers($oddsKey);
+            }
+
+            $home = (string) ($fixture['home'] ?? '');
+            $away = (string) ($fixture['away'] ?? '');
+            $homeId = (int) ($fixture['home_id'] ?? 0);
+            $awayId = (int) ($fixture['away_id'] ?? 0);
+
+            $matched = [];
+            foreach ($byLeague[$oddsKey] as $scorer) {
+                $side = null;
+                if (($homeId > 0 && $scorer['team_id'] === $homeId) || $this->teamMatches($home, $scorer['team'])) {
+                    $side = 'home';
+                } elseif (($awayId > 0 && $scorer['team_id'] === $awayId) || $this->teamMatches($away, $scorer['team'])) {
+                    $side = 'away';
+                }
+
+                if ($side !== null) {
+                    $matched[] = [...$scorer, 'side' => $side];
+                }
+            }
+
+            return $matched !== [] ? [...$fixture, 'scorers' => $matched] : $fixture;
+        }, $fixtures);
+    }
+
+    private function teamMatches(string $a, string $b): bool
+    {
+        $normA = $this->normalizeTeamName($a);
+        $normB = $this->normalizeTeamName($b);
+
+        if ($normA === '' || $normB === '') {
+            return false;
+        }
+
+        if ($normA === $normB || str_contains($normA, $normB) || str_contains($normB, $normA)) {
+            return true;
+        }
+
+        $tokensA = array_values(array_filter(explode(' ', $normA), fn ($t) => strlen($t) >= 3));
+        $tokensB = array_values(array_filter(explode(' ', $normB), fn ($t) => strlen($t) >= 3));
+
+        if ($tokensA === [] || $tokensB === []) {
+            return false;
+        }
+
+        $shorter = count($tokensA) <= count($tokensB) ? $tokensA : $tokensB;
+        $longer = count($tokensA) <= count($tokensB) ? $tokensB : $tokensA;
+
+        return count(array_intersect($shorter, $longer)) === count($shorter);
+    }
+
+    private function normalizeTeamName(string $name): string
+    {
+        $clean = mb_strtolower(trim($name));
+        $clean = str_replace(['é', 'è', 'ê', 'à', 'â', 'ü', 'ö', 'ä', 'ñ', 'ç', 'í', 'ó', 'ú'], ['e', 'e', 'e', 'a', 'a', 'u', 'o', 'a', 'n', 'c', 'i', 'o', 'u'], $clean);
+        $clean = preg_replace('/[^a-z0-9\s]/', ' ', $clean) ?? '';
+        $clean = preg_replace('/\b(fc|cf|sc|ac|as|afc|ssc|cd|ud|rc|rcd|sv|vfb|tsg|rb|fk|sk|bk|if|club|de|la|del|los|las|ogc|osc|aj|us|ss)\b/', ' ', $clean) ?? '';
+
+        return trim(preg_replace('/\s+/', ' ', $clean) ?? '');
     }
 }
