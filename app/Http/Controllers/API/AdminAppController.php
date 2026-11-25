@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Models\AppSetting;
+use App\Models\BannedDevice;
 use App\Models\Message;
 use App\Models\Transaction;
 use App\Models\User;
@@ -187,7 +188,9 @@ class AdminAppController extends Controller
             ->where('fcm_token', 'like', 'ExponentPushToken[%')
             ->count();
         $activeVipUsers = VipSubscription::query()->active()->distinct('user_id')->count('user_id');
+        $bannedUsers = User::query()->whereNull('account_deleted_at')->where('is_active', false)->count();
         $hasMore = false;
+        $userCols = ['id', 'name', 'email', 'phone', 'fcm_token', 'device_id', 'is_active', 'banned_at', 'ban_reason', 'created_at'];
 
         if (mb_strlen($search) >= 2) {
             $users = User::query()
@@ -198,7 +201,7 @@ class AdminAppController extends Controller
                     ->orWhere('phone', 'like', '%' . $search . '%'))
                 ->latest('id')
                 ->limit(40)
-                ->get(['id', 'name', 'email', 'phone', 'fcm_token', 'created_at']);
+                ->get($userCols);
 
             // Numéro : comparaison chiffre à chiffre (saisis avec espaces, « + », tirets…).
             $digits = preg_replace('/\D+/', '', $search);
@@ -207,7 +210,7 @@ class AdminAppController extends Controller
                 $byPhone = User::query()
                     ->whereNull('account_deleted_at')
                     ->whereNotNull('phone')
-                    ->get(['id', 'name', 'email', 'phone', 'fcm_token', 'created_at'])
+                    ->get($userCols)
                     ->filter(fn (User $user) => str_contains(preg_replace('/\D+/', '', (string) $user->phone), $digits));
                 $users = $users->merge($byPhone)->unique('id')->take(40)->values();
             }
@@ -217,7 +220,7 @@ class AdminAppController extends Controller
                 ->latest('id')
                 ->skip(($page - 1) * $perPage)
                 ->take($perPage + 1)
-                ->get(['id', 'name', 'email', 'phone', 'fcm_token', 'created_at']);
+                ->get($userCols);
             $hasMore = $batch->count() > $perPage;
             $users = $batch->take($perPage)->values();
         }
@@ -234,6 +237,7 @@ class AdminAppController extends Controller
             'total_users' => $totalUsers,
             'push_ready_users' => $pushReadyUsers,
             'active_vip_users' => $activeVipUsers,
+            'banned_users' => $bannedUsers,
             'page' => $page,
             'has_more' => $hasMore,
             'users' => $users->map(fn (User $user) => [
@@ -241,10 +245,58 @@ class AdminAppController extends Controller
                 'name' => $user->name,
                 'email' => $user->email,
                 'phone' => $user->phone,
+                'is_active' => (bool) $user->is_active,
+                'is_admin' => (bool) $user->is_admin,
+                'banned_at' => $user->banned_at?->toIso8601String(),
+                'ban_reason' => $user->ban_reason,
                 'has_push' => str_starts_with((string) $user->fcm_token, 'ExponentPushToken['),
                 'created_at' => $user->created_at?->toIso8601String(),
                 'active_vips' => $vipsByUser->get($user->id, []),
             ])->values(),
+        ]);
+    }
+
+    /**
+     * Bannit un utilisateur, coupe ses sessions et interdit toute nouvelle inscription depuis son téléphone/numéro.
+     */
+    public function banUser(int $id, Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'reason' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        $user = User::query()->whereNull('account_deleted_at')->findOrFail($id);
+
+        if ($user->is_admin || $user->id === $request->user()->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Impossible de bannir un compte administrateur.',
+            ], 422);
+        }
+
+        BannedDevice::banUser($user, $request->user(), $validated['reason'] ?? null);
+
+        return response()->json([
+            'success' => true,
+            'message' => "{$user->name} a été banni. Son compte et son téléphone sont bloqués.",
+            'user_id' => $user->id,
+            'is_active' => false,
+        ]);
+    }
+
+    /**
+     * Lève le bannissement d'un utilisateur et débloque son appareil/numéro.
+     */
+    public function unbanUser(int $id): JsonResponse
+    {
+        $user = User::query()->whereNull('account_deleted_at')->findOrFail($id);
+        BannedDevice::unbanUser($user);
+
+        return response()->json([
+            'success' => true,
+            'message' => "{$user->name} a été débanni.",
+            'user_id' => $user->id,
+            'is_active' => true,
         ]);
     }
 

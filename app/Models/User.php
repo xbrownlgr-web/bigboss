@@ -28,6 +28,7 @@ class User extends Authenticatable
         'is_vip',
         'is_active',
         'fcm_token',
+        'device_id',
         'password',
     ];
 
@@ -48,6 +49,7 @@ class User extends Authenticatable
         'password',
         'remember_token',
         'fcm_token',
+        'device_id',
     ];
 
     public const COUNTRIES = [
@@ -75,6 +77,7 @@ class User extends Authenticatable
             'password' => 'hashed',
             'is_vip' => 'boolean',
             'is_active' => 'boolean',
+            'banned_at' => 'datetime',
             'adult_confirmed_at' => 'datetime',
             'account_deleted_at' => 'datetime',
         ];

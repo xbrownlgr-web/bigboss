@@ -63,6 +63,8 @@ Route::prefix('v1')->group(function () {
             Route::post('/transactions/{id}/approve', [AdminAppController::class, 'approve'])->whereNumber('id');
             Route::post('/transactions/{id}/reject', [AdminAppController::class, 'reject'])->whereNumber('id');
             Route::get('/users', [AdminAppController::class, 'users']);
+            Route::post('/users/{id}/ban', [AdminAppController::class, 'banUser'])->whereNumber('id');
+            Route::post('/users/{id}/unban', [AdminAppController::class, 'unbanUser'])->whereNumber('id');
             Route::get('/vip/options', [AdminAppController::class, 'vipOptions']);
             Route::get('/vip/prices', [AdminAppController::class, 'vipPrices']);
             Route::put('/vip/prices', [AdminAppController::class, 'updateVipPrices']);

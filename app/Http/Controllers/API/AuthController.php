@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use App\Mail\PasswordResetCode;
 use App\Mail\WelcomeUser;
+use App\Models\BannedDevice;
 use App\Models\User;
 use App\Services\AccountDeletionService;
 use Illuminate\Support\Carbon;
@@ -51,11 +52,23 @@ class AuthController extends Controller
             'adult_confirmed.accepted' => 'Vous devez avoir 18 ans ou plus pour utiliser BIG BOSS.',
         ]);
 
+        $deviceId = BannedDevice::cleanDeviceId(
+            (string) ($request->header('X-Device-Id') ?: $request->input('device_id', '')),
+        );
+
+        if (BannedDevice::isBlocked($deviceId, $validated['phone'], $validated['email'], $request->input('fcm_token'))) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cet appareil ou ce numéro a été banni de BIG BOSS. Vous ne pouvez plus créer de compte.',
+            ], 403);
+        }
+
         $user = User::create([
             'name' => trim($validated['name']),
             'email' => $validated['email'],
             'phone' => trim($validated['phone']),
             'country' => $validated['country'],
+            'device_id' => $deviceId,
             'password' => Hash::make($validated['password']),
         ]);
 
@@ -129,22 +142,30 @@ class AuthController extends Controller
             'password.required' => 'Entrez votre mot de passe.',
         ]);
 
-        if (! Auth::attempt($credentials)) {
+        $deviceId = BannedDevice::cleanDeviceId(
+            (string) ($request->header('X-Device-Id') ?: $request->input('device_id', '')),
+        );
+
+        $user = User::whereRaw('LOWER(email) = ?', [$credentials['email']])->first();
+
+        if (! $user || ! Hash::check($credentials['password'], $user->password)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Identifiants incorrects',
             ], 401);
         }
 
-        $user = $request->user();
-
-        if (! $user->is_active) {
-            Auth::logout();
+        if (! $user->is_active || (! $user->is_admin && BannedDevice::isBlocked($deviceId, null, $user->email))) {
+            $user->tokens()->delete();
 
             return response()->json([
                 'success' => false,
-                'message' => 'Votre compte est désactivé. Contactez le support.',
+                'message' => 'Votre compte ou cet appareil a été banni de BIG BOSS. Contactez le support.',
             ], 403);
+        }
+
+        if ($deviceId && $user->device_id !== $deviceId) {
+            $user->forceFill(['device_id' => $deviceId])->save();
         }
 
         $token = $user->createToken('mobile')->plainTextToken;
@@ -269,9 +290,27 @@ class AuthController extends Controller
 
     public function me(Request $request): JsonResponse
     {
+        $user = $request->user();
+        $deviceId = BannedDevice::cleanDeviceId(
+            (string) ($request->header('X-Device-Id') ?: $request->input('device_id', '')),
+        );
+
+        if (! $user->is_active || (! $user->is_admin && BannedDevice::isBlocked($deviceId))) {
+            $user->tokens()->delete();
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Votre compte ou cet appareil a été banni de BIG BOSS.',
+            ], 401);
+        }
+
+        if ($deviceId && $user->device_id !== $deviceId) {
+            $user->forceFill(['device_id' => $deviceId])->save();
+        }
+
         return response()->json([
             'success' => true,
-            'user' => $request->user(),
+            'user' => $user,
         ]);
     }
 
@@ -282,12 +321,30 @@ class AuthController extends Controller
             'app_variant' => ['sometimes', 'in:apk,play,ios'],
         ]);
 
-        $request->user()->update([
-            'fcm_token' => $request->fcm_token,
-        ]);
+        $user = $request->user();
+        $deviceId = BannedDevice::cleanDeviceId(
+            (string) ($request->header('X-Device-Id') ?: $request->input('device_id', '')),
+        );
 
-        // Envoyée par les nouvelles versions de l'app ; les anciennes sont toutes des APK du site.
-        $request->user()->forceFill(['app_variant' => $request->input('app_variant', 'apk')])->save();
+        if (! $user->is_admin && BannedDevice::isBlocked($deviceId, null, null, $request->fcm_token)) {
+            $user->tokens()->delete();
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Cet appareil a été banni de BIG BOSS.',
+            ], 403);
+        }
+
+        $updates = [
+            'fcm_token' => $request->fcm_token,
+            // Envoyée par les nouvelles versions de l'app ; les anciennes sont toutes des APK du site.
+            'app_variant' => $request->input('app_variant', 'apk'),
+        ];
+        if ($deviceId) {
+            $updates['device_id'] = $deviceId;
+        }
+
+        $user->forceFill($updates)->save();
 
         return response()->json([
             'success' => true,
